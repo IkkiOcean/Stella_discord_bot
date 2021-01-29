@@ -1,7 +1,7 @@
 import discord #pip install discord
 from discord.ext import commands
 from discord.ext.commands import BucketType, Greedy
-import requests
+import requests #requests
 from discord.errors import Forbidden
 import random, textwrap
 import datetime
@@ -10,7 +10,7 @@ import os
 from PIL import Image, ImageFont, ImageDraw  #pip install Pillow
 from io import BytesIO
 import typing
-from urllib.request import urlopen
+import asyncio
 import numpy
 import mal
 from mal import *
