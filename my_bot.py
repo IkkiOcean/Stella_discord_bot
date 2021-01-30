@@ -495,38 +495,7 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
     if len(text1)>18:
         await ctx.send("Hey! Your name is longer than 18 Characters \n**Tip**: Keep it shorter :) ")    
     await ctx.send(file=discord.File("instagram.png"))
-#mha template
-@client.command()#name='mha', aliases=['Mha','MHA'])
-async def mha(ctx,user:discord.Member=None):
-    if user==None:
-        user = ctx.author
-    resp=requests.get("https://media.discordapp.net/attachments/782562061812891648/796762001552179270/mha_template.jpg?width=273&height=467") 
-    
-    mha = Image.open(BytesIO(resp.content))
-    asset = user.avatar_url_as(size=128)
-    data = BytesIO(await asset.read())   
-    pfp = Image.open(data)
-    pfp = pfp.resize((74,70))
-    mha.paste(pfp,(42,123))
-    mha.save("mha.jpg")
-    await ctx.send(file=discord.File("mha.jpg")) 
-    
-    #font = ImageFont.truetype(r"G:\bot\.vscode\luffyfont.ttf", 60)        
-    #draw=ImageDraw.Draw(wanted)
-    #text1 = user.display_name
-    #text = textwrap.wrap(text1, 19)
-    #W, H = (251,500)
-    #w, h = draw.textsize(text[0],font=font)
-    #draw.text((W-w/2, H-h/2),text[0],(93,63,51),font=font,align="center")
-    
-    #num= random.randint(100000000,10000000000) 
-    #draw=ImageDraw.Draw(wanted)
-    #font = ImageFont.truetype(r"G:\bot\.vscode\luffyfont.ttf", 70)
-    #draw.text((102,534),bount,(93,63,51),font=font)
-    #wanted.save("wanted.png")
-    
-    #if len(text1)>19:
-        #await ctx.send("Hey! Your name is longer than 19 Characters \n**Tip**: Keep it shorter :) ")
+
         
 
 #REACTION_ROLES.....................................................................
