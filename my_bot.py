@@ -427,7 +427,7 @@ async def wanted(ctx,user:discord.Member=None):
     pfp = Image.open(data)
     pfp = pfp.resize((385,261))
     wanted.paste(pfp,(57,153))
-    font = ImageFont.truetype(font=BytesIO(open(".vscode/luffyfont.ttf", "rb").read()), 60)        
+    font = ImageFont.truetype(".vscode/luffyfont.ttf", 60)        
     draw=ImageDraw.Draw(wanted)
     text1 = user.display_name
     text = textwrap.wrap(text1, 19)
@@ -440,7 +440,7 @@ async def wanted(ctx,user:discord.Member=None):
     num= random.randint(100000000,10000000000) 
     bount= str(num)
     draw=ImageDraw.Draw(wanted)
-    font = ImageFont.truetype(font=BytesIO(open(".vscode/luffyfont.ttf", "rb").read()), 70)
+    font = ImageFont.truetype(".vscode/luffyfont.ttf", 70)
     draw.text((102,534),bount,(93,63,51),font=font)
     wanted.save("wanted.png")
     
@@ -460,7 +460,7 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
     pfp = Image.open(data)
     pfp = pfp.resize((322,313))
     post.paste(pfp,(19,54))
-    font = ImageFont.truetype(font=BytesIO(open(".vscode/ARIAL.TTF", "rb").read()), 15)        
+    font = ImageFont.truetype(".vscode/ARIAL.TTF", 15)        
     draw=ImageDraw.Draw(post)
     text1 = user.display_name
     text = textwrap.wrap(text1, 19)
