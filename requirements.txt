@@ -33,3 +33,5 @@ urllib3==1.26.2
 wrapt==1.12.1
 yarg==0.1.9
 yarl==1.5.1
+ARIAL.TTF
+luffyfont.ttf
