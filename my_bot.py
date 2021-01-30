@@ -1369,7 +1369,7 @@ import asyncio
 @client.command(name='waifu',aliases=["Waifu"]) 
 @commands.cooldown(2, 120, BucketType.user)  
 async def waifu_(ctx):
-    chosen_index = random.randint(0,42) 
+    chosen_index = random.randint(0,52) 
     embed=  discord.Embed(title = f"**{waifuname[chosen_index]}**",description= waifuseries[chosen_index],color =0x00ebff)
     embed.set_image(url=waifupics[chosen_index])
     message=await ctx.send(embed=embed)
