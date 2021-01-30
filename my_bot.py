@@ -427,7 +427,7 @@ async def wanted(ctx,user:discord.Member=None):
     pfp = Image.open(data)
     pfp = pfp.resize((385,261))
     wanted.paste(pfp,(57,153))
-    font = ImageFont.truetype(r"stella/.vscode/luffyfont.ttf", 60)        
+    font = ImageFont.truetype(r".vscode/luffyfont.ttf", 60)        
     draw=ImageDraw.Draw(wanted)
     text1 = user.display_name
     text = textwrap.wrap(text1, 19)
@@ -440,7 +440,7 @@ async def wanted(ctx,user:discord.Member=None):
     num= random.randint(100000000,10000000000) 
     bount= str(num)
     draw=ImageDraw.Draw(wanted).vscode/ARIAL.TTF
-    font = ImageFont.truetype(r".vscode/luffyfont.TTF", 70)
+    font = ImageFont.truetype(r".vscode/luffyfont.ttf", 70)
     draw.text((102,534),bount,(93,63,51),font=font)
     wanted.save("wanted.png")
     
