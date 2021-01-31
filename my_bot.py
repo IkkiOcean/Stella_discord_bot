@@ -513,7 +513,7 @@ async def chika(ctx, *,caption):
     post.write_text_box((328,366),line3,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
     post.write_text_box((328,548),line4,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
     
-    post.save("chika/stella.png")
+    post.save(".vscode/chikastella.png")
     
     await ctx.send(file=discord.File("chika/stella.png"))
 #message................
