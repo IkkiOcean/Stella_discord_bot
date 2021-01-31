@@ -1386,7 +1386,24 @@ async def waifu_(ctx):
             
     except asyncio.TimeoutError:
         await ctx.send(f"{user.name}{waifuname[chosen_index]} ran away with someone ;-;")    
+        
+        
+        
          
 
+#help...............................
+client.remove_command("help")
+@client.group(invoke_without_command=True)#<> required [] optional
+async def help(ctx):
+    em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/H7MDM37)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\nif you don't have common sense then,\n||Do not actually include the <> and [] symbols in the command||",timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
+    em.set_author(name = "**Help/Command List**",icon_url=f"{ctx.message.author.avatar_url}")
+    em.add_field(name="Moderation",value="`kick` `ban` `clear`")
+    em.add_field(name="Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ")
+    em.add_field(name="Meme Generation",value="`wanted` `insta`")
+    em.add_field(name="Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ")
+    em.add_field(name="Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ")
+    em.add_field(name="Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot`")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    await ctx.send(embed=em)
 # run the client on the server
 client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.RoKqLr0IWKoG20WKpW10g37OZk0')
