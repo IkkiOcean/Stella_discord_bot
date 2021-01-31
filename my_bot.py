@@ -420,14 +420,14 @@ async def hug(context,member: discord.Member, *,gifmsg=None):
 async def wanted(ctx,user:discord.Member=None):
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/32SYRo8.png") 
+    resp=requests.get("https://cdn.discordapp.com/attachments/782562061812891648/784300226537324564/Wanted.png") 
     
     wanted = Image.open(BytesIO(resp.content))
     asset = user.avatar_url_as(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
-    pfp = pfp.resize((276,188))
-    wanted.paste(pfp,(43,111))
+    pfp = pfp.resize((385,261))
+    wanted.paste(pfp,(57,153))
     font = ImageFont.truetype("luffyfont.ttf", 60)        
     draw=ImageDraw.Draw(wanted)
     text1 = user.display_name
