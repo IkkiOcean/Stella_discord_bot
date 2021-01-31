@@ -746,7 +746,7 @@ async def help(ctx):
     em.set_author(name = "**Help/Command List**",icon_url=f"{ctx.message.author.avatar_url}")
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
-    em.add_field(name="😆 Meme Generation",value="`wanted` `insta`",inline=False)
+    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `chika`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot`",inline=False)
