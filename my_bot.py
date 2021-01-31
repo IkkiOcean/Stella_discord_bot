@@ -502,20 +502,19 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
 #chika
 @client.command(name='chika', aliases=['Chika'])
 async def chika(ctx, *,caption): 
-    resp=requests.get("https://i.imgur.com/ZlnspzF.png") #chika
-    post1 = Image.open(BytesIO(resp.content)).convert("RGB")   
+       
     line1, line2, line3, line4 = caption.split(",")  
-    print("hello")
-    post = ImageText(post1)
-    print("hello one")
+    
+    post = ImageText("chika1.png")
+    
     #img.write_text_box((300, 200), text, box_width=200, font_filename=font,font_size=15, color=color, place='center')
     post.write_text_box((328,5),line1,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
     post.write_text_box((328,185),line2,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
     post.write_text_box((328,366),line3,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
     post.write_text_box((328,548),line4,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
-    print("hello two")
+    
     post.save("chika/stella.png")
-    print("helloe three")
+    
     await ctx.send(file=discord.File("chika/stella.png"))
 #message................
 
