@@ -503,7 +503,7 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
 @client.command(name='chika', aliases=['Chika'])
 async def chika(ctx, *,caption): 
     resp=requests.get("https://i.imgur.com/ZlnspzF.png") #chika
-    post = Image.open(BytesIO(resp.content))   
+    post = Image.open(BytesIO(resp.content)).convert("RGB")   
     line1, line2, line3, line4 = caption.split(",")   
     #img.write_text_box((300, 200), text, box_width=200, font_filename=font,font_size=15, color=color, place='center')
     post.write_text_box((328,5),line1,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
