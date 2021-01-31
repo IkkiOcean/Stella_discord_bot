@@ -16,7 +16,6 @@ import mal
 from mal import *
 import asyncio
 from waifu import waifupics, waifuname, waifuseries
-from Image_utils import ImageText
 
 os.chdir(r".vscode")
 # client (our bot)
@@ -427,8 +426,8 @@ async def wanted(ctx,user:discord.Member=None):
     asset = user.avatar_url_as(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
-    pfp = pfp.resize((385,261))
-    wanted.paste(pfp,(57,153))
+    pfp = pfp.resize((276,188))
+    wanted.paste(pfp,(43,111))
     font = ImageFont.truetype("luffyfont.ttf", 60)        
     draw=ImageDraw.Draw(wanted)
     text1 = user.display_name
@@ -498,24 +497,7 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
         await ctx.send("Hey! Your name is longer than 18 Characters \n**Tip**: Keep it shorter :) ")    
     await ctx.send(file=discord.File("instagram.png"))
 
-#memes
-#chika
-@client.command(name='chika', aliases=['Chika'])
-async def chika(ctx, *,caption): 
-       
-    line1, line2, line3, line4 = caption.split(",")  
-    
-    post = ImageText("chika1.png")
-    
-    #img.write_text_box((300, 200), text, box_width=200, font_filename=font,font_size=15, color=color, place='center')
-    post.write_text_box((328,5),line1,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
-    post.write_text_box((328,185),line2,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
-    post.write_text_box((328,366),line3,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
-    post.write_text_box((328,548),line4,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
-    
-    post.save(".vscode/chikastella.png")
-    
-    await ctx.send(file=discord.File("chika/stella.png"))
+
 #message................
 
 #dm
