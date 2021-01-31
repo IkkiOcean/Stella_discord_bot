@@ -14,7 +14,9 @@ import asyncio
 import numpy
 import mal
 from mal import *
+import asyncio
 from waifu import waifupics, waifuname, waifuseries
+from Image_utils import ImageText
 
 os.chdir(r".vscode")
 # client (our bot)
@@ -419,7 +421,7 @@ async def hug(context,member: discord.Member, *,gifmsg=None):
 async def wanted(ctx,user:discord.Member=None):
     if user==None:
         user = ctx.author
-    resp=requests.get("https://cdn.discordapp.com/attachments/782562061812891648/784300226537324564/Wanted.png") 
+    resp=requests.get("https://i.imgur.com/32SYRo8.png") 
     
     wanted = Image.open(BytesIO(resp.content))
     asset = user.avatar_url_as(size=128)
@@ -452,7 +454,7 @@ async def wanted(ctx,user:discord.Member=None):
 async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= None):
     if user==None:
         user = ctx.author
-    resp=requests.get("https://cdn.discordapp.com/attachments/782562061812891648/798163684589305916/instagramtemplate.png") 
+    resp=requests.get("https://i.imgur.com/REDMT7r.png") 
     
     post = Image.open(BytesIO(resp.content))
     asset = user.avatar_url
@@ -496,107 +498,20 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
         await ctx.send("Hey! Your name is longer than 18 Characters \n**Tip**: Keep it shorter :) ")    
     await ctx.send(file=discord.File("instagram.png"))
 
-        
-
-#REACTION_ROLES.....................................................................
-reaction_title = ""
-reactions = {}
-#imagelink = ""
-reaction_message_id= ""
-@client.command(name='create_reactionroles',pass_context = True)    
-@commands.has_permissions(manage_guild=True)
-async def create_reactionroles(context):
-    embed=discord.Embed(title="Create Reaction Post", color=0x00ebff)
-    embed.set_author(name=f'{client.user}' ,icon_url=f'{client.user.avatar_url}')
-    embed.add_field(name='Set Title', value= "`set_title [Title]`",inline=False)
-    embed.add_field(name='Add Role', value='`add_role {@role} {Emoji}`',inline=False)
-    embed.add_field(name='Remove Role', value='`remove_role {@role}`',inline=False)
-    #embed.add_field(name='Add Image', value= "`add_image {link}`",inline=False)
-    await context.send(embed=embed)
-    await context.message.delete()
-
-@client.command(name='set_title',pass_context = True)    
-@commands.has_permissions(manage_guild=True)  
-async def set_title(context, *,new_title):
-    global reaction_title 
-    reaction_title = new_title
-    await context.send("The title for the Reaction Role Embed is `" + reaction_title + " `now!!")
-    await context.message.delete()
-
-@client.command(name='add_role',pass_context = True)    
-@commands.has_permissions(manage_guild=True)
-async def add_role(context, role: discord.Role, reaction ):
-       
-    if role != None:
-        reactions[role.name] = reaction
-        await context.send("Role `" + role.name + "` has been **added** with the emoji"+ reaction)
-        await context.message.delete()
-    else:
-        await context.send("Please try again and add role")
-
-@client.command(name='remove_role',pass_context = True)    
-@commands.has_permissions(manage_guild=True)
-async def remove_role(context, role: discord.Role):
-    if role.name in reactions:
-        del reactions[role.name]
-        await context.send("Role `" + role.name + "` has been **removed**")
-        await context.message.delete()
-    else:
-        await context.send("That role was not added")
-
-
-#@client.command(name='add_image')
-#async def add_image(context, image):
-    #imagelink = image
-    #await context.send('Image has been **added**')
-    #await context.message.delete()
-
-@client.command(name='send_post',pass_context = True)    
-@commands.has_permissions(manage_guild=True)
-async def send_post(context):
-    
-    description = 'React To get Roles!\n'
-
-    for role in reactions:
-        description += '`' + role + "`  -  " + reactions[role] + '\n'
-
-    embed = discord.Embed(title=reaction_title, description=description, color=0x00ebff) 
-    embed.set_author(name=f'{client.user}' ,icon_url=f'{client.user.avatar_url}')
-    #embed.set_image(url=imagelink)
-
-
-    message = await context.send(embed=embed)   
-
-    global reaction_message_id
-    reaction_message_id = str(message.id)
-
-    for role in reactions:
-        await message.add_reaction(reactions[role])
-
-    await context.message.delete()  
-
-
-@client.event
-async def on_reaction_add(reaction, user):   
-
-    if not user.bot:
-
-        message = reaction.message
-
-        if str(message.id) == reaction_message_id:
-
-            #add roles to our userss...
-
-            role_to_give = ""
-
-            for role in reactions:
-
-                if reactions[role] == reaction.emoji:
-                    role_to_give = role
-
-            role_for_reaction = discord.utils.get(user.guild.roles, name=role_to_give)
-            await user.add_roles(role_for_reaction)
-
+#memes
+#chika
+@client.command(name='chika', aliases=['Chika'])
+async def chika(ctx, *,caption): 
+    resp=requests.get("https://i.imgur.com/ZlnspzF.png") #chika
+    post = Image.open(BytesIO(resp.content))   
+    line1, line2, line3, line4 = caption.split(",")   
+    #img.write_text_box((300, 200), text, box_width=200, font_filename=font,font_size=15, color=color, place='center')
+    post.write_text_box((328,5),line1,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
+    post.write_text_box((328,185),line2,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
+    post.write_text_box((328,366),line3,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
+    post.write_text_box((328,548),line4,box_width=293,font_filename="ARIAL.TTF",color=(0,0,0),place='centre')
+    post.save("chika/stella.png")
+    await ctx.send(file=discord.File("chika/stella.png"))
 #message................
 
 #dm
@@ -661,8 +576,8 @@ async def propose(context, member: discord.Member , *,msg= None):
         response= await client.wait_for('message', check= check, timeout= 40)
         
         if "accept" in response.content.lower():
-            resp=requests.get("https://cdn.discordapp.com/attachments/754740569552715817/804413355543494726/shipbot-min.png") 
-            resp2=requests.get("https://cdn.discordapp.com/attachments/754740569552715817/804416481814773820/background.png")
+            resp=requests.get("https://i.imgur.com/12OscjX.png") #marraige
+            resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
             
             
             marraige = Image.open(BytesIO(resp.content)).convert('RGBA')
@@ -711,535 +626,12 @@ async def imposter(context, member: Greedy[discord.Member]):#member1 : discord.M
     line=random.choice(linelist)
 
     imps.add_field(name='Who is the Imposter!!',value=f'{line}')
-    imps.set_image(url='https://cdn.discordapp.com/attachments/782562061812891648/783657342691967026/amoung_us.jpg')
+    imps.set_image(url='https://i.imgur.com/m2EfMwb.jpg')
     await context.send(embed=imps)
 
 
 
-#Economy.................................................
-
-#currency = ""
-#@client.command(name='set_symbol',pass_context = True)    
-#@commands.has_permissions(manage_guild=True)
-#async def set_symbol(context, currency ):
- #   em =discord.Embed(description = f"Currency has been set to {currency}", timestamp=datetime.datetime.utcnow(),color =0x00ebff)
-  #  em.set_author(name = f"{context.author.name} ",icon_url=f"{context.guild.icon_url} ")
-   # await context.send(embed =em)
-mainshop = [{"name":"Death Note","price":1000,"description":"It's a Death Note\n"},
-            {"name":"3D Maneuver Gear","price":10000,"description":"Swords and gear From Attack On Titan\n"},
-            {"name":"Grimoire","price":10000,"description":"TBook of Magic"}]
-
-
-@client.command(name='balance',aliases = ["Balance","Bal","bal"])
-async def balance(ctx, *, member: discord.Member = None):
-    if member == None:
-        
-        await open_account(ctx.author)
-
-        user = ctx.author
-    
-        users = await get_bank_data()
-
-        wallet_amt = users[str(user.id)] ["wallet"]
-        bank_amt= users[str(user.id)] ["bank"]
-        net_worth= wallet_amt + bank_amt
-
-        em =discord.Embed(timestamp=datetime.datetime.utcnow(),color =0x00ebff)
-        em.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}")
-        em.add_field(name="Cash", value = f"{wallet_amt} :money_with_wings:" )
-        em.add_field(name="Bank", value = f"{bank_amt} :money_with_wings:")
-        em.add_field(name="Net Worth", value = f"{net_worth} :money_with_wings:")
-        await ctx.send(embed = em)
-
-    else:
-        await open_account(member)
-
-        user = member
-    
-        users = await get_bank_data()
-
-        wallet_amt = users[str(user.id)] ["wallet"]
-        bank_amt= users[str(user.id)] ["bank"]
-        net_worth= wallet_amt + bank_amt
-
-        em =discord.Embed(timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-        em.set_author(name = f"{member.name} ",icon_url=f"{member.avatar_url}")
-        em.add_field(name="Cash", value = f"{wallet_amt} :money_with_wings:" )
-        em.add_field(name="Bank", value = f"{bank_amt} :money_with_wings:")
-        em.add_field(name="Net Worth", value = f"{net_worth} :money_with_wings:")
-        await ctx.send(embed = em)
-
-
-
-
-@client.command(name= 'beg',aliases = ["Beg"])
-@commands.cooldown(2, 120, BucketType.user)
-
-async def beg(ctx):
-    await open_account(ctx.author)
-
-    user = ctx.author
-    
-    users = await get_bank_data()
-
-    earnings = random.randrange(101)
-
-    await ctx.send(f"Someone gave you {earnings} :money_with_wings:!!") #have to make emote system like reaction roles
-
-    users[str(user.id)]['wallet'] += earnings
-
-    with open('bank.json',"w") as f:
-        json.dump(users,f) 
-
-        
-
-                
-                
-
-       
-
-@client.command(name= 'withdraw', aliases= ['with','With','Withdraw'])
-async def withdraw(ctx,amount = None):
-    await open_account(ctx.author)
-
-    if amount == None:
-        await ctx.send('Atleast , Tell me how much to withdraw!')
-        return
-
-    bal = await update_bank(ctx.author) 
-    if amount == "all":
-        amount = bal[1]
-    amount = int(amount)
-    if amount>bal[1]:
-        await ctx.send("You don't have that much **money** ;-;")   
-        return
-    if amount<0:
-        await ctx.send("How can I withdraw something, which does'nt exist! dummyyy.....")  
-        return  
-
-    await update_bank(ctx.author,amount) 
-    await update_bank(ctx.author,-1*amount,"bank") 
-    em =discord.Embed(description = f"Withdrew {amount} :money_with_wings: from your bank! ",timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-    em.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}") 
-
-    await ctx.send(embed = em) 
-
-@client.command(name= 'deposit', aliases= ['Deposit','Dep','dep'])
-async def deposit(ctx, amount = None):
-    await open_account(ctx.author)
-
-    if amount == None:
-        await ctx.send('Atleast , Tell me how much to Deposit!')
-        return
-
-    bal = await update_bank(ctx.author) 
-    if amount == "all":
-        amount = bal[0]
-    amount = int(amount)
-    if amount>bal[0]:
-        await ctx.send("You don't have that much **money** ;-;")   
-        return
-    if amount<=0:
-        await ctx.send("You need Cash for that... :-(")
-        return
-    await update_bank(ctx.author,-1*amount) 
-    await update_bank(ctx.author,amount,"bank") 
-
-    em =discord.Embed(description = f"Deposited  {amount} :money_with_wings: in your bank! ",timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-    em.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}") 
-
-    await ctx.send(embed = em)  
-
-    
-     
-
-    
-
-#sendmoney...
-@client.command(name= 'give', aliases= ['send','Give','Send'])
-async def give(ctx, member: discord.Member, amount = None):
-    await open_account(ctx.author)
-    await open_account(member)
-
-    if amount == None:
-        await ctx.send('Atleast , Tell me how much to Send!')
-        return
-
-    bal = await update_bank(ctx.author) 
-    if amount == "all":
-        amount = bal[0]
-    amount = int(amount)
-    if amount>bal[0]:
-        await ctx.send("You don't have that much **money** ;-;")   
-        return
-    if amount<0:
-        return
-    await update_bank(ctx.author,-1*amount,"wallet") 
-    await update_bank(member,amount,"wallet") 
-
-    em =discord.Embed(description = f"{member.display_name} recieved your {amount} :money_with_wings: ",timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-    em.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}") 
-
-    await ctx.send(embed = em)    
-
-#slots....
-@client.command(name= 'slot', aliases= ['Slots','Slot','slots'])
-async def slots(ctx, amount = None):
-    await open_account(ctx.author)
-
-    if amount == None:
-        await ctx.send('Hehe! Tell me how much to **bet**...')
-        return
-
-    bal = await update_bank(ctx.author) 
-    amount = int(amount)
-    if amount>bal[0]:
-        await ctx.send("You don't have that much **money** ;-;")   
-        return
-    if amount<0:
-        return    
-    upper = []
-    final = []
-    lower = []        
-    for i in range(3):
-        a = random.choice([":peach:",":star2:",":black_joker:"])
-        b = random.choice([":peach:",":star2:",":black_joker:"])
-        c = random.choice([":peach:",":star2:",":black_joker:"])
-        final.append(a)
-        upper.append(b)
-        lower.append(c)
-    
-    if final[0] == final[1] and final[0] == final[2] and final[2] == final[1]:
-        await update_bank(ctx.author,2*amount)
-        em =discord.Embed(description = f"You won {amount} :money_with_wings: ",timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-        em.add_field(name = "result:",value = f"{upper[0]} | {upper[1]} | {upper[2]}\n{final[0]} | {final[1]} | {final[2]}    :arrow_left:\n{lower[0]} | {lower[1]} | {lower[2]}")
-        em.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}")
-
-        await ctx.send(embed= em)
-    else:
-        await update_bank(ctx.author,-1*amount)
-        em =discord.Embed(description = f"You lost {amount} :money_with_wings: ",timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-        em.add_field(name = "result:",value = f"{upper[0]} | {upper[1]} | {upper[2]}\n{final[0]} | {final[1]} | {final[2]}    :arrow_left:\n{lower[0]} | {lower[1]} | {lower[2]}")
-        em.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}")  
-        await ctx.send(embed= em)
-
-#rob.......
-@client.command(name= 'rob', aliases= ['Rob','Snatch','snatch'])
-async def rob(ctx, member: discord.Member):
-    await open_account(ctx.author)
-    await open_account(member)
-
-
-    bal = await update_bank(member) 
-    
-    if bal[0]<100:
-        await ctx.send("Hey! Don't rob a poor person ;-;")   
-        return
-
-    listd = ("a","b")   
-    earnings = random.randrange(0,bal[0])
-    robs = random.choice(listd)    
-    if robs == "a":
-
-        await update_bank(ctx.author,earnings,"wallet") 
-        await update_bank(member,-1*earnings,"wallet") 
-
-        em =discord.Embed(description = f"Hehe! You robbed {earnings} :money_with_wings: from {member.display_name}",timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-        em.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}") 
-
-          
-
-    else: 
-        await update_bank(ctx.author,-1*earnings,"wallet") 
-        
-
-        em =discord.Embed(description = f"Shit! You were caught attempting to rob {member.display_name} and have been fined {earnings} :money_with_wings: ;-; ",timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-        em.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}") 
-
-    await ctx.send(embed = em)
-
-#shop.................
-
-
-
-@client.command(name="shop")
-async def shop(ctx):
-    em = discord.Embed(title = "Shop",timestamp=datetime.datetime.utcnow(),color = discord.Color(0xfa43ee))
-
-    for item in mainshop:
-        name = item["name"]
-        price = item["price"]
-        desc = item["description"]
-        em.add_field(name = name, value = f":money_with_wings:{price} \n {desc}")
-        em.set_author(name= f"{ctx.guild.name}" , icon_url=f"{ctx.guild.icon_url}")
-
-    await ctx.send(embed = em)
-
-@client.command()
-async def buy(ctx,item,amount = 1):
-    await open_account(ctx.author)
-
-    res = await buy_this(ctx.author,item,amount)
-
-    if not res[0]:
-        if res[1]==1:
-            await ctx.send("That Object isn't there!")
-            return
-        if res[1]==2:
-            await ctx.send(f"You don't have enough money in your wallet to buy {amount} {item}")
-            return
-
-
-    await ctx.send(f"You just bought {amount} {item}")
-
-#use deathnote
-@client.command(name= 'kira',aliases = ["Kira"])
-@commands.cooldown(2, 120, BucketType.user)
-
-async def kira(ctx):
-    await open_account(ctx.author)
-
-    user = ctx.author
-    
-    users = await get_bank_data()
-    try:
-        bag = users[str(user.id)]["bag"]
-    except:
-        bag = []
-    try:
-        for thing in bag:
-            n = thing["item"]
-            amt = thing["amount"]
-            if n == "death note" and amt >=1:
-                
-                earnings = random.randrange(500)
-                users[str(user.id)]['wallet'] += earnings
-                kira = discord.Embed(timestamp=datetime.datetime.utcnow(),color= 0x990000)
-                kira.set_author(name = f"{ctx.author.name} ",icon_url=f"{ctx.message.author.avatar_url}") 
-                line1 = f"You killed your friend (if you have any🙃) with Death Note and Earned {earnings} :money_with_wings:!! **MONSTER**"
-                line2 = f'You killed Naruto with Death Note because he was screaming "Datebbayo" and Earned {earnings} :money_with_wings:!! Believe it'
-                line3 = f'You killed your neighbour with Death Note because he was staring your waifu and Earned {earnings} :money_with_wings:!!'
-                line4 = f'You killed Ryuuk (but why? how? can you?🙃) with Death Note and Earned {earnings} :money_with_wings:!!'
-                line5 = f'You killed someone with Death Note and Earned {earnings} :money_with_wings:!!'
-                linelist = (line1,line2,line3,line4,line5)
-                kiraline = random.choice(linelist)
-                kira.add_field(name= "✍️ Kira", value=f"{kiraline}" )
-                kiragif = ('https://cdn.discordapp.com/attachments/782562061812891648/792763328639533076/kira5.gif','https://cdn.discordapp.com/attachments/782562061812891648/792763323456028733/kira4.gif','https://cdn.discordapp.com/attachments/782562061812891648/792763320917819392/kira3.gif','https://cdn.discordapp.com/attachments/782562061812891648/792763318284189716/kira2.gif',"https://cdn.discordapp.com/attachments/782562061812891648/792763314992054282/kira1.gif")
-                rndkira = random.choice(kiragif)
-                kira.set_thumbnail(url=rndkira)
-                await ctx.send(embed= kira)
-                
-            if n == "death note" and amt < 1:
-                await ctx.send("Buy one Death Note")
-            
-    except:
-        await ctx.send("Buy Death Note")            
-        
-                    
-    with open('bank.json',"w") as f:
-       json.dump(users,f)
-    
-#aot
-
-@client.command(name="inventory",aliases=['bag','inv','Inv','Bag'])
-async def bag(ctx):
-    await open_account(ctx.author)
-    user = ctx.author
-    users = await get_bank_data()
-
-    try:
-        bag = users[str(user.id)]["bag"]
-    except:
-        bag = []
-
-
-    em = discord.Embed(title = "Bag",color = discord.Color(0xfa43ee))
-    for item in bag:
-        name = item["item"]
-        amount = item["amount"]
-
-        em.add_field(name = name, value = amount)
-        
-    
-                
-    if amount == None:
-        await ctx.send("you have nothing")
-    else:    
-        await ctx.send(embed = em)    
-
-async def buy_this(user,item_name,amount):
-    item_name = item_name.lower()
-    name_ = None
-    for item in mainshop:
-        name = item["name"].lower()
-        if name == item_name:
-            name_ = name
-            price = item["price"]
-            break
-
-    if name_ == None:
-        return [False,1]
-
-    cost = price*amount
-
-    users = await get_bank_data()
-
-    bal = await update_bank(user)
-
-    if bal[0]<cost:
-        return [False,2]
-
-
-    try:
-        index = 0
-        t = None
-        for thing in users[str(user.id)]["bag"]:
-            n = thing["item"]
-            if n == item_name:
-                old_amt = thing["amount"]
-                new_amt = old_amt + amount
-                users[str(user.id)]["bag"][index]["amount"] = new_amt
-                t = 1
-                break
-            index+=1 
-        if t == None:
-            obj = {"item":item_name , "amount" : amount}
-            users[str(user.id)]["bag"].append(obj)
-    except:
-        obj = {"item":item_name , "amount" : amount}
-        users[str(user.id)]["bag"] = [obj]        
-
-    with open("bank.json","w") as f:
-        json.dump(users,f)
-
-    await update_bank(user,cost*-1,"wallet")
-
-    return [True,"Worked"]    
-
-@client.command(name="sell")
-async def sell(ctx,item,amount = 1):
-    await open_account(ctx.author)
-
-    res = await sell_this(ctx.author,item,amount)
-
-    if not res[0]:
-        if res[1]==1:
-            await ctx.send("That Object isn't there!")
-            return
-        if res[1]==2:
-            await ctx.send(f"You don't have {amount} {item} in your bag.")
-            return
-        if res[1]==3:
-            await ctx.send(f"You don't have {item} in your bag.")
-            return
-
-    await ctx.send(f"You just sold {amount} {item}.")
-
-async def sell_this(user,item_name,amount,price = None):
-    item_name = item_name.lower()
-    name_ = None
-    for item in mainshop:
-        name = item["name"].lower()
-        if name == item_name:
-            name_ = name
-            if price==None:
-                price = 0.9* item["price"]
-            break
-
-    if name_ == None:
-        return [False,1]
-
-    cost = price*amount
-
-    users = await get_bank_data()
-
-    bal = await update_bank(user)
-
-
-    try:
-        index = 0
-        t = None
-        for thing in users[str(user.id)]["bag"]:
-            n = thing["item"]
-            if n == item_name:
-                old_amt = thing["amount"]
-                new_amt = old_amt - amount
-                if new_amt < 0:
-                    return [False,2]
-                users[str(user.id)]["bag"][index]["amount"] = new_amt
-                t = 1
-                break
-            index+=1 
-        if t == None:
-            return [False,3]
-    except:
-        return [False,3]    
-
-    with open("bank.json","w") as f:
-        json.dump(users,f)
-
-    await update_bank(user,cost,"wallet")
-
-    return [True,"Worked"]
-
-
-#lb.......
-@client.command(name="leaderboard",aliases = ["lb"])
-async def leaderboard(ctx,x = 10):
-    users = await get_bank_data()
-    leader_board = {}
-    total = []
-    for user in users:
-        name = int(user)
-        total_amount = users[user]["wallet"] + users[user]["bank"]
-        leader_board[total_amount] = name
-        total.append(total_amount)
-
-    total = sorted(total,reverse=True)    
-
-    em = discord.Embed(title = f"Top {x} Richest People" , description = "This is decided on the basis of raw money in the bank and wallet",color = discord.Color(0xfa43ee))
-    index = 1
-    for amt in total:
-        id_ = leader_board[amt]
-        member = await client.fetch_user(id_)
-        name = member.name
-        em.add_field(name = f"{index}. {name}" , value = f":money_with_wings: {amt}",  inline = False)
-        if index == x:
-            break
-        else:
-            index += 1
-
-    await ctx.send(embed = em)    
-        
-async def open_account(user):
-    
-    users = await get_bank_data()
-
-    if str(user.id) in users:
-        return False
-    else:
-        users[str(user.id)] = {}
-        users[str(user.id)] ["wallet"] = 0
-        users[str(user.id)] ["bank"] = 0
-
-    with open('bank.json',"w") as f:
-        json.dump(users,f)   
-    return True  
-
-
-async def get_bank_data():
-    with open("bank.json","r") as f:
-        users = json.load(f)    
-
-    return users
-    #withdraw....
-async def update_bank(user,change = 0,mode = "wallet"):
-    users = await get_bank_data()
-    users[str(user.id)][mode] += change
-    with open('bank.json',"w") as f:
-        json.dump(users,f)       
-    bal = [users[str(user.id)]["wallet"],users[str(user.id)]["bank"]]
-    return bal  
+ 
 #MyAnimeList
 #animesearch
 @client.command(name= "anime",aliases = ["Anime"])
@@ -1286,53 +678,8 @@ async def manga(ctx, *, manga):
 #AnimeSearchResult.synopsis
 #AnimeSearchResult.type
 #AnimeSearchResult.score    
-
-
-#list.................
-@client.command(name='Create_Team')
-@commands.has_permissions(manage_guild = True)
-async def Create_Team(context, Leader : discord.Member , *, team):
-    em = discord.Embed(timestamp=datetime.datetime.utcnow(),color =0x00ebff)
-    em.set_author(name= team , icon_url=f"{context.guild.icon_url}")
-    em.add_field(name= f"Leader :  {Leader.display_name}",value= "Team has been Created!")
-
-    await context.send( embed = em)
-
-#async def make_team(user):
     
-    #users = await get_bank_data()
 
-    #if str(user.id) in users:
-        #return False
-    #else:
-        #users[str(user.id)] = {}
-        #users[str(user.id)] ["wallet"] = 0
-        #users[str(user.id)] ["bank"] = 0
-
-    #with open('bank.json',"w") as f:
-       # json.dump(users,f)   
-  #  return True  
-
-
-#async def get_bank_data():
-    #with open("bank.json","r") as f:
-        #users = json.load(f)     
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import asyncio
 
 
 @client.command(name='waifu',aliases=["Waifu"]) 
@@ -1357,8 +704,8 @@ async def waifu_(ctx):
         if answer == "Yes":
             await asyncio.sleep(5)
             await ctx.send(f"{user.name}\nAwww... {waifuname[chosen_index]} said **Yes** for the marraige!! Congrats💝\nLet me make a wedding card for you >///<")
-            resp=requests.get("https://cdn.discordapp.com/attachments/754740569552715817/804413355543494726/shipbot-min.png") 
-            resp2=requests.get("https://cdn.discordapp.com/attachments/754740569552715817/804416481814773820/background.png")
+            resp=requests.get("https://i.imgur.com/12OscjX.png") 
+            resp2=requests.get("https://i.imgur.com/apeZldc.png")
             resp3=requests.get(waifupics[chosen_index])
             waifu0 = Image.open(BytesIO(resp3.content))
             marraige = Image.open(BytesIO(resp.content)).convert('RGBA')
@@ -1400,7 +747,7 @@ async def help(ctx):
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta`",inline=False)
-    em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
+    #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
