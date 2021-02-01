@@ -18,7 +18,7 @@ import asyncio
 from waifu import waifupics, waifuname, waifuseries
 
 
-os.chdir(r"G:\bot\stella\.vscode")#G:\bot\stella\.vscode
+os.chdir(r".vscode")#G:\bot\stella\.vscode
 # client (our bot)
 #prefix...................]
 intents = discord.Intents.all()
