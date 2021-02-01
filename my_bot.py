@@ -18,7 +18,7 @@ import asyncio
 from waifu import waifupics, waifuname, waifuseries
 
 
-os.chdir(r"G:\bot\stella\.vscode")#G:\bot\stella\.vscode
+os.chdir(r".vscode")#G:\bot\stella\.vscode
 # client (our bot)
 #prefix...................]
 intents = discord.Intents.all()
@@ -553,13 +553,27 @@ async def jojo(ctx,user:discord.Member=None ):
     post.save("jojo.png")
     await ctx.send(file=discord.File("jojo.png"))
 #message................
+#announcement
+@client.command(name="announcement",aliases=["announce","Announce","Announcement"])
+@commands.has_permissions(manage_guild=True)
+async def announce_everyone(ctx,mention,channel : discord.TextChannel, *,msg):
+    if mention == "everyone":
+        em = discord.Embed(description=msg,timestamp=datetime.datetime.utcnow(),color=0x00ebff)
+        em.set_footer(text=f"announced by {ctx.author}")
+        await channel.send("@everyone", embed=em)
+
+    if mention == "here":
+        em = discord.Embed(description=msg,timestamp=datetime.datetime.utcnow(),color=0x00ebff)
+        em.set_footer(text=f"announced by {ctx.author}")
+        await channel.send("@here", embed=em)
+    
 
 #dm
 @client.command(name='dm',pass_context = True)    
 @commands.has_permissions(manage_guild=True)
 async def dm(context, member : discord.Member, *,msg):
     
-    await member.send("**" + msg + "**")
+    await member.send(msg +f"\nsent by{context.author} from {context.guild} ")
     await context.message.delete()
 #say
 @client.command(name='say',aliases = ["Say","Type","type"])
