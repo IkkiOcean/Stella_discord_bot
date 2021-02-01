@@ -17,7 +17,8 @@ from mal import *
 import asyncio
 from waifu import waifupics, waifuname, waifuseries
 
-os.chdir(r".vscode")
+
+os.chdir(r"G:\bot\stella\.vscode")#G:\bot\stella\.vscode
 # client (our bot)
 #prefix...................]
 intents = discord.Intents.all()
@@ -80,7 +81,7 @@ async def version(context):
 
 @client.command(name='Bot')   
 async def Bot(context):
-    helpembed = discord.Embed (title='Hi', description='Aur bhai kaisa laga bot',color=0x00ebff) 
+    helpembed = discord.Embed (title='Hi', description='Its me, Stela',color=0x00ebff) 
     await context.author.send(embed=helpembed) 
 
 #moderation.................................................................................... 
@@ -420,7 +421,7 @@ async def hug(context,member: discord.Member, *,gifmsg=None):
 async def wanted(ctx,user:discord.Member=None):
     if user==None:
         user = ctx.author
-    resp=requests.get("https://cdn.discordapp.com/attachments/782562061812891648/784300226537324564/Wanted.png") 
+    resp=requests.get("https://i.imgur.com/jNJBoeJ.png") 
     
     wanted = Image.open(BytesIO(resp.content))
     asset = user.avatar_url_as(size=128)
@@ -496,8 +497,61 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
     if len(text1)>18:
         await ctx.send("Hey! Your name is longer than 18 Characters \n**Tip**: Keep it shorter :) ")    
     await ctx.send(file=discord.File("instagram.png"))
+@client.command(name='chika', aliases=['Chika'])
+async def chika(ctx, *,caption): 
+    resp=requests.get("https://i.imgur.com/ZlnspzF.png") #chika 
+    post = Image.open(BytesIO(resp.content)) 
+    #post = Image.open("chika.png") 
+    font = ImageFont.truetype("ARIAL.TTF", 30)
+    line1, line2, line3, line4 = caption.split(",") 
+    W = 473
+    H11 = 15
+    H12 = 57
+    H13 = 101
+    H14 = 143
+    draw = ImageDraw.Draw(post)
+    line1 = textwrap.wrap(line1,13)
+    w11, h11 = draw.textsize(line1[0],font=font)
+    
+    
+    
+    
+    
+    draw.text(((W-w11/2, H11-h11/2)),line1[0],(0,0,0),font=font,align="center",)
+    if len(line1[1])>0:
+        w12, h12 = draw.textsize(line1[1],font=font)
+        draw.text(((W-w12/2, H12-h12/2)),line1[1],(0,0,0),font=font,align="center",)
+    if len(line1[2])>0:
+        w13, h13 = draw.textsize(line1[2],font=font)
+        draw.text(((W-w13/2, H13-h13/2)),line1[2],(0,0,0),font=font,align="center",)
+    if len(line1[3])>0:
+        w14, h14 = draw.textsize(line1[3],font=font)
+        draw.text(((W-w14/2, H14-h14/2)),line1[3],(0,0,0),font=font,align="center",)        
 
 
+    
+    print(line2)
+    print(line3)
+    print(line4)
+    
+    
+    post.save("chika.png")#185
+    await ctx.send(file=discord.File("chika.png"))
+#jojo
+@client.command(name='jojo', aliases=['Jojo'])
+async def jojo(ctx,user:discord.Member=None ): 
+    if user==None:
+        user = ctx.author
+    resp=requests.get("https://i.imgur.com/yrUJdsK.png")  
+    post = Image.open(BytesIO(resp.content)) 
+    asset = user.avatar_url_as(size=128)
+    data = BytesIO(await asset.read())   
+    pfp = Image.open(data)
+    pfp = pfp.resize((177,240)) 
+    #pfp = pfp.rotate(10)
+    post.paste(pfp,(94,96))
+    post.save("jojo.png")
+    await ctx.send(file=discord.File("jojo.png"))
 #message................
 
 #dm
@@ -732,7 +786,7 @@ async def help(ctx):
     em.set_author(name = "**Help/Command List**",icon_url=f"{ctx.message.author.avatar_url}")
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
-    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `chika`",inline=False)
+    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot`",inline=False)
