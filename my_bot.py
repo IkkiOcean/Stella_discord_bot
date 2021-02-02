@@ -497,6 +497,74 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
     if len(text1)>18:
         await ctx.send("Hey! Your name is longer than 18 Characters \n**Tip**: Keep it shorter :) ")    
     await ctx.send(file=discord.File("instagram.png"))
+#distract  
+@client.command(name='distract', aliases=['Distract',"distracted","Distracted"])
+async def distract(ctx, *,caption): 
+    resp=requests.get("https://i.imgur.com/WE18XMM.jpg") #distract 
+    post = Image.open(BytesIO(resp.content)) 
+    font = ImageFont.truetype("ARIAL.TTF", 40)
+    line1, line2, line3 = caption.split(",")
+    draw = ImageDraw.Draw(post)
+    lines1 = textwrap.wrap(line1,7)  
+    lines2 = textwrap.wrap(line2,7)
+    lines3 = textwrap.wrap(line3,7)
+    W1 = 376
+    H1 = 164
+    W2 = 563
+    H2 = 138
+    W3 = 110
+    H3 = 21
+    for line1 in lines1:
+        w1, h1 = font.getsize(line1)
+        draw.text((W1-w1/2,H1),line1,(0,0,0),font=font)
+        H1 += h1 
+    for line2 in lines2:
+        w2, h2 = font.getsize(line2)
+        draw.text((W2-w2/2,H2),line2,(0,0,0),font=font)
+        H2 += h2  
+    for line3 in lines3:
+        w3, h3 = font.getsize(line3)
+        draw.text((W3-w3/2,H3),line3,(0,0,0),font=font)
+        H3 += h3      
+    post.save("distracted.jpg")#185
+    await ctx.send(file=discord.File("distracted.jpg"))
+#thisisshit
+@client.command(name='thisisshit', aliases=['Thisisshit'])
+async def thisisshit(ctx,user:discord.Member=None): 
+    if user == None:
+        user = ctx.author
+    resp=requests.get("https://i.imgur.com/jtZqJ2u.jpg") #shit 
+    post = Image.open(BytesIO(resp.content)) 
+    asset = user.avatar_url_as(size=128)
+    data = BytesIO(await asset.read())   
+    pfp = Image.open(data)
+    pfp = pfp.resize((265,141))
+    post.paste(pfp,(9,159))   
+    post.save("thisisshit.jpg")    
+    await ctx.send(file=discord.File("thisisshit.jpg"))
+#water
+@client.command(name='water', aliases=['Water'])
+async def water(ctx, *,caption): 
+    resp=requests.get("https://i.imgur.com/wpN45qC.jpg") #water
+    post = Image.open(BytesIO(resp.content))  
+    font = ImageFont.truetype("ARIAL.TTF", 30)
+    W = 282
+    H1 = 36
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(caption,12)   
+    for line in lines:
+        w1, h1 = font.getsize(line)
+        draw.text((W-w1/2,H1),line,(0,0,0),font=font)
+        H1 += h1 
+    asset = ctx.author.avatar_url_as(size=128)
+    data = BytesIO(await asset.read())   
+    pfp = Image.open(data)
+    pfp = pfp.resize((86,94))
+    post.paste(pfp,(18,264))    
+    post.save("water.png")    
+    await ctx.send(file=discord.File("water.png"))
+#chika    
 @client.command(name='chika', aliases=['Chika'])
 async def chika(ctx, *,caption): 
     resp=requests.get("https://i.imgur.com/ZlnspzF.png") #chika 
@@ -504,39 +572,105 @@ async def chika(ctx, *,caption):
     #post = Image.open("chika.png") 
     font = ImageFont.truetype("ARIAL.TTF", 30)
     line1, line2, line3, line4 = caption.split(",") 
-    W = 473
-    H11 = 15
-    H12 = 57
-    H13 = 101
-    H14 = 143
+    W = 470
+    H1 = 15
+    H2 = 191
+    H3 = 372
+    H4 = 555
+    
     draw = ImageDraw.Draw(post)
-    line1 = textwrap.wrap(line1,13)
-    w11, h11 = draw.textsize(line1[0],font=font)
+    line11 = textwrap.wrap(line1,17)
+    line22 = textwrap.wrap(line2,17)
+    line33 = textwrap.wrap(line3,17)
+    line44 = textwrap.wrap(line4,17)
     
     
     
     
+    for element in line11:
+        w1, h1 = font.getsize(element)
+        draw.text((W-w1/2,H1),element,(0,0,0),font=font)
+        H1 += h1
+            
     
-    draw.text(((W-w11/2, H11-h11/2)),line1[0],(0,0,0),font=font,align="center",)
-    if len(line1[1])>0:
-        w12, h12 = draw.textsize(line1[1],font=font)
-        draw.text(((W-w12/2, H12-h12/2)),line1[1],(0,0,0),font=font,align="center",)
-    if len(line1[2])>0:
-        w13, h13 = draw.textsize(line1[2],font=font)
-        draw.text(((W-w13/2, H13-h13/2)),line1[2],(0,0,0),font=font,align="center",)
-    if len(line1[3])>0:
-        w14, h14 = draw.textsize(line1[3],font=font)
-        draw.text(((W-w14/2, H14-h14/2)),line1[3],(0,0,0),font=font,align="center",)        
+    for element2 in line22:
+        w2, h2 = font.getsize(element2)
+        draw.text((W-w2/2,H2),element2,(0,0,0),font=font)
+        H2 += h2
 
+            
+    for element3 in line33:
+        w3, h3 = font.getsize(element3)
+        draw.text((W-w3/2,H3),element3,(0,0,0),font=font)
+        H3 += h3
 
-    
-    print(line2)
-    print(line3)
-    print(line4)
+        
+    for element4 in line44:
+        w4, h4 = font.getsize(element4)
+        draw.text((W-w4/2,H4),element4,(0,0,0),font=font)
+        H4 += h4
+
+           
     
     
     post.save("chika.png")#185
     await ctx.send(file=discord.File("chika.png"))
+#myboi 
+@client.command(name='myboi', aliases=['myboy',"Myboi","Myboy"])
+async def myboi(ctx,user:discord.Member): 
+    
+    resp=requests.get("https://i.imgur.com/QTIHrse.jpg") #boy 
+    post = Image.open(BytesIO(resp.content)) 
+    text1 = ctx.author.display_name
+    text = textwrap.wrap(text1, 19)
+    W, H = (585,420)
+    draw = ImageDraw.Draw(post)
+    font = ImageFont.truetype("ARIAL.TTF", 60)
+    w, h = draw.textsize(text[0],font=font)
+    draw.text((W-w/2, H-h/2),text[0],(93,63,51),font=font,align="center")
+    asset = user.avatar_url_as(size=128)
+    data = BytesIO(await asset.read())   
+    pfp = Image.open(data)
+    pfp = pfp.resize((385,279))
+    post.paste(pfp,(1213,3))
+    
+    post.save("Myboi.png")    
+    await ctx.send(file=discord.File("Myboi.png"))
+
+     
+        
+#worthless
+@client.command(name='worthless', aliases=['Worthless'])
+async def worthless(ctx, *,caption): 
+    resp=requests.get("https://i.imgur.com/7yQETI9.png") #worthless 
+    post = Image.open(BytesIO(resp.content)) 
+     
+    font = ImageFont.truetype("ARIAL.TTF", 25)
+    W = 202
+    H1 = 75
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(caption,17)   
+    for line in lines:
+        w1, h1 = font.getsize(line)
+        draw.text((W-w1/2,H1),line,(0,0,0),font=font)
+        H1 += h1 
+    post.save("worthless.png")    
+    await ctx.send(file=discord.File("worthless.png"))
+#fbi    
+   
+@client.command(name='fbi', aliases=['Fbi'])
+async def fbi(ctx, *,msg):
+    resp=requests.get("https://i.imgur.com/OkhouW4.jpg")  
+    post = Image.open(BytesIO(resp.content))
+    font = ImageFont.truetype("Product_Sans_Regular.ttf", 35)     
+    #msg1 = str(msg)   
+    msg2 = textwrap.wrap(msg,33)
+    draw=ImageDraw.Draw(post)
+    draw.text((35,256),msg2[0],(0,0,0),font=font)
+    post.save("fbi.jpg")
+    await ctx.send(file=discord.File("fbi.jpg"))
+
 #jojo
 @client.command(name='jojo', aliases=['Jojo'])
 async def jojo(ctx,user:discord.Member=None ): 
@@ -553,6 +687,7 @@ async def jojo(ctx,user:discord.Member=None ):
     post.save("jojo.png")
     await ctx.send(file=discord.File("jojo.png"))
 #message................
+
 #announcement
 @client.command(name="announcement",aliases=["announce","Announce","Announcement"])
 @commands.has_permissions(manage_guild=True)
@@ -800,7 +935,7 @@ async def help(ctx):
     em.set_author(name = "**Help/Command List**",icon_url=f"{ctx.message.author.avatar_url}")
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
-    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo`",inline=False)
+    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `thisisshit` `distract` `myboi`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot`",inline=False)
