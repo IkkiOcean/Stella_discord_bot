@@ -544,7 +544,9 @@ async def thisisshit(ctx,user:discord.Member=None):
     await ctx.send(file=discord.File("thisisshit.jpg"))
 #water
 @client.command(name='water', aliases=['Water'])
-async def water(ctx, *,caption): 
+async def water(ctx,user:typing.Optional[discord.Member]=None, *,caption): 
+    if user==None:
+        user = ctx.author
     resp=requests.get("https://i.imgur.com/wpN45qC.jpg") #water
     post = Image.open(BytesIO(resp.content))  
     font = ImageFont.truetype("ARIAL.TTF", 30)
@@ -557,7 +559,7 @@ async def water(ctx, *,caption):
         w1, h1 = font.getsize(line)
         draw.text((W-w1/2,H1),line,(0,0,0),font=font)
         H1 += h1 
-    asset = ctx.author.avatar_url_as(size=128)
+    asset = user.avatar_url_as(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
     pfp = pfp.resize((86,94))
@@ -571,7 +573,7 @@ async def chika(ctx, *,caption):
     post = Image.open(BytesIO(resp.content)) 
     #post = Image.open("chika.png") 
     font = ImageFont.truetype("ARIAL.TTF", 30)
-    line1, line2, line3, line4 = caption.split(",") 
+    line1, line2, line3, line4 = caption.split("|") 
     W = 470
     H1 = 15
     H2 = 191
@@ -671,6 +673,53 @@ async def fbi(ctx, *,msg):
     post.save("fbi.jpg")
     await ctx.send(file=discord.File("fbi.jpg"))
 
+#breaking news
+@client.command(name='news', aliases=['News'])
+async def news(ctx,user:typing.Optional[discord.Member]=None, *,msg):
+    if user==None:
+        user = ctx.author
+    resp=requests.get("https://i.imgur.com/dvP6ekG.png")  
+    #resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
+    #bg = Image.open(BytesIO(resp2.content)).convert('RGB')
+    post = Image.open(BytesIO(resp.content))
+    font1 = ImageFont.truetype("BebasNeue-Regular.ttf", 35)  
+    font2 = ImageFont.truetype("BebasNeue-Regular.ttf", 15)    
+    msg1, msg2 = msg.split("|") 
+    #msg1 = str(msg)   
+    msg1 = textwrap.wrap(msg1,34)
+    msg2 = textwrap.wrap(msg2,70)
+    draw=ImageDraw.Draw(post)
+    draw.text((6,200),msg1[0],(0,0,0),font=font1)
+    draw.text((44,248),msg2[0],(0,0,0),font=font2)
+    asset = user.avatar_url#_as(size=128)
+    data = BytesIO(await asset.read())   
+    pfp = Image.open(data)
+    pfp = pfp.resize((482,198)) 
+    bg = Image.new("RGB",(480,270),(255,255,255))
+    bg.paste(pfp,(0,0))
+    bg.paste(post,(0,0),mask=post)
+    #pfp = pfp.rotate(10)
+    #post.paste(pfp,(0,0))
+    bg.save("news.png")
+    await ctx.send(file=discord.File("news.png"))
+#santa
+@client.command(name='santa', aliases=['Santa'])
+async def santa(ctx, *,caption): 
+    resp=requests.get("https://i.imgur.com/jCZwcR3.jpg") #santa 
+    post = Image.open(BytesIO(resp.content)) 
+     
+    font = ImageFont.truetype("ARIAL.TTF", 25)
+    W = 123
+    H1 = 351
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(caption,10)   
+    for line in lines:
+        w1, h1 = font.getsize(line)
+        draw.text((W-w1/2,H1),line,(0,0,0),font=font)
+        H1 += h1 
+    post.save("santa.png")    
+    await ctx.send(file=discord.File("santa.png"))    
 #jojo
 @client.command(name='jojo', aliases=['Jojo'])
 async def jojo(ctx,user:discord.Member=None ): 
