@@ -763,7 +763,7 @@ async def dm(context, member : discord.Member, *,msg):
 @client.command(name='say',aliases = ["Say","Type","type"])
 @commands.cooldown(2, 120, BucketType.user)
 async def say(context, *,msg: commands.clean_content):
-    await context.send(msg+"\n\n           -{context.author}")
+    await context.send(msg+f"\n\n           -{context.author}")
     await context.message.delete()
 #spoiler
 @client.command(name='Spoiler',aliases = ["spoiler","Spoil","spoil"])
