@@ -762,21 +762,15 @@ async def dm(context, member : discord.Member, *,msg):
 #say
 @client.command(name='say',aliases = ["Say","Type","type"])
 @commands.cooldown(2, 120, BucketType.user)
-async def say(context, *,msg = None):
-    if msg == None:
-        return
-    else:
-        await context.send(msg)
-        await context.message.delete()
+async def say(context, *,msg: commands.clean_content):
+    await context.send(msg+"\n\n           -{context.author}")
+    await context.message.delete()
 #spoiler
 @client.command(name='Spoiler',aliases = ["spoiler","Spoil","spoil"])
 @commands.cooldown(2, 120, BucketType.user)
-async def Spoiler(context, *,msg = None):
-    if msg == None:
-        return
-    else:
-        await context.send("||"+msg+ "||")
-        await context.message.delete() 
+async def Spoiler(context, *,msg: commands.clean_content):
+    await context.send("||"+msg+ f"||\n\n           -{context.author}")
+    await context.message.delete() 
 
 #emoji 
 #@client.command(name='Emote',aliases = ["emote","emoji","Emoji"])
