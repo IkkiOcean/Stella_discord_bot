@@ -735,6 +735,145 @@ async def jojo(ctx,user:discord.Member=None ):
     post.paste(pfp,(94,96))
     post.save("jojo.png")
     await ctx.send(file=discord.File("jojo.png"))
+
+#disability
+@client.command(name='disability', aliases=['Disability'])
+async def disability(ctx,user:discord.Member=None ): 
+    if user==None:
+        user = ctx.author
+    resp=requests.get("https://i.imgur.com/4RsH5M4.png")  
+    post = Image.open(BytesIO(resp.content)) 
+    asset = user.avatar_url_as(size=128)
+    data = BytesIO(await asset.read())   
+    pfp = Image.open(data)
+    pfp = pfp.resize((207,187)) 
+    #pfp = pfp.rotate(10)
+    post.paste(pfp,(567,408))
+    post.save("disability.png")
+    await ctx.send(file=discord.File("disability.png"))
+#rip
+@client.command(name='rip', aliases=['Rip'])
+async def rip(ctx,user:discord.Member=None ): 
+    if user==None:
+        user = ctx.author
+    resp=requests.get("https://i.imgur.com/c8mksIz.png")  
+    post = Image.open(BytesIO(resp.content)) 
+    asset = user.avatar_url
+    data = BytesIO(await asset.read())   
+    pfp = Image.open(data)
+    pfp = pfp.resize((78,78)) 
+    #pfp = pfp.rotate(10)
+    post.paste(pfp,(59,116))
+    post.save("jojo.png")
+    message=await ctx.send(file=discord.File("jojo.png")) 
+    await message.add_reaction("🇫")
+
+#billy
+@client.command(name='billy', aliases=['Billy'])
+async def billy(ctx, *,msg):
+    resp=requests.get("https://i.imgur.com/qhlo7N1.jpg")  
+    post = Image.open(BytesIO(resp.content))
+    font = ImageFont.truetype("Product_Sans_Regular.ttf", 15)     
+    #msg1 = str(msg)   
+    msg2 = textwrap.wrap(msg,39)
+    draw=ImageDraw.Draw(post)
+    draw.text((264,177),msg2[0],(0,0,0),font=font)
+    post.save("billy.jpg")
+    await ctx.send(file=discord.File("billy.jpg"))
+
+#facts
+@client.command(name='fact', aliases=['Fact'])
+async def fact(ctx, *,caption): 
+    resp=requests.get("https://i.imgur.com/aKADQfg.jpg") #fact
+    post = Image.open(BytesIO(resp.content)) 
+     
+    font = ImageFont.truetype("ARIAL.TTF", 25)
+    W = 107
+    H1 = 345
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(caption,12)   
+    for line in lines:
+        w1, h1 = font.getsize(line)
+        draw.text((W-w1/2,H1),line,(0,0,0),font=font)
+        H1 += h1 
+        
+    post.save("fact.png")    
+    await ctx.send(file=discord.File("fact.png"))  
+
+#meme
+@client.command(name='bitch', aliases=['Bitch'])
+async def bitch(ctx, *,caption): 
+    resp=requests.get("https://i.imgur.com/2i9cJvo.png") #meme
+    post = Image.open(BytesIO(resp.content)) 
+     
+    font = ImageFont.truetype("ARIAL.TTF", 32)
+    W = 187
+    H1 = 317
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(caption,12)   
+    for line in lines:
+        w1, h1 = font.getsize(line)
+        draw.text((W-w1/2,H1),line,(0,0,0),font=font)
+        H1 += h1 
+    post.save("bitch.png")    
+    await ctx.send(file=discord.File("bitch.png"))   
+
+#yu-gi-oh
+@client.command(name='yugioh', aliases=['Yugioh'])
+async def yugioh(ctx,*,msg ): 
+    resp=requests.get("https://i.imgur.com/bPMhqIY.jpg")  
+    post = Image.open(BytesIO(resp.content)) 
+    font = ImageFont.truetype("ARIAL.TTF", 25)
+    line1, line2 = msg.split("|")
+    W = 88
+    H1 = 80
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(line1,10)   
+    for line in lines:
+        w1, h1 = font.getsize(line)
+        draw.text((W-w1/2,H1),line,(0,0,0),font=font)
+        H1 += h1     
+          
+    
+    W2 = 88
+    H2 = 299
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(line2,10)   
+    for line in lines:
+        w2, h2 = font.getsize(line)
+        draw.text((W2-w2/2,H2),line,(0,0,0),font=font)
+        H2 += h2 
+
+    post.save("yugioh.png")
+    await ctx.send(file=discord.File("yugioh.png")) 
+
+#yu-gi-oh pfp
+@client.command(name='yugiohpfp', aliases=['Yugiohpfp'])
+async def yugiohpfp(ctx,member: Greedy[discord.Member] ): 
+    resp=requests.get("https://i.imgur.com/bPMhqIY.jpg")  
+    post = Image.open(BytesIO(resp.content)) 
+    asset1 = member[0].avatar_url
+    data1 = BytesIO(await asset1.read())   
+    pfp1 = Image.open(data1)
+    pfp1 = pfp1.resize((171,180)) 
+    
+    post.paste(pfp1,(3,71))     
+
+    asset = member[1].avatar_url
+    data = BytesIO(await asset.read())   
+    pfp = Image.open(data)
+    pfp = pfp.resize((168,167)) 
+    post.paste(pfp,(6,286))
+    post.save("yugiohpfp.jpg")
+    await ctx.send(file=discord.File("yugiohpfp.jpg"))       
+#billi https://i.imgur.com/qhlo7N1.jpg
+# fact   https://i.imgur.com/aKADQfg.jpg
+# meme   https://i.imgur.com/2i9cJvo.png
+# yugioh   https://i.imgur.com/bPMhqIY.jpg      
 #message................
 
 #announcement
@@ -978,7 +1117,7 @@ async def help(ctx):
     em.set_author(name = "**Help/Command List**",icon_url=f"{ctx.message.author.avatar_url}")
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
-    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `thisisshit` `distract` `myboi`",inline=False)
+    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot`",inline=False)
