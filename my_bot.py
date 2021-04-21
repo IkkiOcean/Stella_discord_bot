@@ -16,6 +16,7 @@ import mal
 from mal import *
 import asyncio
 from waifu import waifupics, waifuname, waifuseries
+from gogoanimeapi import gogoanime as gogo
 
 
 os.chdir(r".vscode")#G:\bot\stella\.vscode
@@ -1106,21 +1107,78 @@ async def waifu_(ctx):
         await ctx.send(f"{user.name}{waifuname[chosen_index]} ran away with someone ;-;")    
         
         
-        
-         
+#gogoanime
+@client.command(name='search',aliases=["Search"]) 
+async def search(ctx, *,Anime):     
+    anime_search = gogo.get_search_results(query=Anime)
+    em = discord.Embed(description= "Reply with the Anime number",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
+    em.set_author(name = "Anime search",icon_url=f"{client.user.avatar_url}")
+    x=1
+    for title in anime_search:
+        em.add_field(name=f"{x} : {title.get('name')}",value="_")
+        x = x+1
+       
+    await ctx.send(embed = em)   
+    
+    def check(msg):
+        return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit() 
 
+    msg = await client.wait_for("message", check=check) 
+ 
+    msg1 = int(msg.content)
+    anime = anime_search[(msg1)-1]
+    id = anime.get('animeid')
+    anime_details = gogo.get_anime_details(animeid=id)
+    plot = anime_details.get('plot_summary')
+    title = anime_details.get('title')
+    episode = anime_details.get('episodes')
+    
+    image = anime_details.get('image_url')
+    embed = discord.Embed(description= f"{plot}",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
+    embed.set_author(name = title,icon_url=f"{client.user.avatar_url}")
+    embed.add_field(name="Episodes",value=f"{episode} episodes available\n**Reply with Episode Number**")
+    embed.set_thumbnail(url=image)
+    await ctx.send(embed=embed)  
+    msg2 = await client.wait_for('message', check=check)
+    msg3 = int(msg2.content)
+    
+    anime_link = gogo.get_episodes_link(animeid=id, episode_num=msg3)
+    link = anime_link.get('(HDP-mp4)')
+    link4 = anime_link.get('(1080P-mp4)')
+    link2 = anime_link.get('DoodStream')
+    link3 = anime_link.get('StreamTape')
+    link5 = anime_link.get('(720P-mp4)')
+    link6 = anime_link.get('(360P-mp4)')
+    emb = discord.Embed(description=f'Download link of Episode {msg3} :\n[Download Now(HD)]({link})\n[Download Now(1080p)]({link4})\n[Download Now(720p)]({link5})\n[Download Now(360p)]({link6})')
+    emb.set_author(name = title,icon_url=f"{client.user.avatar_url}")
+    emb.add_field(name="Watch",value=f"[1) Watch Now ]({link2})\n[2) Watch Now]({link3})")
+    emb.set_thumbnail(url=image)
+    await ctx.send(embed = emb)
+
+@client.event
+async def on_member_join(member):
+    village = client.get_channel(754090618669629481)
+    rules = client.get_channel(754749808476160112)
+    role = client.get_channel(754089226030678128)
+    em = discord.Embed(description= f"Welcome {member.mention}, Enjoy your stay🤗! Don't forget to read {rules.mention} and check {role.mention} ",timestamp=datetime.datetime.utcnow(),color=0x00ebff)   
+    welcomegif = ("https://i.imgur.com/COTu9rN.gif","https://i.imgur.com/ZzvVprt.gif")  
+    rndgif = random.choice(welcomegif)
+    em.set_image(url=rndgif)
+    await village.send(f"{member.mention}",embed = em)    
+    
+    
 #help...............................
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
 async def help(ctx):
     em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/H7MDM37)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\nif you don't have common sense then,\n||Do not actually include the <> and [] symbols in the command||",timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
-    em.set_author(name = "**Help/Command List**",icon_url=f"{ctx.message.author.avatar_url}")
+    em.set_author(name = "Help/Command List",icon_url=f"{client.user.avatar_url}")
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
-    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot`",inline=False)
+    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `Search`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 # run the client on the server
