@@ -17,8 +17,9 @@ from mal import *
 import asyncio
 from waifu import waifupics, waifuname, waifuseries
 from gogoanimeapi import gogoanime as gogo
+import urllib.parse, urllib.request, re
 
-
+#urban = UrbanClient()
 os.chdir(r".vscode")#G:\bot\stella\.vscode
 # client (our bot)
 #prefix...................]
@@ -87,7 +88,7 @@ async def Bot(context):
 
 #moderation.................................................................................... 
 #kick...............
-@client.command(name='kick',pass_context = True)    
+@client.command(name='kick',pass_context = True,aliases=["Kick"])    
 @commands.has_permissions(kick_members=True)
 async def kick(context, member : discord.Member, *,reason = None):
     
@@ -108,7 +109,7 @@ async def kick(context, member : discord.Member, *,reason = None):
     
 
 #ban.....................    
-@client.command(name='ban',pass_context = True)    
+@client.command(name='ban',pass_context = True,aliases=["Ban"])    
 @commands.has_permissions(ban_members=True)
 async def ban(context, member : discord.Member, *,reason=None):
     
@@ -128,7 +129,7 @@ async def ban(context, member : discord.Member, *,reason=None):
 
 
 #clear.....
-@client.command(name="clear",aliases=["Clear",'Clean','clean','delete','Delete'])    
+@client.command(name="clear",aliases=["Clear",'Clean','clean','delete','Delete','purge','Purge'])    
 @commands.has_permissions(manage_messages = True)
 async def clear(context,amount=2):
     await context.channel.purge(limit = (amount+1))
@@ -897,7 +898,7 @@ async def announce_everyone(ctx,mention,channel : discord.TextChannel, *,msg):
 @commands.has_permissions(manage_guild=True)
 async def dm(context, member : discord.Member, *,msg):
     
-    await member.send(msg +f"\nsent by{context.author} from {context.guild} ")
+    await member.send(msg +f"\n\nsent by **{context.author}** from **{context.guild}** ")
     await context.message.delete()
 #say
 @client.command(name='say',aliases = ["Say","Type","type"])
@@ -1119,67 +1120,445 @@ async def search(ctx, *,Anime):
         x = x+1
        
     await ctx.send(embed = em)   
-    
-    def check(msg):
-        return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit() 
+    try:
+        print(0)
+        def check(msg):
+            return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit() 
 
-    msg = await client.wait_for("message", check=check) 
+        msg = await client.wait_for("message", check=check,timeout=30) 
  
-    msg1 = int(msg.content)
-    anime = anime_search[(msg1)-1]
-    id = anime.get('animeid')
-    anime_details = gogo.get_anime_details(animeid=id)
-    plot = anime_details.get('plot_summary')
-    title = anime_details.get('title')
-    episode = anime_details.get('episodes')
+        msg1 = int(msg.content)
+        anime = anime_search[(msg1)-1]
+        id = anime.get('animeid')
+        anime_details = gogo.get_anime_details(animeid=id)
+        plot = anime_details.get('plot_summary')
+        title = anime_details.get('title')
+        episode = anime_details.get('episodes')
+        image = anime_details.get('image_url')
+        embed = discord.Embed(description= f"{plot}",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
+        embed.set_author(name = title,icon_url=f"{client.user.avatar_url}")
+        embed.add_field(name="Episodes",value=f"{episode} episodes available\n**Reply with Episode Number**")
+        embed.set_thumbnail(url=image)
+        await ctx.send(embed=embed)  
+        try:
+            msg2 = await client.wait_for('message', check=check,timeout=30)
+            msg3 = int(msg2.content)
+            print(1)
     
-    image = anime_details.get('image_url')
-    embed = discord.Embed(description= f"{plot}",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
-    embed.set_author(name = title,icon_url=f"{client.user.avatar_url}")
-    embed.add_field(name="Episodes",value=f"{episode} episodes available\n**Reply with Episode Number**")
-    embed.set_thumbnail(url=image)
-    await ctx.send(embed=embed)  
-    msg2 = await client.wait_for('message', check=check)
-    msg3 = int(msg2.content)
-    
-    anime_link = gogo.get_episodes_link(animeid=id, episode_num=msg3)
-    link = anime_link.get('(HDP-mp4)')
-    link4 = anime_link.get('(1080P-mp4)')
-    link2 = anime_link.get('DoodStream')
-    link3 = anime_link.get('StreamTape')
-    link5 = anime_link.get('(720P-mp4)')
-    link6 = anime_link.get('(360P-mp4)')
-    emb = discord.Embed(description=f'Download link of Episode {msg3} :\n[Download Now(HD)]({link})\n[Download Now(1080p)]({link4})\n[Download Now(720p)]({link5})\n[Download Now(360p)]({link6})')
-    emb.set_author(name = title,icon_url=f"{client.user.avatar_url}")
-    emb.add_field(name="Watch",value=f"[1) Watch Now ]({link2})\n[2) Watch Now]({link3})")
-    emb.set_thumbnail(url=image)
-    await ctx.send(embed = emb)
+            anime_link = gogo.get_episodes_link(animeid=id, episode_num=msg3)
+            link = anime_link.get('(HDP-mp4)')
+            link4 = anime_link.get('(1080P-mp4)')
+            link2 = anime_link.get('DoodStream')
+            link3 = anime_link.get('StreamTape')
+            link5 = anime_link.get('(720P-mp4)')
+            link6 = anime_link.get('(360P-mp4)')
+            emb = discord.Embed(description=f'Download link of Episode {msg3} :\n[Download Now(HD)]({link})\n[Download Now(1080p)]({link4})\n[Download Now(720p)]({link5})\n[Download Now(360p)]({link6})')
+            emb.set_author(name = title,icon_url=f"{client.user.avatar_url}")
+            emb.add_field(name="Watch",value=f"[1) Watch Now ]({link2})\n[2) Watch Now]({link3})")
+            emb.set_thumbnail(url=image)
+            await ctx.send(embed = emb)
+        except asyncio.TimeoutError:
+            em1 = discord.Embed(description="**Timeout**") 
+            print(1234) 
+            await ctx.send(embed=em1)    
+    except asyncio.TimeoutError:
+        em = discord.Embed(description="**Timeout**") 
+        print(123) 
+        await ctx.send(embed=em)  
 
+    
+
+@client.command(name='userinfo',aliases=["whois","Whois","Userinfo"])
+async def userinfo(ctx, member: discord.Member = None):
+    if not member:  # if member is no mentioned
+        member = ctx.message.author  # set member as the author
+    roles = [role for role in member.roles[1:]]
+    role1 = roles[::-1]
+    
+    #perm_list = [perm[0] for perm in member.guild_permissions if perm[1]]
+    #perms = [perms for perms in perm_list]
+    embed = discord.Embed(colour=member.color, timestamp=ctx.message.created_at,title=f"User : {member}")
+    embed.set_thumbnail(url=member.avatar_url)
+    embed.set_footer(text=f"Requested by {ctx.author}")
+
+    embed.add_field(name="ID:", value=member.id,inline=False)
+    embed.add_field(name="Display Name:", value=member.display_name,inline=False)
+
+    embed.add_field(name="Created Account On:", value=member.created_at.strftime("%a, %#d %B %Y, %I:%M %p UTC"),inline=False)
+    embed.add_field(name="Joined Server On:", value=member.joined_at.strftime("%a, %#d %B %Y, %I:%M %p UTC"),inline=False)
+    if role1 != []:
+        embed.add_field(name="Roles:", value="".join([role.mention for role in role1]),inline=False)
+        embed.add_field(name="Highest Role:", value=member.top_role.mention,inline=False)
+    else:
+        embed.add_field(name="Roles:", value="None",inline=False) 
+        embed.add_field(name="Highest Role:", value="@everyone",inline=False)  
+    #embed.add_field(name="Permissions:", value="".join([name for name in perm_list]))
+    
+    
+    #print(role.mention for role in roles)
+    #print(roles)
+    #print(member.guild_permissions for perm in perm_list)
+    await ctx.send(embed=embed)
+
+@client.command(name="serverinfo",aliases=["Serverinfo","Sinfo","sinfo"])
+async def serverinfo(ctx):
+  name = str(ctx.guild.name)
+
+  owner = str(ctx.guild.owner)
+  id = str(ctx.guild.id)
+  region = str(ctx.guild.region)
+  memberCount = str(ctx.guild.member_count)
+  txtchannel = str(len(ctx.guild.text_channels))
+  vcchannel = str(len(ctx.guild.voice_channels))
+  role = str(len(ctx.guild.roles))
+  icon = str(ctx.guild.icon_url)
+  create = ctx.guild.created_at.strftime("%a, %#d %B %Y, %I:%M %p UTC")
+  embed = discord.Embed(color=discord.Color.blue())
+  embed.set_author(name=name,icon_url=icon)
+  embed.set_footer(text=f"Requested by {ctx.author} | Server Created : {create}")
+  embed.set_thumbnail(url=icon)
+  embed.add_field(name="Owner", value=owner, inline=True)
+  embed.add_field(name="Region", value=region, inline=True)
+  embed.add_field(name="Server ID", value=id, inline=True)
+  embed.add_field(name="Text Channels", value=txtchannel, inline=True)
+  embed.add_field(name="Voice Channels", value=vcchannel, inline=True)
+  embed.add_field(name="Roles", value=role, inline=True)
+  embed.add_field(name="Member Count", value=memberCount, inline=True)
+
+  await ctx.send(embed=embed)
+
+@client.command(name="yt",aliases=["Yt","Youtube","youtube"])
+async def yt(ctx, *, search):
+
+    query_string = urllib.parse.urlencode({'search_query': search})
+    htm_content = urllib.request.urlopen(
+        'http://www.youtube.com/results?' + query_string)
+    search_results = re.findall(r'/watch\?v=(.{11})',htm_content.read().decode())
+    await ctx.send('http://www.youtube.com/watch?v=' + search_results[0])
+
+@client.command(name="embed",aliases=["Embed"])    
+async def embed(ctx,color, *,text):
+    #msg, color = text.split("|")
+    print(2)
+    first_word = color[0]
+    print (first_word)
+    print(len(color))
+    if first_word == "#" and len(color) == 7:
+        hexcode = int(color.replace("#",""),16)
+        colorhex = int(hex(hexcode),0)
+        em = discord.Embed(description = text,color=colorhex,timestamp=datetime.datetime.utcnow())
+    else:
+        colorhex = 0x00ebff 
+        text = color + " " + text
+        em = discord.Embed(description = text,color=colorhex,timestamp=datetime.datetime.utcnow())
+    ##if color == None:
+        #colorhex = 0x00ebff
+    print(0)
+    #else:  
+        #print(1)  
+       ## hexcode = int(color.replace("#",""),16)
+        #colorhex = int(hex(hexcode),0)
+    #em = discord.Embed(description = text,color=colorhex,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.guild.name,icon_url=ctx.guild.icon_url)
+    await ctx.send("```If you want to add a image to the Embed, send its link within 20 seconds\nMake sure your next message is a Image link\nIf not then Ignore```")
+    try: 
+        def check(msg1):
+            return msg1.author == ctx.author and ctx.channel == msg1.channel 
+        
+        msg1 = await client.wait_for("message", check=check,timeout=20)
+        link = msg1.content
+        #resp=requests.get(msg)
+         
+        em.set_image(url=link)
+        await ctx.send(embed=em)
+        
+    except asyncio.TimeoutError:
+        await ctx.send(embed=em)            
+       
 @client.event
 async def on_member_join(member):
-    village = client.get_channel(754090618669629481)
-    rules = client.get_channel(754749808476160112)
-    role = client.get_channel(754089226030678128)
-    em = discord.Embed(description= f"Welcome {member.mention}, Enjoy your stay🤗! Don't forget to read {rules.mention} and check {role.mention} ",timestamp=datetime.datetime.utcnow(),color=0x00ebff)   
-    welcomegif = ("https://i.imgur.com/COTu9rN.gif","https://i.imgur.com/ZzvVprt.gif")  
-    rndgif = random.choice(welcomegif)
-    em.set_image(url=rndgif)
-    await village.send(f"{member.mention}",embed = em)    
+    if member.guild.id == (754084144807673947):
+
+        village = client.get_channel(754090618669629481)
+        rules = client.get_channel(754749808476160112)
+        role = client.get_channel(754089226030678128)
+        em = discord.Embed(description= f"Welcome {member.mention}, Enjoy your stay🤗! Don't forget to read {rules.mention} and check {role.mention} ",timestamp=datetime.datetime.utcnow(),color=0x00ebff)   
+        welcomegif = ("https://i.imgur.com/COTu9rN.gif","https://i.imgur.com/ZzvVprt.gif")  
+        rndgif = random.choice(welcomegif)
+        em.set_image(url=rndgif)
+        await village.send(f"{member.mention}",embed = em)    
     
     
 #help...............................
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
 async def help(ctx):
-    em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/H7MDM37)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\nif you don't have common sense then,\n||Do not actually include the <> and [] symbols in the command||",timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
+    em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/H7MDM37)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\n||Do not actually include the <> and [] symbols in the command||",timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
     em.set_author(name = "Help/Command List",icon_url=f"{client.user.avatar_url}")
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
-    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `Search`",inline=False)
+    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
+
+@help.command()
+async def kick(ctx):
+    em = discord.Embed(description="Kicks a member from the Server",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.kick <member> [reason]`")
+    em.add_field(name="**Permission required**",value="`Kick Member`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def ban(ctx):
+    em = discord.Embed(description="Bans a member from the Server",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.ban <member> [reason]`")
+    em.add_field(name="**Permission required**",value="`Ban Member`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def clear(ctx):
+    em = discord.Embed(description="Deletes messages",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.clear <Number of Msgs>`")
+    em.add_field(name="**Aliases**",value="`Clean` `delete` `purge`")
+    em.add_field(name="**Permission required**",value="`Manage Messages`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def wanted(ctx):
+    em = discord.Embed(description="Creates a Wanted poster from One Piece",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.wanted <member>`")
+    em.add_field(name="**Aliases**",value="`bounty`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def jojo(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.jojo <member>`")
+    await ctx.send(embed=em)   
+
+@help.command()
+async def chika(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.chika <message1>|<message2>|<message3>|<message4>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def fbi(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.fbi <Text Message>`")
+    await ctx.send(embed=em)
+@help.command()
+async def worthless(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.worthless <Text Message>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def water(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.water [member] <Text Message>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def rip(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.rip <member>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def disability(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.disability <member>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def thisisshit(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.thisisshit <member>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def myboi(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.myboi <member>`")
+    await ctx.send(embed=em)
+ 
+@help.command()
+async def santa(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.santa <Text Message>`")
+    await ctx.send(embed=em) 
+
+@help.command()
+async def news(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.news <member> <message1>|<message2>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def yugioh(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.yugioh <message1>|<message2>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def yugiohpfp(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.yugiohpfp <member1> <member2>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def bitch(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.bitch <Text message>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def billy(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.bily <Text message>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def fact(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.fact <Text message>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def say(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.say <Text message>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def spoiler(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.spoiler <Text message>`")
+    em.add_field(name="**Aliases**",value="`spoil`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def propose(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.propose <member>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def imposter(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.imposter <ping more than 2 member>`")
+    em.add_field(name="**Aliases**",value="`Whoisimposter`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def anime(ctx):
+    em = discord.Embed(description="Search anime on Mal",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.anime <Name of anime>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def manga(ctx):
+    em = discord.Embed(description="Search manga on Mal",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.manga <Number of Msgs>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def dm(ctx):
+    em = discord.Embed(description="Dms the message to the member",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.dm <member> <Text message`")
+    em.add_field(name="**Permission required**",value="`Manage Server`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def search(ctx):
+    em = discord.Embed(description="Use to find download/Watch Link of anime",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.search <Name of the anime>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def announce(ctx):
+    em = discord.Embed(description="Use it to do announcement",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.announce <everyone or here> <channel> <Text message>`")
+    em.add_field(name="**Permission required**",value="`Manage Server`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def yt(ctx):
+    em = discord.Embed(description="Kicks a member from the Server",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.yt <search>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def embed(ctx):
+    em = discord.Embed(description="Use to create Embeds",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.embed <Text message>|<hexcolor code>`")
+    await ctx.send(embed=em)
+
 # run the client on the server
 client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.RoKqLr0IWKoG20WKpW10g37OZk0')
