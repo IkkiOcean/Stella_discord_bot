@@ -17,6 +17,7 @@ from mal import *
 import asyncio
 from waifu import waifupics, waifuname, waifuseries
 from gogoanimeapi import gogoanime as gogo
+import numpy as np
 import urllib.parse, urllib.request, re
 
 #urban = UrbanClient()
@@ -72,7 +73,7 @@ async def on_ready():
 
 @client.command(name='version')
 async def version(context):
-    myembed = discord.Embed(title='Current Version', description='The Bot is in version 1.0.0',color=0x00ebff)
+    myembed = discord.Embed(title='Current Version', description='The Bot is in version 1.4.1',color=0x00ebff)
     myid = '<@!745006368175423489>'
     helper1 = '<@!741967836422996008>'
     
@@ -940,48 +941,75 @@ async def avatar(context, *,member : discord.Member = None):
 #marraige
 @client.command(name="propose",aliases= ["Propose"])
 async def propose(context, member: discord.Member , *,msg= None):
-    await context.send(f"{member.mention}, {context.author.mention} proposed you for the marraige!! Do you accept?? \nType accept or reject")
-    def check(response):
-        return response.content.lower() in ["accept","reject"] and response.author == member and response.channel == context.channel
+    if context.author != member:
+        await context.send(f"{member.mention}\n{context.author.mention} proposed you for the marraige!! Do you accept?? \nType accept or reject")
+        def check(response):
+            return response.content.lower() in ["accept","reject"] and response.author == member and response.channel == context.channel
     
-    try:
+        try:
         
-        response= await client.wait_for('message', check= check, timeout= 40)
+            response= await client.wait_for('message', check= check, timeout= 40)
         
-        if "accept" in response.content.lower():
-            resp=requests.get("https://i.imgur.com/12OscjX.png") #marraige
-            resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
-            
-            
-            marraige = Image.open(BytesIO(resp.content)).convert('RGBA')
-            
-            bg = Image.open(BytesIO(resp2.content)).convert('RGB')
-            asset = context.author.avatar_url_as(size=128)
-            asset2 = member.avatar_url_as(size=128)
-            data = BytesIO(await asset.read())  
-            data2 = BytesIO(await asset2.read())  
-            pfp = Image.open(data)
-            waifu0 = Image.open(data2)
-
-            pfp = pfp.resize((493,483))
-            waifu1 =  waifu0.resize((493,483))
-            
-            bg.paste(pfp,(85,71))
-            
-            bg.paste(waifu1,(1295,61))
-            bg.paste(marraige,(0,0),mask=marraige)
+            if "accept" in response.content.lower():
+                resp=requests.get("https://i.imgur.com/gxsD8hr.png") #marraige
+            #resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
+                resp2=requests.get("https://i.imgur.com/Rs9YYjN.png")
+                bg = Image.new("RGBA",(1479,600), (0,0,0,0))
              
-            bg.save("marraige.png",format="png")
-            wed = discord.Embed(description=f"{context.author.name} and {member.name} are **married** now!!💝",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
-            file = discord.File("marraige.png")
-            wed.set_image(url="attachment://marraige.png")
-            await context.send(file = file, embed=wed)
+                marraige = Image.open(BytesIO(resp.content)).convert('RGBA')
+                mrg =  marraige.resize((250,250))
+                frm = Image.open(BytesIO(resp2.content)).convert('RGBA')
+                frm = frm.resize((580,580))
+                asset = context.author.avatar_url_as(size=128)
+                asset2 = member.avatar_url
+                data = BytesIO(await asset.read())  
+                data2 = BytesIO(await asset2.read())  
+                pfp = Image.open(data).convert('RGB')
+                waifu0 = Image.open(data2).convert('RGB')
+   
+                pfp = pfp.resize((435,435))
+                waifu1 =  waifu0.resize((435,435))
+                height,width = pfp.size
+                lum_img = Image.new('L', [height,width] , 0)
+  
+                draw = ImageDraw.Draw(lum_img)
+                draw.pieslice([(0,0), (height,width)], 0, 360, fill = 255, outline = "white")
+                img_arr =np.array(pfp)
+                lum_img_arr =np.array(lum_img)
+    #display(Image.fromarray(lum_img_arr))
+                final_img_arr = np.dstack((img_arr,lum_img_arr))
+                fll1 = Image.fromarray(final_img_arr)
+                height,width = pfp.size
+                lu_img = Image.new('L', [height,width] , 0)
+  
+                draw = ImageDraw.Draw(lu_img)
+                draw.pieslice([(0,0), (height,width)], 0, 360, fill = 255, outline = "white")
+                img_arrwa =np.array(waifu1)
+                lu_img_arr =np.array(lu_img)
+    #display(Image.fromarray(lum_img_arr))
+                final_img_arrwa = np.dstack((img_arrwa,lu_img_arr))
+                fll = Image.fromarray(final_img_arrwa)
+            
+                bg.paste(fll1,(77,80))
+            
+                bg.paste(fll,(886,80))
+                bg.paste(mrg,(570,150))
+                bg.paste(frm,(0,0),mask=frm)
+                bg.paste(frm,(809,0),mask=frm)
+             
+                bg.save("marraige.png",format="png")
+                wed = discord.Embed(description=f"{context.author.name} and {member.name} are **married** now!!💝",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
+                file = discord.File("marraige.png")
+                wed.set_image(url="attachment://marraige.png")
+                await context.send(file = file, embed=wed)
 
-        if "reject" in response.content.lower():
-            await context.send(f"{context.message.author.mention} You got rejected... ;-;")   
+            if "reject" in response.content.lower():
+                await context.send(f"{context.message.author.mention} You got rejected... ;-;")   
 
-    except asyncio.TimeoutError:
-        await context.send(f"{context.author.mention} {member.name} didn't reply. ;-;")       
+        except asyncio.TimeoutError:
+            await context.send(f"{context.author.mention} {member.name} didn't reply. ;-;")     
+    else:
+        await context.send(f"{context.author.mention} You really want to marry yourself ??!!\n||are you lonely? ;-;||")          
 
 
 
@@ -1012,12 +1040,18 @@ async def anime(ctx, *, anime):
     from mal import AnimeSearch
     search = AnimeSearch(anime) 
     AAnime= Anime(search.results[0].mal_id)
+    x = ","
+    gen = ""
+    for genre in AAnime.genres:
+        if genre == AAnime.genres[-1]:
+            x = "."
+        gen += (f"{genre}{x} ")
     mal = discord.Embed(description=f'**[{search.results[0].title}]({search.results[0].url})** \n{AAnime.synopsis}',timestamp=datetime.datetime.utcnow(),color=0xff0092)
     mal.add_field(name="**⌛ Status**",value= AAnime.status,inline=False)
     mal.add_field(name="**📺 Total Episodes**",value= AAnime.episodes,inline=True)
     mal.add_field(name="**📡 Aired**",value= AAnime.aired,inline=True)
     mal.add_field(name="**💻 Type**",value= AAnime.type,inline=True)
-    mal.add_field(name="**🎬 Genre**",value= AAnime.genres,inline=False)
+    mal.add_field(name="**🎬 Genre**",value= gen,inline=False)
     mal.add_field(name="**⭐ Rating**",value= f'{AAnime.score}/10',inline=True )
     mal.add_field(name="**🎖️ Rank**",value= f'**Top {AAnime.rank}**',inline=False)
     mal.set_footer(text= f'Requested by {ctx.author}' )
@@ -1030,13 +1064,19 @@ async def manga(ctx, *, manga):
     from mal import MangaSearch
     search = MangaSearch(manga) 
     AManga= Manga(search.results[0].mal_id)
+    x = ","
+    gen = ""
+    for genre in AManga.genres:
+        if genre == AManga.genres[-1]:
+            x = "."
+        gen += (f"{genre}{x} ")
     mal = discord.Embed(description=f'**[{search.results[0].title}]({search.results[0].url})** \n{AManga.synopsis}',timestamp=datetime.datetime.utcnow(),color=0xff0092)
     mal.add_field(name="**⌛ Status**",value= AManga.status)          
     mal.add_field(name="**📕 Total Chapters**",value= AManga.chapters)
     mal.add_field(name="**📚 Total Volumes**",value= AManga.volumes)
     mal.add_field(name="**🗓️ Published**",value= AManga.published,inline=True)
     mal.add_field(name="**🎨 Type**",value= AManga.type,inline=True)
-    mal.add_field(name="**🎬 Genre**",value= AManga.genres,inline=False)
+    mal.add_field(name="**🎬 Genre**",value= gen,inline=False)
     mal.add_field(name="**⭐ Rating**",value= f'{AManga.score}/10',inline=True )
     mal.add_field(name="**🎖️ Rank**",value= f'**Top {AManga.rank}**',inline=False)
     mal.set_footer(text= f'Requested by {ctx.author}' )
@@ -1077,7 +1117,7 @@ async def waifu_(ctx):
         if answer == "Yes":
             await asyncio.sleep(5)
             await ctx.send(f"{user.name}\nAwww... {waifuname[chosen_index]} said **Yes** for the marraige!! Congrats💝\nLet me make a wedding card for you >///<")
-            resp=requests.get("https://i.imgur.com/12OscjX.png") 
+            resp=requests.get("https://i.imgur.com/QjFL5Y8.png") 
             resp2=requests.get("https://i.imgur.com/apeZldc.png")
             resp3=requests.get(waifupics[chosen_index])
             waifu0 = Image.open(BytesIO(resp3.content))
@@ -1115,13 +1155,16 @@ async def search(ctx, *,Anime):
     em = discord.Embed(description= "Reply with the Anime number",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
     em.set_author(name = "Anime search",icon_url=f"{client.user.avatar_url}")
     x=1
+    srch = ""
     for title in anime_search:
-        em.add_field(name=f"{x} : {title.get('name')}",value="_")
+        srch += (f"{x} : {title.get('name')}\n\n")
         x = x+1
-       
+    #for title in anime_search:
+        #em.add_field(name=f"{x} : {title.get('name')}",value="_")
+        #x = x+1
+    em.add_field(name="Search Result: ",value=srch)   
     await ctx.send(embed = em)   
     try:
-        print(0)
         def check(msg):
             return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit() 
 
@@ -1143,7 +1186,7 @@ async def search(ctx, *,Anime):
         try:
             msg2 = await client.wait_for('message', check=check,timeout=30)
             msg3 = int(msg2.content)
-            print(1)
+            
     
             anime_link = gogo.get_episodes_link(animeid=id, episode_num=msg3)
             link = anime_link.get('(HDP-mp4)')
@@ -1159,11 +1202,11 @@ async def search(ctx, *,Anime):
             await ctx.send(embed = emb)
         except asyncio.TimeoutError:
             em1 = discord.Embed(description="**Timeout**") 
-            print(1234) 
+            
             await ctx.send(embed=em1)    
     except asyncio.TimeoutError:
         em = discord.Embed(description="**Timeout**") 
-        print(123) 
+         
         await ctx.send(embed=em)  
 
     
@@ -1174,8 +1217,37 @@ async def userinfo(ctx, member: discord.Member = None):
         member = ctx.message.author  # set member as the author
     roles = [role for role in member.roles[1:]]
     role1 = roles[::-1]
+    msg = ""
+    perm_list = [perm[0] for perm in member.guild_permissions if perm[1]]
     
-    #perm_list = [perm[0] for perm in member.guild_permissions if perm[1]]
+    
+    if 'administrator' in perm_list:
+        msg += f"__`Administrator`__  "
+    if 'manage_guild' in perm_list:    
+        msg += f" __`Manage Server`__ "
+    if 'manage_roles' in perm_list:    
+        msg += f" __`Manage Roles`__ "   
+    if 'manage_channels' in perm_list:    
+        msg += f" __`Manage Channels`__ "
+    if 'manage_messages' in perm_list:    
+        msg += f" __`Manage Messages`__ "           
+    if 'manage_webhooks' in perm_list:    
+        msg += f" __`Manage Webhooks`__ "
+    if 'manage_nicknames' in perm_list:    
+        msg += f" __`Manage Nicknames`__ "
+    if 'manage_emojis' in perm_list:    
+        msg += f" __`Manage Emojis`__ "   
+    if 'kick_members' in perm_list:    
+        msg += f" __`Kick Members`__ " 
+    if 'ban_members' in perm_list:    
+        msg += f" __`Ban Members`__ "   
+    if 'mention_everyone' in perm_list:    
+        msg += f" __`Mention Everyone`__ " 
+    if 'mute_members' in perm_list:    
+        msg += f" __`Mute Members`__ " 
+    if 'deafen_members' in perm_list:    
+        msg += f" __`Deafen Members`__ "           
+         
     #perms = [perms for perms in perm_list]
     embed = discord.Embed(colour=member.color, timestamp=ctx.message.created_at,title=f"User : {member}")
     embed.set_thumbnail(url=member.avatar_url)
@@ -1187,12 +1259,14 @@ async def userinfo(ctx, member: discord.Member = None):
     embed.add_field(name="Created Account On:", value=member.created_at.strftime("%a, %#d %B %Y, %I:%M %p UTC"),inline=False)
     embed.add_field(name="Joined Server On:", value=member.joined_at.strftime("%a, %#d %B %Y, %I:%M %p UTC"),inline=False)
     if role1 != []:
-        embed.add_field(name="Roles:", value="".join([role.mention for role in role1]),inline=False)
-        embed.add_field(name="Highest Role:", value=member.top_role.mention,inline=False)
+        embed.add_field(name=f"Roles[{len(role1)}]:", value="".join([role.mention for role in role1]),inline=False)
     else:
-        embed.add_field(name="Roles:", value="None",inline=False) 
-        embed.add_field(name="Highest Role:", value="@everyone",inline=False)  
-    #embed.add_field(name="Permissions:", value="".join([name for name in perm_list]))
+        embed.add_field(name=f"Roles[{len(role1)}]:", value="None",inline=False) 
+    if msg != "":
+        embed.add_field(name="Permissions:", value=msg,inline=False)
+    if member.bot:  
+        embed.add_field(name="Discord Bot?", value="Yes",inline=False)  
+       
     
     
     #print(role.mention for role in roles)
@@ -1237,12 +1311,12 @@ async def yt(ctx, *, search):
     await ctx.send('http://www.youtube.com/watch?v=' + search_results[0])
 
 @client.command(name="embed",aliases=["Embed"])    
-async def embed(ctx,color, *,text):
+async def embed(ctx,color, *,text = None):
     #msg, color = text.split("|")
-    print(2)
+    if text == None:
+        text = ""
     first_word = color[0]
-    print (first_word)
-    print(len(color))
+    
     if first_word == "#" and len(color) == 7:
         hexcode = int(color.replace("#",""),16)
         colorhex = int(hex(hexcode),0)
@@ -1253,14 +1327,14 @@ async def embed(ctx,color, *,text):
         em = discord.Embed(description = text,color=colorhex,timestamp=datetime.datetime.utcnow())
     ##if color == None:
         #colorhex = 0x00ebff
-    print(0)
+    
     #else:  
         #print(1)  
        ## hexcode = int(color.replace("#",""),16)
         #colorhex = int(hex(hexcode),0)
     #em = discord.Embed(description = text,color=colorhex,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.guild.name,icon_url=ctx.guild.icon_url)
-    await ctx.send("```If you want to add a image to the Embed, send its link within 20 seconds\nMake sure your next message is a Image link\nIf not then Ignore```")
+    await ctx.send("```To add a Image into your embed, paste the link of the particular image below within 20 seconds.If you don't want to embed image the process will be executed in 20 seconds. You are requested not to send any message except the link in these 20 seconds or the process will be terminated.```")
     try: 
         def check(msg1):
             return msg1.author == ctx.author and ctx.channel == msg1.channel 
@@ -1275,6 +1349,72 @@ async def embed(ctx,color, *,text):
     except asyncio.TimeoutError:
         await ctx.send(embed=em)            
        
+
+
+@client.command(name="submit",aliases=["Submit"])    
+async def submit(ctx,*,text):
+    drop_point = client.get_channel(837610754298478643)
+    if ctx.channel == drop_point:
+        
+        
+        colorhex = 0x00ebff 
+    
+        em = discord.Embed(description = f"Submitted by {ctx.author}\nUser ID: {ctx.author.id}",color=colorhex,timestamp=datetime.datetime.utcnow())
+    ##if color == None:
+        #colorhex = 0x00ebff
+    
+    #else:  
+        #print(1)  
+       ## hexcode = int(color.replace("#",""),16)
+        #colorhex = int(hex(hexcode),0)
+    #em = discord.Embed(description = text,color=colorhex,timestamp=datetime.datetime.utcnow())
+        em.set_author(name=f"{text}")
+        await ctx.send("```Paste the link of the image below within 20 seconds to complete your submission.\nDon't Send any message between these 20 sec```",delete_after=20)
+        try: 
+            def check(msg1):
+                return msg1.author == ctx.author and ctx.channel == msg1.channel 
+            
+            msg1 = await client.wait_for("message", check=check,timeout=20)
+            link = msg1.content
+            id = msg1.id
+            delmsg = await drop_point.fetch_message(id)
+            await delmsg.delete()
+
+        #resp=requests.get(msg)
+            try:
+                if link == "":
+                    await ctx.send("You need to send the Image Link! try again...",delete_after=15)
+                else:
+                    em.set_image(url=link)
+                    em.set_footer(text= f"Tournament Submission")
+                    await ctx.send(embed=em)
+            except:
+                await ctx.send("You need to send the Image Link! try again...",delete_after=15)    
+        
+        except asyncio.TimeoutError:
+            await ctx.send("Timeout",delete_after=10)  
+        await ctx.message.delete()      
+    else:
+        return                  
+
+@client.command(name="post",aliases=["Post"])  
+@commands.has_permissions(manage_messages=True)  
+async def post(ctx, *,id): 
+    id1, id2 = id.split("|")  
+    post_point = client.get_channel(837609315572383755)
+    if ctx.channel == post_point: 
+        channel = client.get_channel(837610754298478643) 
+
+        msg1 = await channel.fetch_message(id1)
+        msg2 = await channel.fetch_message(id2)
+        message1 = await ctx.send("<@&836631353117900902> **Vote** for the following Submissions!!",embed = msg1.embeds[0])
+        message2 = await ctx.send(embed = msg2.embeds[0])
+        await message1.add_reaction("<a:Stela_up:838153046537535549>")
+        await message2.add_reaction("<a:Stela_up:838153046537535549>")
+    else:
+        return    
+    await ctx.message.delete()    
+             
 @client.event
 async def on_member_join(member):
     if member.guild.id == (754084144807673947):
@@ -1286,9 +1426,27 @@ async def on_member_join(member):
         welcomegif = ("https://i.imgur.com/COTu9rN.gif","https://i.imgur.com/ZzvVprt.gif")  
         rndgif = random.choice(welcomegif)
         em.set_image(url=rndgif)
-        await village.send(f"{member.mention}",embed = em)    
+        await village.send(f"{member.mention}",embed = em)   
+       
+#@client.command(name="t")
+#async def t(ctx):    
     
-    
+    #asset1 = ctx.author.avatar_url
+    #data1 = BytesIO(await asset1.read())   
+    #img = Image.open(data1)
+  
+    #height,width = img.size
+    #lum_img = Image.new('L', [height,width] , 0)
+  
+    #draw = ImageDraw.Draw(lum_img)
+    #draw.pieslice([(0,0), (height,width)], 0, 360, fill = 255, outline = "white")
+    #img_arr =np.array(img)
+    #lum_img_arr =np.array(lum_img)
+    #display(Image.fromarray(lum_img_arr))
+    #final_img_arr = np.dstack((img_arr,lum_img_arr))
+    #fll = Image.fromarray(final_img_arr)
+    #fll.save("test.png")
+    #await ctx.send(file=discord.File("test.png"))
 #help...............................
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
@@ -1300,7 +1458,7 @@ async def help(ctx):
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
-    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed`",inline=False)
+    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
@@ -1311,6 +1469,14 @@ async def kick(ctx):
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.kick <member> [reason]`")
     em.add_field(name="**Permission required**",value="`Kick Member`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def submit(ctx):
+    em = discord.Embed(description="Submits your contestant for the Tournament",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.submit <name>`\nafter that Send the link of the image within 20 sec\nThis command will only work in Tournament")
     await ctx.send(embed=em)
 
 @help.command()
@@ -1504,7 +1670,7 @@ async def imposter(ctx):
 
 @help.command()
 async def anime(ctx):
-    em = discord.Embed(description="Search anime on Mal",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em = discord.Embed(description="Searches anime on Mal",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.anime <Name of anime>`")
@@ -1512,7 +1678,7 @@ async def anime(ctx):
 
 @help.command()
 async def manga(ctx):
-    em = discord.Embed(description="Search manga on Mal",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em = discord.Embed(description="Searches manga on Mal",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.manga <Number of Msgs>`")
@@ -1529,7 +1695,7 @@ async def dm(ctx):
 
 @help.command()
 async def search(ctx):
-    em = discord.Embed(description="Use to find download/Watch Link of anime",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em = discord.Embed(description="Use it to find download/Watch Link of anime",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.search <Name of the anime>`")
@@ -1546,7 +1712,7 @@ async def announce(ctx):
 
 @help.command()
 async def yt(ctx):
-    em = discord.Embed(description="Kicks a member from the Server",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em = discord.Embed(description="Searches video on Youtube",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.yt <search>`")
@@ -1557,7 +1723,7 @@ async def embed(ctx):
     em = discord.Embed(description="Use to create Embeds",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
-    em.add_field(name="**Usage**",value="`S.embed <Text message>|<hexcolor code>`")
+    em.add_field(name="**Usage**",value="`S.embed [hexcode of color] <Text message>`")
     await ctx.send(embed=em)
 
 # run the client on the server
