@@ -1427,7 +1427,20 @@ async def on_member_join(member):
         rndgif = random.choice(welcomegif)
         em.set_image(url=rndgif)
         await village.send(f"{member.mention}",embed = em)   
-       
+
+@client.command(name="server")
+@commands.has_permissions(manage_messages = True)
+async def server(ctx):  
+    servers = (client.guilds)
+    guilds = ""
+    for guild in servers:
+        guilds += f"{guild.name}\n"
+
+    
+    serverss = str(len(servers))
+    await ctx.send(guilds)
+    await ctx.send(serverss)
+
 #@client.command(name="t")
 #async def t(ctx):    
     
@@ -1726,5 +1739,7 @@ async def embed(ctx):
     em.add_field(name="**Usage**",value="`S.embed [hexcode of color] <Text message>`")
     await ctx.send(embed=em)
 
+
+
 # run the client on the server
-client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.RoKqLr0IWKoG20WKpW10g37OZk0')
+client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.1sl5xrh9uoyW-uUZHo3kYpk-4pM')
