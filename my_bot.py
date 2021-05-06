@@ -1349,7 +1349,33 @@ async def embed(ctx,color, *,text = None):
     except asyncio.TimeoutError:
         await ctx.send(embed=em)            
        
+@client.command(name="Hall",aliases=["hall"])
+@commands.has_permissions(manage_messages= True)    
+async def hall(ctx,* ,text):
+    hall_point = client.get_channel(837605170330337310)
+    if ctx.channel == hall_point:
+        x, msg = text.split("|")
 
+    
+    
+        colorhex = 0xff0000 
+    
+        em = discord.Embed(description = msg,color=colorhex,timestamp=datetime.datetime.utcnow())
+    ##if color == None:
+        #colorhex = 0x00ebff
+    
+    #else:  
+        #print(1)  
+       ## hexcode = int(color.replace("#",""),16)
+        #colorhex = int(hex(hexcode),0)
+    #em = discord.Embed(description = text,color=colorhex,timestamp=datetime.datetime.utcnow())
+        em.set_author(name=f"Hall Of Fame {x}" ,icon_url=ctx.guild.icon_url)
+        await ctx.send(embed=em)
+        await ctx.message.delete() 
+    else:
+        return       
+             
+       
 
 @client.command(name="submit",aliases=["Submit"])    
 async def submit(ctx,*,text):
