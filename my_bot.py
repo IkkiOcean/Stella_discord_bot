@@ -1,4 +1,5 @@
-import discord #pip install discord
+import discord
+from discord import embeds #pip install discord
 from discord.ext import commands
 from discord.ext.commands import BucketType, Greedy
 import requests #requests
@@ -1467,6 +1468,28 @@ async def server(ctx):
     await ctx.send(guilds)
     await ctx.send(serverss)
 
+@client.command(name="poll",aliases = ["Poll"])
+@commands.has_permissions(manage_messages = True)
+async def poll(ctx, *,msg): 
+    data = re.split(pattern = "\|+" , string = msg)
+    
+    for options in data:
+        message = await ctx.send(options)
+        await message.add_reaction("⏫")
+
+@client.command(name="rndqoute",aliases = ["Rndqoute","Rq","rq"])
+async def rndquote(ctx):
+    qoute = requests.get("https://animechan.vercel.app/api/random").json()
+    
+    anime = qoute['anime']
+    character = qoute['character']
+    line = qoute['quote']
+    q = discord.Embed(timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
+    q.set_author(name="Random Qoute",icon_url= ctx.author.avatar_url)
+    q.add_field(name=f"Anime: {anime}",value=f'"{line}"\n   -said by {character}')
+    msg = await ctx.send(embed = q)
+    await msg.add_reaction("<:AO_stonksup:843516237962149958>")
+
 #@client.command(name="t")
 #async def t(ctx):    
     
@@ -1496,7 +1519,7 @@ async def help(ctx):
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` ",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
@@ -1765,6 +1788,14 @@ async def embed(ctx):
     em.add_field(name="**Usage**",value="`S.embed [hexcode of color] <Text message>`")
     await ctx.send(embed=em)
 
+@help.command()
+async def rndqoute(ctx):
+    em = discord.Embed(description="Send a random anime qoute",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.rndqoute`")
+    em.add_field(name="**Aliases**",value="`rq`")
+    await ctx.send(embed=em)
 
 
 # run the client on the server
