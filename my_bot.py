@@ -1,5 +1,6 @@
 import discord
-from discord import embeds #pip install discord
+from discord import embeds
+from discord import user #pip install discord
 from discord.ext import commands
 from discord.ext.commands import BucketType, Greedy
 import requests #requests
@@ -20,7 +21,8 @@ from waifu import waifupics, waifuname, waifuseries
 from gogoanimeapi import gogoanime as gogo
 import numpy as np
 import urllib.parse, urllib.request, re
-
+from imdb import IMDb
+from bs4 import BeautifulSoup
 #urban = UrbanClient()
 os.chdir(r".vscode")#G:\bot\stella\.vscode
 # client (our bot)
@@ -28,7 +30,7 @@ os.chdir(r".vscode")#G:\bot\stella\.vscode
 intents = discord.Intents.all()
 #client = commands.Bot(command_prefix='.', intents = intents)
 
-client = commands.Bot(command_prefix = ('stela ','S.','Stela '), intents = intents)
+client = commands.Bot(command_prefix = ('stela ','S.','s.','Stela '), intents = intents)
 #@client.event 
 #async def on_message(message):
     #if message.content.startswith(f'{client.user.mention}'):
@@ -44,9 +46,13 @@ client = commands.Bot(command_prefix = ('stela ','S.','Stela '), intents = inten
 @client.event
 async def on_command_error(ctx,error):
     if isinstance(error,commands.MissingPermissions):
-        await ctx.send("You are too weak!;-; Work hard and get powers to do that :)")
+        await ctx.send("You are too weak ;-; Work hard and get powers to do that :)")
+    if isinstance(error,commands.MemberNotFound):
+        await ctx.send("Member Not Found")    
+    if isinstance(error,commands.MissingRequiredArgument):
+        await ctx.send("Pls use command properly! `S.help <command>`")    
     elif isinstance(error,Forbidden):
-        await ctx.send("Give me powers to do that! I will not disappoint you")   
+        await ctx.send("Give me powers to do that! I will not disappoint you ;-;")   
     elif isinstance(error,commands.CommandOnCooldown):
         await ctx.send(f" You have to wait {error.retry_after:,.2F} secs ¯\_(ツ)_/¯")     
     else:
@@ -93,20 +99,23 @@ async def Bot(context):
 @client.command(name='kick',pass_context = True,aliases=["Kick"])    
 @commands.has_permissions(kick_members=True)
 async def kick(context, member : discord.Member, *,reason = None):
-    
-    message = discord.Embed(color=0x00ebff)
-    kickgif = ('https://cdn.discordapp.com/attachments/782562061812891648/782714161560944670/kicked1.gif','https://cdn.discordapp.com/attachments/782562061812891648/782714161560944670/kicked1.gif')
-    rndkick = random.choice(kickgif)
-    message.add_field(name='Kicked',value=f"You have been **kicked** from {context.guild.name} for {reason}")
-    message.set_image(url=rndkick)
+    if member != context.author:
+        message = discord.Embed(color=0x00ebff)
+        kickgif = ('https://cdn.discordapp.com/attachments/782562061812891648/782714161560944670/kicked1.gif','https://cdn.discordapp.com/attachments/782562061812891648/782714161560944670/kicked1.gif')
+        rndkick = random.choice(kickgif)
+        message.add_field(name='Kicked',value=f"You have been **kicked** from {context.guild.name} for {reason}")
+        message.set_image(url=rndkick)
+        kicked= discord.Embed(color=0x00ebff)
+        kicked.add_field(name='Kicked',value=f"{member.mention} has been kicked from the server!! Hehe:)")
+        await member.kick(reason=reason)
+        await context.send(embed=kicked)
+        await member.send(embed=message)
+    else:
+        await context.send("Want to kick yourself? :(")
 
-    kicked= discord.Embed(color=0x00ebff)
-    kicked.add_field(name='Kicked',value=f"{member.mention} has been kicked from the server!! Hehe:)")
 
     
-    await member.kick(reason=reason)
-    await context.send(embed=kicked)
-    await member.send(embed=message)
+   
     
     
 
@@ -115,19 +124,21 @@ async def kick(context, member : discord.Member, *,reason = None):
 @commands.has_permissions(ban_members=True)
 async def ban(context, member : discord.Member, *,reason=None):
     
-    
-    await member.ban(reason=reason)
-    banned= discord.Embed(color=0x00ebff)
-    banned.add_field(name='Banned',value=f"{member.mention} has been **Banned** from the server!! Hehe:)")
-    
-    await context.send(embed=banned)
-    message = discord.Embed(color=0x00ebff)
-    bangif = ('https://cdn.discordapp.com/attachments/782562061812891648/782722014829084672/ban1.gif','https://cdn.discordapp.com/attachments/782562061812891648/782722005044691014/ban_2.gif')
-    rndban = random.choice(bangif)
-    message.add_field(name='Banned',value=f"You have been banned from {context.guild.name} for {reason}")
-    message.set_image(url=rndban)
+    if member != context.author:
+        await member.ban(reason=reason)
+        banned= discord.Embed(color=0x00ebff)
+        banned.add_field(name='Banned',value=f"{member.mention} has been **Banned** from the server!! Hehe:)")
+        await context.send(embed=banned)
+        message = discord.Embed(color=0x00ebff)
+        bangif = ('https://cdn.discordapp.com/attachments/782562061812891648/782722014829084672/ban1.gif','https://cdn.discordapp.com/attachments/782562061812891648/782722005044691014/ban_2.gif')
+        rndban = random.choice(bangif)
+        message.add_field(name='Banned',value=f"You have been banned from {context.guild.name} for {reason}")
+        message.set_image(url=rndban)
 
-    await member.send(embed=message)
+        await member.send(embed=message)
+    else:
+        await context.send("Want to ban yourself? :(")
+
 
 
 #clear.....
@@ -1210,8 +1221,106 @@ async def search(ctx, *,Anime):
          
         await ctx.send(embed=em)  
 
+@client.command(name='movie',aliases=["Movie","Series","series"])
+async def movie(ctx, *,msg):    
+    ia = IMDb()
+    movies = ia.search_movie(msg)
+    id = movies[0].movieID
     
+    movie = ia.get_movie(id)
+    print(movie)
+    plot = movie['plot'][0]
+    #clip = movie['vote details']
+    await ctx.send(plot)
+    await ctx.send(clip)
+    print (ia.get_movie_infoset())
+    
+    print(id)
+#['airing', 'akas', 'alternate versions', 'awards', 'connections', 'crazy credits', 'critic reviews', 'episodes', 'external reviews', 'external sites', 'faqs', 'full credits', 'goofs', 'keywords', 'list', 'locations', 'main', 'misc sites', 'news', 'official sites', 'parents guide', 'photo sites', 'plot', 'quotes', 'recommendations', 'release dates', 'release info', 'reviews', 'sound clips', 'soundtrack', 'synopsis', 'taglines', 'technical', 'trivia', 'tv schedule', 'video clips', 'vote details']
+insult_api_url = 'http://autoinsult.datahamster.com/index.php?style=3'
+@client.command(name='insult',aliases=["Insult"])
+async def insult(ctx, member : discord.Member = None):
+    if member == None:
+        member = ctx.author
+    data = requests.get(insult_api_url).text
+    
+    site = BeautifulSoup(data, "lxml")
+    await ctx.send(f"{member.mention} " + "{}!".format(site.select("div.insult")[0].text))
+roast_api_url = 'https://evilinsult.com/generate_insult.php?lang=en&amp;type=json'    
+@client.command(name='roast',aliases=["Roast"])
+async def roast(ctx, member : discord.Member = None):    
+    if member == None:
+        member = ctx.author
+    data = requests.get("https://evilinsult.com/generate_insult.php").text
+    await ctx.send(f"{member.mention} {data}") 
+@client.command(name='df',aliases=["define","Define","Df"])
+async def define(ctx, *,word): 
+    try: 
+        r = requests.get("http://www.urbandictionary.com/define.php?term={}".format(word))
 
+        soup = BeautifulSoup(r.content,features="lxml")
+    
+        mean = (soup.find("div",attrs={"class":"meaning"}).text)
+        exp = (soup.find("div",attrs={"class":"example"}).text)
+        up = (soup.find("a",attrs={"class":"up"}).text)
+        down = (soup.find("a",attrs={"class":"down"}).text)
+        em = discord.Embed(title=f"Word: {word}",colour=ctx.author.color, timestamp=ctx.message.created_at)
+        em.add_field(name="Meaning:",value=mean)
+        em.add_field(name="Example:",value=f"{exp}\n\n{up} 👍\n{down} 👎")
+        await ctx.send(embed=em)
+    except:
+        em = discord.Embed(title="Not found")
+        await ctx.send(embed=em)
+   
+@client.command(name='profile',aliases=["Mal","mal","Profile"])
+async def profile(ctx, *,word): 
+    try:
+        link = "https://myanimelist.net/profile/{}".format(word)
+        r = requests.get(link)
+
+        soup = BeautifulSoup(r.content,features="lxml")
+        #<a href="https://myanimelist.net/animelist/ItsIkki?status=2" class="">Completed</a>
+    #watch = (soup.find("span",attrs={"class":"di-ib fl-r lh10"}).text)
+    
+        spans = soup.find_all('span',attrs={"class":"di-ib fl-r lh10"})
+        numbers = []
+        for span in spans:
+            numbers.append(span.string)
+        numb = []    
+    
+        entries = soup.find_all('span',attrs={"class":"di-ib fl-r"})
+        for entry in entries:
+            numb.append(entry.string)    
+    #comp = (a.find("span",attrs={"class":"di-ib fl-r lh10"}).text) 
+        #print(numbers)
+        
+        score = soup.find('span',attrs={"class":"score-label score-6"}).string
+        #print(score)
+        
+        days = soup.find('div',attrs={"class":"di-tc al pl8 fs12 fw-b"}).get_text(strip=True)
+        #print(days)
+        #<img class="" data-src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" 
+        
+        img = soup.find('img',attrs={"class":"lazyload"})['data-src']
+        #print(img)
+        #<img class="" data-src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" data-gtm-vis-first-on-screen-13153650_151="297" data-gtm-vis-first-on-screen-13153650_147="329" data-gtm-vis-recent-on-screen-13153650_151="3350706" data-gtm-vis-total-visible-time-13153650_151="100" data-gtm-vis-has-fired-13153650_151="1" data-gtm-vis-recent-on-screen-13153650_147="3350825" data-gtm-vis-total-visible-time-13153650_147="100" data-gtm-vis-has-fired-13153650_147="1">
+        em = discord.Embed(description=f"**[{word} Anime Stats]({link})**",color = ctx.author.color)   
+        em.add_field(name="Watching:",value=numbers[0])
+        em.add_field(name="Completed:",value=numbers[1])
+        em.add_field(name="On Hold:",value=numbers[2])
+        em.add_field(name="Dropped:",value=numbers[3])
+        em.add_field(name="Plan to Watch:",value=numbers[4])
+        em.add_field(name="Total Entries:",value=numb[0])
+        em.add_field(name="Rewatched:",value=numb[1])
+        em.add_field(name="Total Episodes:",value=numb[2])
+        em.add_field(name="Mean Score:",value=score)
+        em.add_field(name="Days:",value=days[5:])
+        em.set_thumbnail(url=img)
+        em.set_author(name=ctx.author,icon_url=ctx.author.avatar_url)
+        await ctx.send(embed = em)
+    except:
+        em = discord.Embed(title="Not found")
+        await ctx.send(embed=em)    
 @client.command(name='userinfo',aliases=["whois","Whois","Userinfo"])
 async def userinfo(ctx, member: discord.Member = None):
     if not member:  # if member is no mentioned
@@ -1470,12 +1579,33 @@ async def server(ctx):
 
 @client.command(name="poll",aliases = ["Poll"])
 @commands.has_permissions(manage_messages = True)
-async def poll(ctx, *,msg): 
+async def poll(ctx,ques, *,msg: commands.clean_content):
     data = re.split(pattern = "\|+" , string = msg)
-    
+    await ctx.send("❔"+ ques)
     for options in data:
         message = await ctx.send(options)
         await message.add_reaction("⏫")
+
+@client.command(name="f",aliases = ["F"])
+async def f(ctx,*,msg: commands.clean_content):
+    message = await ctx.send(f"Press 🇫 to pay respects to {msg}")  
+    await message.add_reaction("🇫")
+    def check(reaction, user):
+        return str(reaction.emoji) == "🇫" and user != client.user and reaction.message.id == message.id
+    timeout = time.time() + 60*5     
+    while True:     
+        reaction, user = await client.wait_for("reaction_add", check=check)
+        await ctx.send(f"{user.display_name} has paid their respects.")
+    
+    
+      
+        
+
+    #except:
+        #await ctx.send("Nobody paid respects, how shameful.")    
+
+
+        
 
 @client.command(name="rndqoute",aliases = ["Rndqoute","Rq","rq"])
 async def rndquote(ctx):
@@ -1519,7 +1649,7 @@ async def help(ctx):
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute ",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
@@ -1790,7 +1920,7 @@ async def embed(ctx):
 
 @help.command()
 async def rndqoute(ctx):
-    em = discord.Embed(description="Send a random anime qoute",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em = discord.Embed(description="Sends a random anime qoute",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.rndqoute`")
