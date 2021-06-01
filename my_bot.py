@@ -164,8 +164,25 @@ async def clear(context,amount=2):
     await context.send(f"`{amount} messages has been Deleted... 👍`",delete_after = 10)
 
 #mute
-    
+#addrole
+@client.command(name="addrole",aliases=["Addrole"])    
+@commands.has_permissions(administrator = True)    
+async def addrole(ctx,member :discord.Member,role: typing.Optional[discord.Role], *,rolename = None):
+    try:
+        
+        if role != None:
+            
+            await member.add_roles(role)
+            await ctx.reply(f"`{role.name}` role has been given to {member.mention}")
+        else:   
+            roless = discord.utils.get(ctx.guild.roles, name = rolename)
+        
+            await member.add_roles(roless)
+            await ctx.reply(f"`{rolename}` role has been given to {member.mention}")
+    except:
+        await ctx.reply("Type `S.addrole <ROLE NAME OR MENTION ROLE>`")
  
+    
 #EMOTES................................................................
 #blush......
 @client.command(name='blush')    
@@ -1358,27 +1375,26 @@ async def filler(ctx, *,word):
         await ctx.send(embed = emb)
     except:
         em = discord.Embed(title="Not found")
-        msg = await ctx.send(embed=em,delete_after=30)      
-
+        msg = await ctx.send(embed=em,delete_after=30)
 
 @client.command(name='setmal',aliases=["Setmal","setprofile","Setprofile"])
 async def setmal(ctx, *,word): 
     userid = ctx.author.id
     
     
-    doc = mal_collect.find_one({"user_id": userid})
+    doc = mal_collect.find_one({"_id": userid})
     if doc != None:
         await ctx.reply("You already have your id tagged!\nTry `S.resetmal` to reset!")
     else:
-        post = {"user_id": userid,"mal_id":word}
+        post = {"_id": userid,"mal_id":word}
         mal_collect.insert_one(post)
         await ctx.reply("done")
 @client.command(name='resetmal',aliases=["Resetmal"])
 async def resetmal(ctx, *,word): 
     userid = ctx.author.id
-    doc = mal_collect.find_one({"user_id": userid})
+    doc = mal_collect.find_one({"_id": userid})
     if doc != None:
-        mal_collect.update_one({"user_id": userid},{"$set":{"mal_id":word}})
+        mal_collect.update_one({"_id": userid},{"$set":{"mal_id":word}})
         await ctx.reply("done")
     else:
         await ctx.reply("Set your id using `S.set`")
@@ -1386,9 +1402,9 @@ async def resetmal(ctx, *,word):
 @client.command(name='removemal',aliases=["Removemal"])
 async def removemal(ctx):
     userid = ctx.author.id
-    doc = mal_collect.find_one({"user_id": userid})
+    doc = mal_collect.find_one({"_id": userid})
     if doc != None:
-        mal_collect.delete_one({"user_id": userid})
+        mal_collect.delete_one({"_id": userid})
         await ctx.reply("done")
     else:
         await ctx.reply("You haven't tagged your account with your id yet...")
@@ -1402,7 +1418,7 @@ async def profile(ctx, *, member: discord.Member =None):
         if member == None:
             member = ctx.author
         userid = member.id
-        doc = mal_collect.find_one({"user_id": userid})
+        doc = mal_collect.find_one({"_id": userid})
         if doc != None:
             id = doc["mal_id"]
         else:
