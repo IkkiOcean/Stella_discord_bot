@@ -26,9 +26,12 @@ import numpy as np
 import urllib.parse, urllib.request, re
 from imdb import IMDb
 from bs4 import BeautifulSoup
+import certifi
+from pymongo import MongoClient
+
 #urban = UrbanClient()
 os.chdir(r".vscode")#G:\bot\stella\.vscode
-# client (our bot)
+
 #prefix...................]
 intents = discord.Intents.all()
 #client = commands.Bot(command_prefix='.', intents = intents)
@@ -41,8 +44,9 @@ client = commands.Bot(command_prefix = ('stela ','S.','s.','Stela '), intents = 
     
 #{} means its required
 #() means its optional
- 
-               
+cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
+db = cluster["discord"]  
+mal_collect = db["mal"]             
 
 
 #error.................
@@ -1357,14 +1361,102 @@ async def filler(ctx, *,word):
         msg = await ctx.send(embed=em,delete_after=30)      
 
 
+@client.command(name='setmal',aliases=["Setmal","setprofile","Setprofile"])
+async def setmal(ctx, *,word): 
+    userid = ctx.author.id
+    
+    
+    doc = mal_collect.find_one({"user_id": userid})
+    if doc != None:
+        await ctx.reply("You already have your id tagged!\nTry `S.resetmal` to reset!")
+    else:
+        post = {"user_id": userid,"mal_id":word}
+        mal_collect.insert_one(post)
+        await ctx.reply("done")
+@client.command(name='resetmal',aliases=["Resetmal"])
+async def resetmal(ctx, *,word): 
+    userid = ctx.author.id
+    doc = mal_collect.find_one({"user_id": userid})
+    if doc != None:
+        mal_collect.update_one({"user_id": userid},{"$set":{"mal_id":word}})
+        await ctx.reply("done")
+    else:
+        await ctx.reply("Set your id using `S.set`")
+
+@client.command(name='removemal',aliases=["Removemal"])
+async def removemal(ctx):
+    userid = ctx.author.id
+    doc = mal_collect.find_one({"user_id": userid})
+    if doc != None:
+        mal_collect.delete_one({"user_id": userid})
+        await ctx.reply("done")
+    else:
+        await ctx.reply("You haven't tagged your account with your id yet...")
 
 
 
 
+@client.command(name='profile',aliases=["Profile"])
+async def profile(ctx, *, member: discord.Member =None): 
+    try:
+        if member == None:
+            member = ctx.author
+        userid = member.id
+        doc = mal_collect.find_one({"user_id": userid})
+        if doc != None:
+            id = doc["mal_id"]
+        else:
+            await ctx.send("Set your mal id first")    
+            
+        link = "https://myanimelist.net/profile/{}".format(id)
+        r = requests.get(link)
 
-
-@client.command(name='profile',aliases=["Mal","mal","Profile"])
-async def profile(ctx, *,word): 
+        soup = BeautifulSoup(r.content,features="lxml")
+        #<a href="https://myanimelist.net/animelist/ItsIkki?status=2" class="">Completed</a>
+    #watch = (soup.find("span",attrs={"class":"di-ib fl-r lh10"}).text)
+    
+        spans = soup.find_all('span',attrs={"class":"di-ib fl-r lh10"})
+        numbers = []
+        for span in spans:
+            numbers.append(span.string)
+        numb = []    
+    
+        entries = soup.find_all('span',attrs={"class":"di-ib fl-r"})
+        for entry in entries:
+            numb.append(entry.string)    
+    #comp = (a.find("span",attrs={"class":"di-ib fl-r lh10"}).text) 
+        #print(numbers)
+        
+        score = soup.find('div',attrs={"class":"di-tc ar pr8 fs12 fw-b"}).get_text(strip=True)
+        #print(score)
+        
+        days = soup.find('div',attrs={"class":"di-tc al pl8 fs12 fw-b"}).get_text(strip=True)
+        #print(days)
+        #<img class="" data-src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" 
+        
+        img = soup.find('img',attrs={"class":"lazyload"})['data-src']
+        #print(img)
+        #<img class="" data-src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" data-gtm-vis-first-on-screen-13153650_151="297" data-gtm-vis-first-on-screen-13153650_147="329" data-gtm-vis-recent-on-screen-13153650_151="3350706" data-gtm-vis-total-visible-time-13153650_151="100" data-gtm-vis-has-fired-13153650_151="1" data-gtm-vis-recent-on-screen-13153650_147="3350825" data-gtm-vis-total-visible-time-13153650_147="100" data-gtm-vis-has-fired-13153650_147="1">
+        em = discord.Embed(description=f"**[{member.display_name} Anime Stats]({link})**\nMal user: {id}",color = ctx.author.color)   
+        em.add_field(name="Watching:",value=numbers[0])
+        em.add_field(name="Completed:",value=numbers[1])
+        em.add_field(name="On Hold:",value=numbers[2])
+        em.add_field(name="Dropped:",value=numbers[3])
+        em.add_field(name="Plan to Watch:",value=numbers[4])
+        em.add_field(name="Total Entries:",value=numb[0])
+        em.add_field(name="Rewatched:",value=numb[1])
+        em.add_field(name="Total Episodes:",value=numb[2])
+        em.add_field(name="Mean Score:",value=score[11:])
+        em.add_field(name="Days:",value=days[5:])
+        em.set_thumbnail(url=img)
+        em.set_author(name=ctx.author,icon_url=ctx.author.avatar_url)
+        em.set_footer(text= f'Requested by {ctx.author}' )
+        await ctx.send(embed = em)
+    except:
+        em = discord.Embed(title="Not found")
+        await ctx.send(embed=em)
+@client.command(name='Mal',aliases=["mal"])
+async def mal(ctx, *,word): 
     try:
         link = "https://myanimelist.net/profile/{}".format(word)
         r = requests.get(link)
@@ -1412,7 +1504,8 @@ async def profile(ctx, *,word):
         await ctx.send(embed = em)
     except:
         em = discord.Embed(title="Not found")
-        await ctx.send(embed=em) 
+        await ctx.send(embed=em)
+
 @client.command(name='userinfo',aliases=["whois","Whois","Userinfo"])
 async def userinfo(ctx, member: discord.Member = None):
     if not member:  # if member is no mentioned

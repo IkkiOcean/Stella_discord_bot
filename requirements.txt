@@ -13,6 +13,7 @@ colorama==0.4.4
 cssselect==1.1.0
 discord==1.0.1
 discord.py==1.6.0
+dnspython==2.1.0
 docopt==0.6.2
 fake-useragent==0.1.11
 gogoanime-api==1.2.458
@@ -33,6 +34,7 @@ pipreqs==0.4.10
 pycodestyle==2.6.0
 pyee==8.1.0
 pylint==2.6.0
+pymongo==3.11.4
 pyppeteer==0.2.5
 pyquery==1.4.3
 requests==2.25.0
