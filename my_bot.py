@@ -1,8 +1,11 @@
 import discord
 from discord import embeds
-from discord import user #pip install discord
+from discord import user
+from discord.client import Client
+from discord.colour import Color #pip install discord
 from discord.ext import commands
 from discord.ext.commands import BucketType, Greedy
+from discord.member import Member
 import requests #requests
 from discord.errors import Forbidden
 import random, textwrap
@@ -73,14 +76,22 @@ async def on_ready():
 
     await general_channel.send('Hello Master')
     print("bot is online")
-    
-
+     
+#@client.event
+#async def on_message(message):
+   # if not message.author.bot:
+    #    mention = f'<@{client.user.id}>'
+        
+    #    if mention == message.content:
+    #        await message.reply("My prefixes are `S.` and `Stela`")
+    #        await message.reply("You mentioned me :)")   
+     #   await client.process_commands(message)         
 #commands...................................................
 
 
 @client.command(name='version')
 async def version(context):
-    myembed = discord.Embed(title='Current Version', description='The Bot is in version 1.4.1',color=0x00ebff)
+    myembed = discord.Embed(title='Current Version', description='The Bot is in version 1.4.3',color=0x00ebff)
     myid = '<@!745006368175423489>'
     helper1 = '<@!741967836422996008>'
     
@@ -1271,7 +1282,87 @@ async def define(ctx, *,word):
     except:
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
-   
+@client.command(name='eplist',aliases=["Eplist"])
+async def eplist(ctx, *,word):  
+    try:   
+        filler_string = word.replace(" ","-")
+        link = ("https://www.animefillerlist.com/shows/" + filler_string)
+        r = requests.get(link)
+        
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all('td',attrs={"class":"Type"})
+        spanss = soup.find_all('td',attrs={"class":"Title"})
+        numbers = ""
+        count = 1
+        ep = len(spans)
+        
+        for (span,spa) in zip(spans,spanss):
+            
+            numbers += (f"**EP {count}**. {span.get_text(strip=True)}:\n||[{spa.get_text(strip=True)}]||\n")
+    
+            count += 1
+            if count > 10:
+                break    
+                     
+        em = discord.Embed(description = f"**[{word} Episode List]({link})**",color=ctx.author.color)    
+        em.add_field(name= f"Total Episodes : {ep}",value=numbers )
+        em.set_footer(text=f"Reply with the episode number\nRequested by {ctx.author}")
+        msg1 = await ctx.send(embed = em) 
+        def check(msg):
+            return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit()
+        try:
+            msg2 = await client.wait_for('message', check=check,timeout=30)
+            msg3 = int(msg2.content)
+            no = msg3-1
+            num = msg3
+            lis = ""
+            nom = 0
+            for (span,spa) in zip(spans[no:],spanss[no:]):
+                lis += (f"**EP {num}**. {span.get_text(strip=True)}:\n||[{spa.get_text(strip=True)}]||\n")
+                num += 1
+                nom += 1
+                if nom > 10:
+                    break 
+            emb = discord.Embed(description = f"**[{word} Episode List]({link})**",color=ctx.author.color)    
+            emb.add_field(name= f"Total Episodes : {ep}",value=lis)
+            emb.set_footer(text= f'Requested by {ctx.author}' )
+            id = msg1.id
+            dellmsg = await ctx.channel.fetch_message(id)
+            await dellmsg.delete()
+            await ctx.send(embed = emb) 
+        except asyncio.TimeoutError:
+            em1 = discord.Embed(description="**Timeout**")   
+            await ctx.send(embed=em1)  
+    except:
+        em = discord.Embed(title="Not found")
+        msg = await ctx.send(embed=em,delete_after=30)
+@client.command(name='filler',aliases=["Filler","Fill","fill"])
+async def filler(ctx, *,word):  
+    try:  
+        filler_string = word.replace(" ","-")
+        link = ("https://www.animefillerlist.com/shows/" + filler_string)
+        r = requests.get(link)    
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all('div',attrs={"class":"filler"})
+        
+        numbers  = ""
+        for span in spans:
+            numbers += (f"{span.get_text(strip=True)}, ")
+        emb = discord.Embed(description=f"**[{word} Filler List]({link})**",color=ctx.author.color)
+        emb.add_field(name= "**Filler Episodes:**",value = numbers[16:])  
+        emb.set_footer(text= f'Requested by {ctx.author}' )  
+        await ctx.send(embed = emb)
+    except:
+        em = discord.Embed(title="Not found")
+        msg = await ctx.send(embed=em,delete_after=30)      
+
+
+
+
+
+
+
+
 @client.command(name='profile',aliases=["Mal","mal","Profile"])
 async def profile(ctx, *,word): 
     try:
@@ -1294,7 +1385,7 @@ async def profile(ctx, *,word):
     #comp = (a.find("span",attrs={"class":"di-ib fl-r lh10"}).text) 
         #print(numbers)
         
-        score = soup.find('span',attrs={"class":"score-label score-6"}).string
+        score = soup.find('div',attrs={"class":"di-tc ar pr8 fs12 fw-b"}).get_text(strip=True)
         #print(score)
         
         days = soup.find('div',attrs={"class":"di-tc al pl8 fs12 fw-b"}).get_text(strip=True)
@@ -1313,14 +1404,15 @@ async def profile(ctx, *,word):
         em.add_field(name="Total Entries:",value=numb[0])
         em.add_field(name="Rewatched:",value=numb[1])
         em.add_field(name="Total Episodes:",value=numb[2])
-        em.add_field(name="Mean Score:",value=score)
+        em.add_field(name="Mean Score:",value=score[11:])
         em.add_field(name="Days:",value=days[5:])
         em.set_thumbnail(url=img)
         em.set_author(name=ctx.author,icon_url=ctx.author.avatar_url)
+        em.set_footer(text= f'Requested by {ctx.author}' )
         await ctx.send(embed = em)
     except:
         em = discord.Embed(title="Not found")
-        await ctx.send(embed=em)    
+        await ctx.send(embed=em) 
 @client.command(name='userinfo',aliases=["whois","Whois","Userinfo"])
 async def userinfo(ctx, member: discord.Member = None):
     if not member:  # if member is no mentioned
@@ -1650,7 +1742,7 @@ async def help(ctx):
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` ",inline=False)
-    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit`",inline=False)
+    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
@@ -1927,6 +2019,32 @@ async def rndqoute(ctx):
     em.add_field(name="**Aliases**",value="`rq`")
     await ctx.send(embed=em)
 
+@help.command()
+async def filler(ctx):
+    em = discord.Embed(description="Sends filler episodes of anime, if any",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.filler <Anime>`")
+    em.add_field(name="**Aliases**",value="`fill`")
+    await ctx.send(embed=em)    
+
+@help.command()
+async def mal(ctx):
+    em = discord.Embed(description="Use to check mal profile",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.mal <mal id>`")
+    em.add_field(name="**Aliases**",value="`profile`")
+    await ctx.send(embed=em)  
+
+@help.command()
+async def eplist(ctx):
+    em = discord.Embed(description="Sends the episode list of anime",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.eplist <Anime>`")
+    
+    await ctx.send(embed=em)  
 
 # run the client on the server
 client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.1sl5xrh9uoyW-uUZHo3kYpk-4pM')
