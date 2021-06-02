@@ -1542,7 +1542,7 @@ async def read(ctx,*,word):
                 break
         em = discord.Embed(description= "Select the manga you wanna read...")    
         em.add_field(name="Mangas:",value= names)
-        await ctx.send(embed=em)
+        await ctx.reply(embed=em)
         try:
             def check(msg):
                 return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit() 
@@ -1552,7 +1552,7 @@ async def read(ctx,*,word):
             spanss = soup.find_all('h3',attrs={"class":"story_name"})
         #project_hmeref = [i['href'] for i in soup.find_all('a',attrs={"rel" : "nofollow"},href=True)]
             chapter = (spanss[msg1].a['href'])
-            await ctx.send("Send the chapter number")
+            await ctx.reply("Send the chapter number")
             try:
                 def check(msg2):
                     return msg2.author == ctx.author and ctx.channel == msg2.channel and msg2.content.isdigit() 
@@ -1568,16 +1568,16 @@ async def read(ctx,*,word):
                     link2 = (f"https://mangakakalot.com/chapter/{nam}/chapter_{number}")
                 
                 emb = discord.Embed(title=f"{namess[msg1]}",description=f"[Click here]({link2})")
-                await ctx.send(embed=emb)
+                await ctx.reply(embed=emb)
             except asyncio.TimeoutError:
                 em3 = discord.Embed(description="**Timeout**")   
-                await ctx.send(embed=em3)    
+                await ctx.reply(embed=em3)    
         except asyncio.TimeoutError:
             em1 = discord.Embed(description="**Timeout**")   
-            await ctx.send(embed=em1)  
+            await ctx.reply(embed=em1)  
     except:
         em = discord.Embed(title="Not found")
-        msg = await ctx.send(embed=em,delete_after=30)
+        msg = await ctx.reply(embed=em,delete_after=30)
 
 
 
@@ -2204,6 +2204,21 @@ async def mal(ctx):
     em.add_field(name="**Usage**",value="`S.mal <mal id>`")
     em.add_field(name="**Aliases**",value="`profile`")
     await ctx.send(embed=em)  
+
+@help.command()
+async def profile(ctx):
+    em = discord.Embed(description="Use to see mal profile",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.profile`\nUse `S.set <mal-id>` to register")
+    await ctx.send(embed=em)  
+
+@help.command()
+async def read(ctx):
+    em = discord.Embed(description="Get link to read manga",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.read <Manga>`")
 
 @help.command()
 async def eplist(ctx):
