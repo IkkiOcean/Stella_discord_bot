@@ -7,7 +7,7 @@ from discord.ext import commands
 from discord.ext.commands import BucketType, Greedy
 from discord.member import Member
 import requests #requests
-from discord.errors import Forbidden
+from discord.errors import DiscordServerError, Forbidden
 import random, textwrap
 import datetime
 import json
@@ -1521,6 +1521,65 @@ async def mal(ctx, *,word):
     except:
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
+
+@client.command(name='read',aliases=["Read"])
+async def read(ctx,*,word): 
+    try:
+        word = word.replace(" ","_")
+        link = "https://mangakakalot.com/search/story/{}".format(word)
+        r = requests.get(link)
+        
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all('h3',attrs={"class":"story_name"})
+        names = ""
+        namess =[]
+        count = 1
+        for span in spans:
+            names += (f"{count}: {span.get_text(strip=True)}\n")
+            namess.append(span.get_text(strip=True))
+            count += 1
+            if count > 3:
+                break
+        em = discord.Embed(description= "Select the manga you wanna read...")    
+        em.add_field(name="Mangas:",value= names)
+        await ctx.send(embed=em)
+        try:
+            def check(msg):
+                return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit() 
+            msg = await client.wait_for("message", check=check,timeout=30)    
+            msg1 = int(msg.content)  
+            msg1 = msg1 - 1  
+            spanss = soup.find_all('h3',attrs={"class":"story_name"})
+        #project_hmeref = [i['href'] for i in soup.find_all('a',attrs={"rel" : "nofollow"},href=True)]
+            chapter = (spanss[msg1].a['href'])
+            await ctx.send("Send the chapter number")
+            try:
+                def check(msg2):
+                    return msg2.author == ctx.author and ctx.channel == msg2.channel and msg2.content.isdigit() 
+                msg2 = await client.wait_for("message", check=check,timeout=30)    
+                number = int(msg2.content)
+                
+                link2 = f"{chapter}/chapter-{number}"
+                
+                if "read" in link2:
+                    
+                    nam = namess[msg1].replace(" ","_")
+                    
+                    link2 = (f"https://mangakakalot.com/chapter/{nam}/chapter_{number}")
+                
+                emb = discord.Embed(title=f"{namess[msg1]}",description=f"[Click here]({link2})")
+                await ctx.send(embed=emb)
+            except asyncio.TimeoutError:
+                em3 = discord.Embed(description="**Timeout**")   
+                await ctx.send(embed=em3)    
+        except asyncio.TimeoutError:
+            em1 = discord.Embed(description="**Timeout**")   
+            await ctx.send(embed=em1)  
+    except:
+        em = discord.Embed(title="Not found")
+        msg = await ctx.send(embed=em,delete_after=30)
+
+
 
 @client.command(name='userinfo',aliases=["whois","Whois","Userinfo"])
 async def userinfo(ctx, member: discord.Member = None):
