@@ -1561,7 +1561,7 @@ async def read(ctx,*,word):
                 
                 link2 = f"{chapter}/chapter-{number}"
                 
-                if "read" in link2:
+                if "read-" in link2:
                     
                     nam = namess[msg1].replace(" ","_")
                     
