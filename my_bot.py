@@ -772,7 +772,7 @@ async def santa(ctx, *,caption):
 async def jojo(ctx,user:discord.Member=None ): 
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/yrUJdsK.png")  
+    resp=requests.get("https://i.imgur.com/fFzVj4u.png")  
     post = Image.open(BytesIO(resp.content)) 
     asset = user.avatar_url_as(size=128)
     data = BytesIO(await asset.read())   
@@ -870,7 +870,7 @@ async def bitch(ctx, *,caption):
 #yu-gi-oh
 @client.command(name='yugioh', aliases=['Yugioh'])
 async def yugioh(ctx,*,msg ): 
-    resp=requests.get("https://i.imgur.com/bPMhqIY.jpg")  
+    resp=requests.get("https://i.imgur.com/bPMhqIY.jpg").convert  
     post = Image.open(BytesIO(resp.content)) 
     font = ImageFont.truetype("ARIAL.TTF", 25)
     line1, line2 = msg.split("|")
@@ -922,6 +922,27 @@ async def yugiohpfp(ctx,member: Greedy[discord.Member] ):
 # meme   https://i.imgur.com/2i9cJvo.png
 # yugioh   https://i.imgur.com/bPMhqIY.jpg      
 #message................
+@client.command(name='pro',aliases=["Pro"])
+async def pro(ctx, member: discord.Member = None):
+    if member == None:
+        member = ctx.author
+       
+    resp=requests.get("https://i.imgur.com/fAkM4cd.png")  
+    post = Image.open(BytesIO(resp.content)).convert('RGBA')     
+    asset1 = member.avatar_url
+    data1 = BytesIO(await asset1.read())   
+    pfp1 = Image.open(data1)
+    pfp1 = pfp1.resize((110,110)) 
+    
+    drw = ImageDraw.Draw(post)
+    drw.ellipse((100,300,100,300),fill=(0,0,0,0))
+    ImageDraw.floodfill(post, xy=(14,24),value=(0,0,0,0),thresh = 40)
+    post.paste(pfp1,(30,87))
+    post.save('profile.png')
+ 
+     
+    
+    await ctx.send(file=discord.File("profile.png")) 
 
 #announcement
 @client.command(name="announcement",aliases=["announce","Announce","Announcement"])
@@ -1425,6 +1446,8 @@ async def profile(ctx, *, member: discord.Member =None):
             await ctx.send("Set your mal id first")    
             
         link = "https://myanimelist.net/profile/{}".format(id)
+        linkanime = "https://myanimelist.net/animelist/{}".format(id)
+        linkmanga = "https://myanimelist.net/mangalist/{}".format(id)
         r = requests.get(link)
 
         soup = BeautifulSoup(r.content,features="lxml")
@@ -1440,20 +1463,16 @@ async def profile(ctx, *, member: discord.Member =None):
         entries = soup.find_all('span',attrs={"class":"di-ib fl-r"})
         for entry in entries:
             numb.append(entry.string)    
-    #comp = (a.find("span",attrs={"class":"di-ib fl-r lh10"}).text) 
-        #print(numbers)
+    
         
         score = soup.find('div',attrs={"class":"di-tc ar pr8 fs12 fw-b"}).get_text(strip=True)
         #print(score)
         
         days = soup.find('div',attrs={"class":"di-tc al pl8 fs12 fw-b"}).get_text(strip=True)
-        #print(days)
-        #<img class="" data-src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" 
         
         img = soup.find('img',attrs={"class":"lazyload"})['data-src']
-        #print(img)
-        #<img class="" data-src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" data-gtm-vis-first-on-screen-13153650_151="297" data-gtm-vis-first-on-screen-13153650_147="329" data-gtm-vis-recent-on-screen-13153650_151="3350706" data-gtm-vis-total-visible-time-13153650_151="100" data-gtm-vis-has-fired-13153650_151="1" data-gtm-vis-recent-on-screen-13153650_147="3350825" data-gtm-vis-total-visible-time-13153650_147="100" data-gtm-vis-has-fired-13153650_147="1">
-        em = discord.Embed(description=f"**[{member.display_name} Anime Stats]({link})**\nMal user: {id}",color = ctx.author.color)   
+        
+        em = discord.Embed(description=f"**[{member.display_name}'s Anime List]({linkanime})**\nMal user: {id}",color = ctx.author.color)   
         em.add_field(name="Watching:",value=numbers[0])
         em.add_field(name="Completed:",value=numbers[1])
         em.add_field(name="On Hold:",value=numbers[2])
@@ -1467,7 +1486,88 @@ async def profile(ctx, *, member: discord.Member =None):
         em.set_thumbnail(url=img)
         em.set_author(name=ctx.author,icon_url=ctx.author.avatar_url)
         em.set_footer(text= f'Requested by {ctx.author}' )
-        await ctx.send(embed = em)
+        
+        msg = await ctx.send(embed = em)
+        #await msg.add_reaction("⬅️")
+        await msg.add_reaction("🌟")
+        await msg.add_reaction("🖌️")
+        def check(reaction, user):
+            
+            return str(reaction.emoji) in ["🌟","🔖","🖌️"] and user != client.user and reaction.message.id == msg.id and user == ctx.author
+        # This makes sure nobody except the command sender can interact with the "menu"
+
+        while True:
+            try:
+                reaction, user = await client.wait_for('reaction_add', check=check, timeout=30)
+            # waiting for a reaction to be added - times out after x seconds, 60 in this
+            # example
+                 
+                if str(reaction.emoji) == "🌟":
+                    
+                    #<div class="di-tc va-t pl8 data">
+                    #<a href="https://myanimelist.net/anime/20507/Noragami">Noragami</a><br>
+                    favs = soup.find_all('div',attrs={"class":"di-tc va-t pl8 data"})
+                    #(spanss[msg1].a['href'])
+                
+                    favanime = ""
+                    favmanga = ""
+                    favcharacter = ""
+                    for fav in favs:
+                        if '/anime/' in (fav.a['href']):
+                        
+                            favanime += f"[{fav.a.string}]({fav.a['href']})\n"
+                        if '/manga/' in (fav.a['href']):
+                        
+                            favmanga += f"[{fav.a.string}]({fav.a['href']})\n"
+                        if '/character/' in (fav.a['href']):
+                        
+                            favcharacter += f"[{fav.a.string}]({fav.a['href']})\n"    
+                    if favmanga == "":
+                        favmanga = "None"
+                    if favanime == "":
+                        favanime = "None" 
+                    if favcharacter == "":
+                        favcharacter = "None"           
+                    emb = discord.Embed(description=f"**[{member.display_name}'s Profile]({link})**\nMal user: {id}",color = ctx.author.color)   
+                    emb.add_field(name="Favourite Anime:",value=favanime)  
+                    emb.add_field(name="Favourite Manga:",value=favmanga)
+                    emb.add_field(name="Favourite Character:",value=favcharacter)   
+                    emb.set_thumbnail(url=img)    
+                    await msg.edit(embed=emb)  
+                    await msg.remove_reaction(reaction, user) 
+                    await msg.remove_reaction("🌟",client.user)
+                    await msg.add_reaction("🔖") 
+                    await msg.add_reaction("🖌️")
+                if str(reaction.emoji) == "🔖":
+                    await msg.edit(embed=em) 
+                    await msg.remove_reaction(reaction, user)
+                    await msg.remove_reaction("🔖",client.user)
+                    await msg.add_reaction("🌟")  
+                    await msg.add_reaction("🖌️")
+                if str(reaction.emoji) == "🖌️":
+                    embb = discord.Embed(description=f"**[{member.display_name}'s Manga List]({linkmanga})**\nMal user: {id}",color = ctx.author.color)
+                    
+                    embb.add_field(name="Reading:",value=numbers[5])
+                    embb.add_field(name="Completed:",value=numbers[6])
+                    embb.add_field(name="On Hold:",value=numbers[7])
+                    embb.add_field(name="Dropped:",value=numbers[8])
+                    embb.add_field(name="Plan to Watch:",value=numbers[9])
+                    embb.add_field(name="Total Entries:",value=numb[3])
+                    embb.add_field(name="Reread:",value=numb[4])
+                    embb.add_field(name="Chapters:",value=numb[5])
+                    embb.add_field(name="Volumes:",value=numb[6])
+                
+                    embb.set_thumbnail(url=img)
+                    embb.set_author(name=ctx.author,icon_url=ctx.author.avatar_url)
+                    embb.set_footer(text= f'Requested by {ctx.author}' )
+                    await msg.edit(embed=embb) 
+                    await msg.remove_reaction(reaction, user)
+                    await msg.remove_reaction("🖌️",client.user)
+                    await msg.add_reaction("🌟")
+                    await msg.add_reaction("🔖")
+            except asyncio.TimeoutError:
+                return
+                  
     except:
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
@@ -1475,6 +1575,8 @@ async def profile(ctx, *, member: discord.Member =None):
 async def mal(ctx, *,word): 
     try:
         link = "https://myanimelist.net/profile/{}".format(word)
+        linkanime = "https://myanimelist.net/animelist/{}".format(word)
+        linkmanga = "https://myanimelist.net/mangalist/{}".format(word)
         r = requests.get(link)
 
         soup = BeautifulSoup(r.content,features="lxml")
@@ -1503,7 +1605,7 @@ async def mal(ctx, *,word):
         img = soup.find('img',attrs={"class":"lazyload"})['data-src']
         #print(img)
         #<img class="" data-src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" src="https://cdn.myanimelist.net/images/userimages/10597508.jpg?t=1622063400" data-gtm-vis-first-on-screen-13153650_151="297" data-gtm-vis-first-on-screen-13153650_147="329" data-gtm-vis-recent-on-screen-13153650_151="3350706" data-gtm-vis-total-visible-time-13153650_151="100" data-gtm-vis-has-fired-13153650_151="1" data-gtm-vis-recent-on-screen-13153650_147="3350825" data-gtm-vis-total-visible-time-13153650_147="100" data-gtm-vis-has-fired-13153650_147="1">
-        em = discord.Embed(description=f"**[{word} Anime Stats]({link})**",color = ctx.author.color)   
+        em = discord.Embed(description=f"**[{word}'s Anime List]({linkanime})**",color = ctx.author.color)   
         em.add_field(name="Watching:",value=numbers[0])
         em.add_field(name="Completed:",value=numbers[1])
         em.add_field(name="On Hold:",value=numbers[2])
@@ -1517,10 +1619,92 @@ async def mal(ctx, *,word):
         em.set_thumbnail(url=img)
         em.set_author(name=ctx.author,icon_url=ctx.author.avatar_url)
         em.set_footer(text= f'Requested by {ctx.author}' )
-        await ctx.send(embed = em)
+        
+        msg = await ctx.send(embed = em)
+        #await msg.add_reaction("⬅️")
+        await msg.add_reaction("🌟")
+        await msg.add_reaction("🖌️")
+        def check(reaction, user):
+            
+            return str(reaction.emoji) in ["🌟","🔖","🖌️"] and user != client.user and reaction.message.id == msg.id and user == ctx.author
+        # This makes sure nobody except the command sender can interact with the "menu"
+
+        while True:
+            try:
+                reaction, user = await client.wait_for('reaction_add', check=check, timeout=30)
+            # waiting for a reaction to be added - times out after x seconds, 60 in this
+            # example
+                 
+                if str(reaction.emoji) == "🌟":
+                    
+                    #<div class="di-tc va-t pl8 data">
+                    #<a href="https://myanimelist.net/anime/20507/Noragami">Noragami</a><br>
+                    favs = soup.find_all('div',attrs={"class":"di-tc va-t pl8 data"})
+                    #(spanss[msg1].a['href'])
+                
+                    favanime = ""
+                    favmanga = ""
+                    favcharacter = ""
+                    for fav in favs:
+                        if '/anime/' in (fav.a['href']):
+                        
+                            favanime += f"[{fav.a.string}]({fav.a['href']})\n"
+                        if '/manga/' in (fav.a['href']):
+                        
+                            favmanga += f"[{fav.a.string}]({fav.a['href']})\n"
+                        if '/character/' in (fav.a['href']):
+                        
+                            favcharacter += f"[{fav.a.string}]({fav.a['href']})\n"    
+                    if favmanga == "":
+                        favmanga = "None"
+                    if favanime == "":
+                        favanime = "None" 
+                    if favcharacter == "":
+                        favcharacter = "None"           
+                    emb = discord.Embed(description=f"**[{word}'s Profile]({link})**",color = ctx.author.color)   
+                    emb.add_field(name="Favourite Anime:",value=favanime)  
+                    emb.add_field(name="Favourite Manga:",value=favmanga)
+                    emb.add_field(name="Favourite Character:",value=favcharacter)   
+                    emb.set_thumbnail(url=img)    
+                    await msg.edit(embed=emb)  
+                    await msg.remove_reaction(reaction, user) 
+                    await msg.remove_reaction("🌟",client.user)
+                    await msg.add_reaction("🔖") 
+                    await msg.add_reaction("🖌️")
+                if str(reaction.emoji) == "🔖":
+                    await msg.edit(embed=em) 
+                    await msg.remove_reaction(reaction, user)
+                    await msg.remove_reaction("🔖",client.user)
+                    await msg.add_reaction("🌟")  
+                    await msg.add_reaction("🖌️")
+                if str(reaction.emoji) == "🖌️":
+                    embb = discord.Embed(description=f"**[{word}'s Manga List]({linkmanga})**",color = ctx.author.color)
+                    
+                    embb.add_field(name="Reading:",value=numbers[5])
+                    embb.add_field(name="Completed:",value=numbers[6])
+                    embb.add_field(name="On Hold:",value=numbers[7])
+                    embb.add_field(name="Dropped:",value=numbers[8])
+                    embb.add_field(name="Plan to Watch:",value=numbers[9])
+                    embb.add_field(name="Total Entries:",value=numb[3])
+                    embb.add_field(name="Reread:",value=numb[4])
+                    embb.add_field(name="Chapters:",value=numb[5])
+                    embb.add_field(name="Volumes:",value=numb[6])
+                
+                    embb.set_thumbnail(url=img)
+                    embb.set_author(name=ctx.author,icon_url=ctx.author.avatar_url)
+                    embb.set_footer(text= f'Requested by {ctx.author}' )
+                    await msg.edit(embed=embb) 
+                    await msg.remove_reaction(reaction, user)
+                    await msg.remove_reaction("🖌️",client.user)
+                    await msg.add_reaction("🌟")
+                    await msg.add_reaction("🔖")
+            except asyncio.TimeoutError:
+                return
+                  
     except:
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
+   
 
 @client.command(name='read',aliases=["Read"])
 async def read(ctx,*,word): 
