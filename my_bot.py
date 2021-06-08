@@ -30,7 +30,7 @@ import certifi
 from pymongo import MongoClient
 
 #urban = UrbanClient()
-os.chdir(r".vscode")#G:\bot\stella\.vscode
+os.chdir(r"G:\bot\stella\.vscode")#G:\bot\stella\.vscode
 
 #prefix...................]
 intents = discord.Intents.all()
@@ -180,9 +180,24 @@ async def addrole(ctx,member :discord.Member,role: typing.Optional[discord.Role]
             await member.add_roles(roless)
             await ctx.reply(f"`{rolename}` role has been given to {member.mention}")
     except:
-        await ctx.reply("Type `S.addrole <ROLE NAME OR MENTION ROLE>`")
+        await ctx.reply("Type `S.addrole <member> <ROLE NAME OR MENTION ROLE>`")
  
-    
+@client.command(name="removerole",aliases=["Removerole"])    
+@commands.has_permissions(administrator = True)    
+async def removerole(ctx,member :discord.Member,role: typing.Optional[discord.Role], *,rolename = None):
+    try:
+        
+        if role != None:
+            
+            await member.remove_roles(role)
+            await ctx.reply(f"`{role.name}` role has been removed from {member.mention}")
+        else:   
+            roless = discord.utils.get(ctx.guild.roles, name = rolename)
+        
+            await member.remove_roles(roless)
+            await ctx.reply(f"`{rolename}` role has been removed from {member.mention}")
+    except:
+        await ctx.reply("Type `S.removerole <member> <ROLE NAME OR MENTION ROLE>`")    
 #EMOTES................................................................
 #blush......
 @client.command(name='blush')    
@@ -250,6 +265,21 @@ async def laugh(context,member: typing.Optional[discord.Member], *,gifmsg=None):
     await context.send(embed=laughs)
     await context.message.delete()    
 #dance
+@client.command(name='kiss',aliases = ["Kiss"])    
+async def kiss(context,member: discord.Member, *,gifmsg=None):
+     
+    if member == None:
+        await context.reply("Atleast mention someone")
+    else:
+        kisss = discord.Embed(description=gifmsg,timestamp=datetime.datetime.utcnow(),color=0x00ebff)
+        kisss.set_author(name = f"{context.message.author.display_name}  is kissing {member.display_name} ",icon_url=f"{context.message.author.avatar_url}")   
+        kissgif = ('https://i.imgur.com/OB1ZlQO.gif','https://i.imgur.com/TM8bbJF.gif','https://i.imgur.com/3xJo1FG.gif','https://i.imgur.com/QLPpZ6C.gif')   
+        rnd_kiss = random.choice(kissgif)
+    #smiles.add_field(name="Happy",value=(f"{context.author.mention} is Smiling ｡◕‿◕｡"))
+        kisss.set_image(url=rnd_kiss)
+
+        await context.send(embed=kisss)
+       # await context.message.delete() 
 @client.command(name='dance')    
 async def dance(context, *,gifmsg=None):
     dances = discord.Embed(description=gifmsg,timestamp=datetime.datetime.utcnow(),color=0x00ebff) 
@@ -916,11 +946,26 @@ async def yugiohpfp(ctx,member: Greedy[discord.Member] ):
     pfp = pfp.resize((168,167)) 
     post.paste(pfp,(6,286))
     post.save("yugiohpfp.jpg")
-    await ctx.send(file=discord.File("yugiohpfp.jpg"))       
-#billi https://i.imgur.com/qhlo7N1.jpg
-# fact   https://i.imgur.com/aKADQfg.jpg
-# meme   https://i.imgur.com/2i9cJvo.png
-# yugioh   https://i.imgur.com/bPMhqIY.jpg      
+    await ctx.send(file=discord.File("yugiohpfp.jpg"))  
+
+@client.command(name='Imagify',aliases=["img","Img","imagify"])
+async def imagify(ctx, *,text):
+    
+    resp=requests.get("https://i.imgur.com/CFvwPZQ.jpg") 
+    post = Image.open(BytesIO(resp.content))
+    font = ImageFont.truetype("Product_Sans_Regular.ttf", 30) 
+    W2 = 210
+    H2 = 20
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(text,25)   
+    for line in lines:
+        w2, h2 = font.getsize(line)
+        draw.text((W2-w2/2,H2),line,(255,255,255),font=font)
+        H2 += h2
+    post.save("img.jpg")
+    await ctx.send(file=discord.File("img.jpg"))     
+
 #message................
 @client.command(name='pro',aliases=["Pro"])
 async def pro(ctx, member: discord.Member = None):
@@ -1156,10 +1201,44 @@ async def manga(ctx, *, manga):
 #AnimeSearchResult.synopsis
 #AnimeSearchResult.type
 #AnimeSearchResult.score    
-    
-
-
-
+#@client.command(name= "char",aliases = ["Character","Char","character"])
+#async def character(ctx, *, name):    
+ #   link = ("https://myanimelist.net/character.php?q={}").format(name)
+  #  print(link)
+  #  r = requests.get(link)
+  #  soup = BeautifulSoup(r.content,features="lxml")
+  #  span = soup.find('td',attrs={"class":"borderClass bgColor1"},{"width":"175"})
+  #  print(span)
+  #  print({span[0].a.string})
+  #  print({span[0].a['href']})
+  #  img = soup.find('img',attrs={"class":"lazyload"})['data-src']
+  #  anime = span.get_text(strip=True)
+   # 
+    #em = discord.Embed(description = "Character search result", color = ctx.author.color)
+    #em.add_field(name="Characters:",value= [{span[0].a.string}]({span[0].a['href']}) )  
+ #   em.add_field(name="Show",value=anime)  
+  #  em.thumbnail(url = img )
+   # msg = await ctx.reply(embed=em)
+    #await msg.add_reaction("🔎")
+    #def check(reaction, user):
+            
+    #        return str(reaction.emoji) in ["🔎","📋"] and user != client.user and reaction.message.id == msg.id and user == ctx.author
+    #while True:
+     #   reaction = await client.wait_for("reaction_add", check=check,timeout=30) 
+      #  if str(reaction.emoji) == "🔎":
+       #     emb =discord.embed(color=ctx.author.color) 
+        #    emb.set_image(url=img) 
+         #   await msg.edit(embed=emb)
+          #  await msg.remove_reaction("🔎",client.user)
+           # await msg.add_reaction("📋") 
+                    
+      #  if str(reaction.emoji) == "📋": 
+       #     await msg.remove_reaction(reaction, user) 
+        #    await msg.remove_reaction("📋",client.user)  
+         #   await msg.edit(embed=em)
+          #  await msg.add_reaction("🔎")
+        
+        
 @client.command(name='waifu',aliases=["Waifu"]) 
 @commands.cooldown(2, 120, BucketType.user)  
 async def waifu_(ctx):
@@ -1324,6 +1403,25 @@ async def define(ctx, *,word):
     except:
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
+@client.command(name='char',aliases=["Char"])
+async def char(ctx, *,word): 
+    link = f"https://myanimelist.net/character.php?cat=character&q={word}"
+    r = requests.get(link)
+    soup = BeautifulSoup(r.content,features="lxml")
+    spans = soup.find("td", {"class" : "borderClass bgColor1"}, width="175")
+    img = soup.find('img', {'class': 'lazyload'})
+    
+  #  <div class="picSurround"><a href="https://myanimelist.net/character/85/Kakashi_Hatake"><img class=" lazyloaded" data-src="https://cdn.myanimelist.net/r/42x62/images/characters/7/284129.webp?s=51cf4d5b54e20bbcb6be84750078aeeb" src="https://cdn.myanimelist.net/r/42x62/images/characters/7/284129.webp?s=51cf4d5b54e20bbcb6be84750078aeeb" width="42" height="62" border="0"></a></div>
+    em = discord.Embed(title="Character Result",description = f"[{spans.a.string}]({spans.a['href']})")
+    imgg = img['data-src']
+    imgg = imgg.replace("r/42x62/","")
+    
+    em.set_image(url=imgg)
+    await ctx.send(embed = em) 
+    
+           # <a href="https://myanimelist.net/character/17/Naruto_Uzumaki">Uzumaki, Naruto</a><br><small>(Nine-Tails Jinchuuriki)</small>
+           # </td>
+
 @client.command(name='eplist',aliases=["Eplist"])
 async def eplist(ctx, *,word):  
     try:   
@@ -1705,6 +1803,55 @@ async def mal(ctx, *,word):
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
    
+@client.command(name='recommend',aliases=["Recommend","recom","Recom"])
+async def recommend(ctx): 
+    
+        link = "https://myanimelist.net/recommendations.php?s=recentrecs&t=anime"
+        r = requests.get(link)
+        
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all('a',attrs={"class":"hoverinfo_trigger"})
+        anime = []
+        animelink = []
+   # animeimg = []
+        count = 0
+        x = 0
+        y = 0
+        for span in spans:
+             #hoverinfo_trigger
+            anime.append(span.img['alt'])
+            animelink.append(span['href'])
+            #animeimg.append(span.img['data-src'])
+            count += 1
+            if count >99:
+                break
+        txt = soup.find_all('div',attrs={"class":"spaceit recommendations-user-recs-text"})
+     #   print(len(spans))
+        
+            
+        em = discord.Embed(title = "Anime Recommendations:",description= f"If you like [{anime[x]}]({animelink[x]})\nThen try [{anime[x+1]}]({animelink[x+1]})",color = ctx.author.color)
+        em.add_field(name="Why?",value = txt[y].string)
+        msg = await ctx.reply(embed=em)
+        await msg.add_reaction("➡️")
+        def check(reaction, user):
+            
+            return str(reaction.emoji) in ["⬅️","➡️"] and user != client.user and reaction.message.id == msg.id and user == ctx.author
+        # This makes sure nobody except the command sender can interact with the "menu"
+
+        while True:
+            try:
+                reaction, user = await client.wait_for('reaction_add', check=check, timeout=30)
+
+                if str(reaction.emoji) == "➡️":
+                    x += 2
+                    y += 1
+                    emb = discord.Embed(title = "Anime Recommendations:",description= f"If you like [{anime[x]}]({animelink[x]})\nThen try [{anime[x+1]}]({animelink[x+1]})",color = ctx.author.color)
+                    emb.add_field(name="Why?",value = txt[y].string)
+                    await msg.edit(embed=emb)
+            except asyncio.TimeoutError:   
+                return
+
+
 
 @client.command(name='read',aliases=["Read"])
 async def read(ctx,*,word): 
