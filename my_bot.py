@@ -31,7 +31,7 @@ from pymongo import MongoClient
 import aiohttp
 
 #urban = UrbanClient()
-os.chdir(r"G:\bot\stella\.vscode")#G:\bot\stella\.vscode
+os.chdir(r".vscode")#G:\bot\stella\.vscode
 
 #prefix...................]
 intents = discord.Intents.all()
