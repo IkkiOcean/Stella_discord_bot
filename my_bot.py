@@ -28,6 +28,7 @@ from imdb import IMDb
 from bs4 import BeautifulSoup
 import certifi
 from pymongo import MongoClient
+import aiohttp
 
 #urban = UrbanClient()
 os.chdir(r"G:\bot\stella\.vscode")#G:\bot\stella\.vscode
@@ -197,7 +198,66 @@ async def removerole(ctx,member :discord.Member,role: typing.Optional[discord.Ro
             await member.remove_roles(roless)
             await ctx.reply(f"`{rolename}` role has been removed from {member.mention}")
     except:
-        await ctx.reply("Type `S.removerole <member> <ROLE NAME OR MENTION ROLE>`")    
+            await ctx.reply("Type `S.removerole <member> <ROLE NAME OR MENTION ROLE>`") 
+
+@client.command(name='Steal',aliases=["steal"])
+@commands.has_permissions(manage_emojis = True) 
+async def steal(ctx, emoji:discord.Emoji, *, name):
+    guild = ctx.guild   
+    url = str(emoji.url)    
+    
+    if name == None:
+        name = "not given"
+    async with aiohttp.ClientSession() as ses:
+        async with ses.get(url) as r:
+                    
+                try:
+                    img_or_gif = BytesIO(await r.read())
+                    b_value = img_or_gif.getvalue()
+                    if r.status in range(200, 299):
+                        emoji = await guild.create_custom_emoji(image=b_value, name=name)
+                        await ctx.send(f'Successfully created emoji: <:{name}:{emoji.id}>')
+                        await ses.close()
+                    else:
+                        
+                        await ctx.send(f'something went wrong| Try another emoji')
+                        await ses.close()
+
+                except discord.HTTPException:
+                   
+                    await ctx.send('File size is too big!')
+    #for emo in emojiss:
+  
+     #   print(emo)
+@client.command(name='addemoji',aliases=["Addemoji"])
+@commands.has_permissions(manage_emojis = True) 
+async def addemoji(ctx, url: str, *, name):
+    guild = ctx.guild   
+    if name == None:
+        name = "not given"
+    
+    async with aiohttp.ClientSession() as ses:
+        async with ses.get(url) as r:
+                    
+                try:
+                    img_or_gif = BytesIO(await r.read())
+                    b_value = img_or_gif.getvalue()
+                    if r.status in range(200, 299):
+                        emoji = await guild.create_custom_emoji(image=b_value, name=name)
+                        await ctx.send(f'Successfully created emoji: <:{name}:{emoji.id}>')
+                        await ses.close()
+                    else:
+                        
+                        await ctx.send(f'something went wrong| Try another emoji')
+                        await ses.close()
+
+                except discord.HTTPException:
+                   
+                    await ctx.send('File size is too big!')    
+
+                
+                
+                  
 #EMOTES................................................................
 #blush......
 @client.command(name='blush')    
@@ -265,20 +325,7 @@ async def laugh(context,member: typing.Optional[discord.Member], *,gifmsg=None):
     await context.send(embed=laughs)
     await context.message.delete()    
 #dance
-@client.command(name='kiss',aliases = ["Kiss"])    
-async def kiss(context,member: discord.Member, *,gifmsg=None):
-     
-    if member == None:
-        await context.reply("Atleast mention someone")
-    else:
-        kisss = discord.Embed(description=gifmsg,timestamp=datetime.datetime.utcnow(),color=0x00ebff)
-        kisss.set_author(name = f"{context.message.author.display_name}  is kissing {member.display_name} ",icon_url=f"{context.message.author.avatar_url}")   
-        kissgif = ('https://i.imgur.com/OB1ZlQO.gif','https://i.imgur.com/TM8bbJF.gif','https://i.imgur.com/3xJo1FG.gif','https://i.imgur.com/QLPpZ6C.gif')   
-        rnd_kiss = random.choice(kissgif)
-    #smiles.add_field(name="Happy",value=(f"{context.author.mention} is Smiling ｡◕‿◕｡"))
-        kisss.set_image(url=rnd_kiss)
 
-        await context.send(embed=kisss)
        # await context.message.delete() 
 @client.command(name='dance')    
 async def dance(context, *,gifmsg=None):
@@ -1360,14 +1407,12 @@ async def movie(ctx, *,msg):
     id = movies[0].movieID
     
     movie = ia.get_movie(id)
-    print(movie)
+    
     plot = movie['plot'][0]
     #clip = movie['vote details']
     await ctx.send(plot)
-    await ctx.send(clip)
-    print (ia.get_movie_infoset())
     
-    print(id)
+    
 #['airing', 'akas', 'alternate versions', 'awards', 'connections', 'crazy credits', 'critic reviews', 'episodes', 'external reviews', 'external sites', 'faqs', 'full credits', 'goofs', 'keywords', 'list', 'locations', 'main', 'misc sites', 'news', 'official sites', 'parents guide', 'photo sites', 'plot', 'quotes', 'recommendations', 'release dates', 'release info', 'reviews', 'sound clips', 'soundtrack', 'synopsis', 'taglines', 'technical', 'trivia', 'tv schedule', 'video clips', 'vote details']
 insult_api_url = 'http://autoinsult.datahamster.com/index.php?style=3'
 @client.command(name='insult',aliases=["Insult"])
@@ -2211,6 +2256,111 @@ async def rndquote(ctx):
     msg = await ctx.send(embed = q)
     await msg.add_reaction("<:AO_stonksup:843516237962149958>")
 
+
+
+#GIVEAWAY
+def convert(time):
+    pos = ["s","m","h","d"]
+
+    time_dict = {"s" : 1, "m" : 60, "h" : 3600 , "d" : 3600*24}
+
+    unit = time[-1]
+
+    if unit not in pos:
+        return -1
+    try:
+        val = int(time[:-1])
+    except:
+        return -2
+
+
+    return val * time_dict[unit]
+@client.command(name="gcreate")
+@commands.has_permissions(manage_messages = True)
+async def giveaway(ctx):
+    await ctx.send("Let's start with this giveaway! Answer these questions within 15 seconds!")
+
+    questions = ["Which channel should it be hosted in?", 
+                "What should be the duration of the giveaway? (s|m|h|d)",
+                "What is the prize of the giveaway?","Enter the requirements If None then Type 'None'"]
+
+    answers = []
+
+    def check(m):
+        return m.author == ctx.author and m.channel == ctx.channel 
+
+    for i in questions:
+        await ctx.send(i)
+
+        try:
+            msg = await client.wait_for('message', timeout=30, check=check)
+        except asyncio.TimeoutError:
+            await ctx.send('You didn\'t answer in time, please be quicker next time!')
+            return
+        else:
+            answers.append(msg.content)
+    try:
+        c_id = int(answers[0][2:-1])
+    except:
+        await ctx.send(f"You didn't mention a channel properly. Do it like this {ctx.channel.mention} next time.")
+        return
+
+    channel = client.get_channel(c_id)
+
+    time = convert(answers[1])
+    if time == -1:
+        await ctx.send(f"You didn't answer the time with a proper unit. Use (s|m|h|d) next time!")
+        return
+    elif time == -2:
+        await ctx.send(f"The time must be an integer. Please enter an integer next time")
+        return            
+
+    prize = answers[2]
+    rqmt = answers[3]
+    
+    await ctx.send(f"The Giveaway will be in {channel.mention} and will last {answers[1]}!")
+
+
+    embed = discord.Embed(title = "Giveaway!", description = f"{prize}", color = ctx.author.color)
+    if rqmt != "None":
+        embed.add_field(name="Requirements:",value= rqmt)
+    embed.add_field(name = "Hosted by:", value = ctx.author.mention)
+
+    embed.set_footer(text = f"Ends {answers[1]} from now!")
+
+    my_msg = await channel.send(embed = embed)
+    
+
+    await my_msg.add_reaction("🎉")
+    
+
+    await asyncio.sleep(time)
+
+
+    new_msg = await channel.fetch_message(my_msg.id)
+
+
+    users = await new_msg.reactions[0].users().flatten()
+    users.pop(users.index(client.user))
+
+    winner = random.choice(users)
+
+    await channel.send(f"Congratulations! {winner.mention} won {prize}!")
+@client.command()
+@commands.has_permissions(manage_messages = True)
+async def reroll(ctx,id_ : int):
+    try:
+        new_msg = await ctx.channel.fetch_message(id_)
+    except:
+        await ctx.send("The id was entered incorrectly.")
+        return
+    
+    users = await new_msg.reactions[0].users().flatten()
+    users.pop(users.index(client.user))
+
+    winner = random.choice(users)
+
+    await ctx.send(f"Congratulations! The new winner is {winner.mention}.!")
 #@client.command(name="t")
 #async def t(ctx):    
     
@@ -2236,12 +2386,12 @@ client.remove_command("help")
 async def help(ctx):
     em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/H7MDM37)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\n||Do not actually include the <> and [] symbols in the command||",timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
     em.set_author(name = "Help/Command List",icon_url=f"{client.user.avatar_url}")
-    em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear`",inline=False)
+    em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear` `addrole` `removeroll`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` ",inline=False)
-    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read`",inline=False)
+    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
@@ -2550,6 +2700,15 @@ async def read(ctx):
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.read <Manga>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def char(ctx):
+    em = discord.Embed(description="Search Characters",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.char <Character Name>`")
+    await ctx.send(embed=em)
 
 @help.command()
 async def eplist(ctx):
