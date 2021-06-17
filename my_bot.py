@@ -2342,10 +2342,12 @@ async def giveaway(ctx):
 
     users = await new_msg.reactions[0].users().flatten()
     users.pop(users.index(client.user))
+    if users == []:
+        await my_msg.reply("No one Participated ;-;")
+    else:    
+        winner = random.choice(users)
 
-    winner = random.choice(users)
-
-    await channel.send(f"Congratulations! {winner.mention} won {prize}!")
+        await my_msg.reply(f"Congratulations! {winner.mention} won {prize}!")
 @client.command()
 @commands.has_permissions(manage_messages = True)
 async def reroll(ctx,id_ : int):
