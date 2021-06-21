@@ -31,6 +31,8 @@ numpy==1.19.5
 parse==1.19.0
 Pillow==8.0.1
 pipreqs==0.4.10
+praw==7.3.0
+prawcore==2.2.0
 pycodestyle==2.6.0
 pyee==8.1.0
 pylint==2.6.0
@@ -47,8 +49,10 @@ tqdm==4.59.0
 typed-ast==1.4.1
 typing==3.7.4.3
 typing-extensions==3.7.4.3
+update-checker==0.18.0
 urllib3==1.26.2
 w3lib==1.22.0
+websocket-client==1.1.0
 websockets==8.1
 wrapt==1.12.1
 yarg==0.1.9
