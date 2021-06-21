@@ -464,7 +464,19 @@ async def bonk(context,member: discord.Member, *,gifmsg=None):
     rnd_bonk = random.choice(bonkgif)
     bonks.set_image(url=rnd_bonk) 
     await context.send(embed=bonks) 
-    await context.message.delete()    
+    await context.message.delete() 
+
+@client.command(name='punch',aliases=["Punch"])
+async def punch(context,member: discord.Member, *,gifmsg=None):
+    punchs = discord.Embed(description=gifmsg,timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
+
+    punchs.set_author(name = f"{context.message.author.display_name} punchs {member.display_name} Ha! ",icon_url=f"{context.message.author.avatar_url}")   
+    punchgif = ('https://i.imgur.com/YJrX0hC.gif','https://i.imgur.com/vS2rUES.gif','https://i.imgur.com/Pm8fekf.gif','https://i.imgur.com/dpDqbXN.gif','https://i.imgur.com/wZKzFsk.gif','https://i.imgur.com/eDKXP7h.gif','https://i.imgur.com/wOj0iuK.gif','https://i.imgur.com/vstkI9k.gif','https://i.imgur.com/BR43afH.gif','https://i.imgur.com/Xr6Yzzw.gif','https://i.imgur.com/zv92jMR.gif','https://i.imgur.com/94BzVNx.gif','https://i.imgur.com/mOxZMps.gif','https://i.imgur.com/yTs6ioC.gif','https://i.imgur.com/JJNVkVy.gif','https://i.imgur.com/O20xM2k.gif','https://i.imgur.com/A9jhWJu.gif','https://i.imgur.com/iQ7HQED.gif','https://i.imgur.com/4wCSoTd.gif','https://i.imgur.com/YvEYrDj.gif','https://i.imgur.com/4eHqGR7.gif','https://i.imgur.com/S7d8z4J.gif','https://i.imgur.com/E9qS559.gif','https://i.imgur.com/fgsPMli.gif')
+    print(len(punchgif))
+    rnd_punch = random.choice(punchgif)
+    punchs.set_image(url=rnd_punch) 
+    await context.send(embed=punchs) 
+    await context.message.delete()       
 #slap
 @client.command(name='slap',aliases=["Slap"])
 async def slap(context,member: discord.Member, *,gifmsg=None):
@@ -2477,10 +2489,10 @@ async def help(ctx):
     em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/H7MDM37)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\n||Do not actually include the <> and [] symbols in the command||",timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
     em.set_author(name = "Help/Command List",icon_url=f"{client.user.avatar_url}")
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear` `addrole` `removeroll`",inline=False)
-    em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
+    em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `punch` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` ",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
