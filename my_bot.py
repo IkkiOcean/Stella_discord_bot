@@ -10,7 +10,7 @@ import requests #requests
 from discord.errors import DiscordServerError, Forbidden
 import random, textwrap
 import datetime
-import json
+#import json
 import os
 from PIL import Image, ImageFont, ImageDraw  #pip install Pillow
 from io import BytesIO
@@ -29,7 +29,7 @@ from bs4 import BeautifulSoup
 import certifi
 from pymongo import MongoClient
 import aiohttp
-
+import praw
 #urban = UrbanClient()
 os.chdir(r".vscode")#G:\bot\stella\.vscode
 
@@ -49,7 +49,11 @@ cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3y
 db = cluster["discord"]  
 mal_collect = db["mal"]             
 
-
+reddit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
+                    client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
+                    #username = 'ItzStela',
+                    #password = 'password@10',
+                    user_agent = "memes")
 #error.................
 @client.event
 async def on_command_error(ctx,error):
@@ -975,6 +979,49 @@ async def yugioh(ctx,*,msg ):
     post.save("yugioh.png")
     await ctx.send(file=discord.File("yugioh.png")) 
 
+@client.command(name='meme', aliases=['Meme','Memes','memes'])
+async def meme(ctx):
+    subred = reddit.subreddit("Animemes")
+    subs = subred.top("day",limit = 50)
+    top = []
+    for tops in subs:
+        if "https://v.redd" not in tops.url:
+            top.append(tops)
+            
+            
+      
+    topp = random.choice(top)   
+    try:
+
+        em = discord.Embed(description = topp.title,color = ctx.author.color)
+        em.set_image(url = topp.url)
+        await ctx.send(embed = em)
+    except:
+        await ctx.reply("`something went wrong ;-;`")    
+
+
+
+@client.command(name='reddit', aliases=['Reddit','red','Red'])
+async def redd(ctx,name):
+    subred = reddit.subreddit(name)
+    subs = subred.top("day",limit = 50)
+    top = []
+    for tops in subs:
+        if "https://v.redd" not in tops.url:
+            top.append(tops)
+            
+            
+      
+    topp = random.choice(top)   
+    print(topp.url)
+    try:
+
+        em = discord.Embed(description = topp.title,color = ctx.author.color)
+        em.set_image(url = topp.url)
+        await ctx.send(embed = em)
+    except:
+        await ctx.reply("`something went wrong ;-;`")    
+
 #yu-gi-oh pfp
 @client.command(name='yugiohpfp', aliases=['Yugiohpfp'])
 async def yugiohpfp(ctx,member: Greedy[discord.Member] ): 
@@ -1289,7 +1336,8 @@ async def manga(ctx, *, manga):
 @client.command(name='waifu',aliases=["Waifu"]) 
 @commands.cooldown(2, 120, BucketType.user)  
 async def waifu_(ctx):
-    chosen_index = random.randint(0,52) 
+    
+    chosen_index = random.randint(0,len(waifupics)-1) 
     embed=  discord.Embed(title = f"**{waifuname[chosen_index]}**",description= waifuseries[chosen_index],color =0x00ebff)
     embed.set_image(url=waifupics[chosen_index])
     message=await ctx.send(embed=embed)
@@ -1303,35 +1351,64 @@ async def waifu_(ctx):
         reaction, user = await client.wait_for('reaction_add',check=check,timeout=60)
 
         await ctx.send(f"{user.name} wanna make {waifuname[chosen_index]}, waifu! 💝") 
-        choice = ("Yes","No")
-        answer = random.choice(choice)    
-        if answer == "Yes":
+        
+        answer = random.randint(0,9)    
+        if answer <= 4:
             await asyncio.sleep(5)
             await ctx.send(f"{user.name}\nAwww... {waifuname[chosen_index]} said **Yes** for the marraige!! Congrats💝\nLet me make a wedding card for you >///<")
-            resp=requests.get("https://i.imgur.com/QjFL5Y8.png") 
-            resp2=requests.get("https://i.imgur.com/apeZldc.png")
-            resp3=requests.get(waifupics[chosen_index])
-            waifu0 = Image.open(BytesIO(resp3.content))
+            resp=requests.get("https://i.imgur.com/gxsD8hr.png") #marraige
+            #resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
+            resp2=requests.get("https://i.imgur.com/Rs9YYjN.png")
+            bg = Image.new("RGBA",(1479,600), (0,0,0,0))
+             
             marraige = Image.open(BytesIO(resp.content)).convert('RGBA')
-            
-            bg = Image.open(BytesIO(resp2.content)).convert('RGB')
+            mrg =  marraige.resize((250,250))
+            frm = Image.open(BytesIO(resp2.content)).convert('RGBA')
+            frm = frm.resize((580,580))
             asset = user.avatar_url_as(size=128)
-            data = BytesIO(await asset.read())   
-            pfp = Image.open(data)
-            pfp = pfp.resize((493,483))
-            waifu1 =  waifu0.resize((493,483))
+            asset2 = requests.get(waifupics[chosen_index])
+            data = BytesIO(await asset.read())  
+             
+            pfp = Image.open(data).convert('RGB')
+            waifu0 = Image.open(BytesIO(asset2.content)).convert('RGB')
+   
+            pfp = pfp.resize((435,435))
+            waifu1 =  waifu0.resize((435,435))
+            height,width = pfp.size
+            lum_img = Image.new('L', [height,width] , 0)
+  
+            draw = ImageDraw.Draw(lum_img)
+            draw.pieslice([(0,0), (height,width)], 0, 360, fill = 255, outline = "white")
+            img_arr =np.array(pfp)
+            lum_img_arr =np.array(lum_img)
+    #diplay(Image.fromarray(lum_img_arr))
+            final_img_arr = np.dstack((img_arr,lum_img_arr))
+            fll1 = Image.fromarray(final_img_arr)
+            height,width = pfp.size
+            lu_img = Image.new('L', [height,width] , 0)
+  
+            draw = ImageDraw.Draw(lu_img)
+            draw.pieslice([(0,0), (height,width)], 0, 360, fill = 255, outline = "white")
+            img_arrwa =np.array(waifu1)
+            lu_img_arr =np.array(lu_img)
+    #display(Image.fromarray(lum_img_arr))
+            final_img_arrwa = np.dstack((img_arrwa,lu_img_arr))
+            fll = Image.fromarray(final_img_arrwa)
+        
+            bg.paste(fll1,(77,80))
             
-            bg.paste(pfp,(85,71))
+            bg.paste(fll,(886,80))
+            bg.paste(mrg,(570,150))
+            bg.paste(frm,(0,0),mask=frm)
+            bg.paste(frm,(809,0),mask=frm)
+             
+            bg.save("marraige.png",format="png")    
             
-            bg.paste(waifu1,(1295,61))
-            bg.paste(marraige,(0,0),mask=marraige)
-            
-            bg.save("marraige.png",format="png")
             wed = discord.Embed(description=f"{user.name} and {waifuname[chosen_index]} are **married** now!!💝",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
             file = discord.File("marraige.png")
             wed.set_image(url="attachment://marraige.png")
             await ctx.send(file = file, embed=wed)
-        if answer == "No":
+        if answer > 4:
             await asyncio.sleep(5)
             await ctx.send(f"{user.name}\n{waifuname[chosen_index]} said **No** to you.... ;-;")
             
@@ -2382,6 +2459,17 @@ async def reroll(ctx,id_ : int):
     #fll = Image.fromarray(final_img_arr)
     #fll.save("test.png")
     #await ctx.send(file=discord.File("test.png"))
+#@client.command(name='w',aliases=["W"]) 
+#@commands.cooldown(2, 120, BucketType.user)  
+#async def w(ctx):
+ #   i = 1
+ #   chosen_index = i
+  #  while i < 39: 
+   #     embed=  discord.Embed(title = f"**{waifuname[chosen_index]}**",description= waifuseries[chosen_index],color =0x00ebff)
+  #      embed.set_image(url=waifupics[chosen_index])
+   #     message=await ctx.send(embed=embed)
+    #    i += 1
+       # chosen_index = i
 #help...............................
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
