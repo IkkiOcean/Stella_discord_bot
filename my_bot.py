@@ -2046,7 +2046,7 @@ async def read(ctx,*,word):
 
 @client.command(name="wallpaper",aliases = ["Wallpaper","wl","Wl"])
 async def wallpaper(ctx, *,word = None ):
-    try:
+    
         
         if word == None:
             word = 'anime'
@@ -2064,8 +2064,7 @@ async def wallpaper(ctx, *,word = None ):
             walls.append(span.img['data-src'])
         wall = random.choice(walls)
         await ctx.send(wall)
-    except:
-        await ctx.reply("Not found")
+    
 
 @client.command(name="mwallpaper",aliases = ["Mwallpaper","mwl","Mwl"])
 async def wallpaper_mobile(ctx, *,word = None ):
