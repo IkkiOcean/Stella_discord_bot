@@ -2060,6 +2060,8 @@ async def wallpaper(ctx, *,word = None ):
         spans = soup.find_all('a',attrs={"itemprop":"url"})
         for span in spans:
             walls.append(span.img['data-src'])
+            print(span)
+            print(span.img['data-src'])
         print(walls)
         wall = random.choice(walls)
         await ctx.send(wall)
