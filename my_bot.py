@@ -2057,6 +2057,7 @@ async def wallpaper(ctx, *,word = None ):
         print(link)
         walls = []
         soup = BeautifulSoup(r.content,features="html.parser")
+        await asyncio.sleep(10)
         spans = soup.find_all('img',attrs={"class":"lazy"})
         print(len(spans))
         for span in spans:
