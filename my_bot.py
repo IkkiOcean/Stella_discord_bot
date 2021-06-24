@@ -2057,13 +2057,11 @@ async def wallpaper(ctx, *,word = None ):
         print(link)
         walls = []
         soup = BeautifulSoup(r.content,features="lxml")
-        spans = soup.find_all('a',attrs={"itemprop":"url"})
+        spans = soup.find_all('img',attrs={"class":"lazy"})
         print(len(spans))
         for span in spans:
-            pint(1)
-            walls.append(span.img['data-src'])
-            print(span)
-            print(span.img['data-src'])
+            walls.append(span['data-src'])
+            
         print(walls)
         wall = random.choice(walls)
         await ctx.send(wall)
