@@ -2082,7 +2082,7 @@ async def wallpaper_mobile(ctx, *,word = None ):
 #<img class="lazy loaded" itemprop="contentUrl" alt="Akira Fudo, devilman crybaby, red HD wallpaper" title="Akira Fudo, devilman crybaby, red HD wallpaper" data-src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" data-was-processed="true" width="400" height="250">
 #</a>   
         walls = []
-        soup = BeautifulSoup(r.content,features="lxml")
+        soup = BeautifulSoup(r.content,features=""html.parser"")
         spans = soup.find_all('a',attrs={"itemprop":"url"})
         for span in spans:
             walls.append(span.img['data-src'])
