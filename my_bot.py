@@ -2058,7 +2058,9 @@ async def wallpaper(ctx, *,word = None ):
         walls = []
         soup = BeautifulSoup(r.content,features="lxml")
         spans = soup.find_all('a',attrs={"itemprop":"url"})
+        print(len(spans))
         for span in spans:
+            pint(1)
             walls.append(span.img['data-src'])
             print(span)
             print(span.img['data-src'])
