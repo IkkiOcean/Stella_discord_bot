@@ -2054,16 +2054,16 @@ async def wallpaper(ctx, *,word = None ):
         link = f"https://www.wallpaperflare.com/search?wallpaper={word}"
         r = requests.get(link)
         
-       # <a ="" href="https://www.wallpaperflare.com/akira-fudo-devilman-crybaby-red-wallpaper-znlue" target="_blank">
-#<img class="lazy loaded" itemprop="contentUrl" alt="Akira Fudo, devilman crybaby, red HD wallpaper" title="Akira Fudo, devilman crybaby, red HD wallpaper" data-src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" data-was-processed="true" width="400" height="250">
-#</a>   
+        print(link)
         walls = []
         soup = BeautifulSoup(r.content,features="lxml")
         spans = soup.find_all('a',attrs={"itemprop":"url"})
         for span in spans:
             walls.append(span.img['data-src'])
+        print(walls)
         wall = random.choice(walls)
         await ctx.send(wall)
+    
     
 
 @client.command(name="mwallpaper",aliases = ["Mwallpaper","mwl","Mwl"])
