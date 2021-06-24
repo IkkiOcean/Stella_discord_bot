@@ -997,7 +997,7 @@ async def meme(ctx):
     subs = subred.top("day",limit = 50)
     top = []
     for tops in subs:
-        if "https://v.redd" not in tops.url:
+        if "https://v.redd" not in tops.url and tops.over_18 == False:
             top.append(tops)
             
             
@@ -1016,19 +1016,19 @@ async def meme(ctx):
 @client.command(name='reddit', aliases=['Reddit','red','Red'])
 async def redd(ctx,name):
     subred = reddit.subreddit(name)
-    subs = subred.top("day",limit = 50)
+    subs = subred.top("day",limit = 60)
     top = []
     for tops in subs:
-        if "https://v.redd" not in tops.url:
+        if "https://v.redd" not in tops.url and tops.over_18 == False:
             top.append(tops)
             
             
       
     topp = random.choice(top)   
-    print(topp.url)
+    
     try:
 
-        em = discord.Embed(description = topp.title,color = ctx.author.color)
+        em = discord.Embed(description = topp.title ,color = ctx.author.color)
         em.set_image(url = topp.url)
         await ctx.send(embed = em)
     except:
@@ -1429,8 +1429,8 @@ async def waifu_(ctx):
         
         
 #gogoanime
-@client.command(name='search',aliases=["Search"]) 
-async def search(ctx, *,Anime):     
+@client.command(name='watch',aliases=["Watch"]) 
+async def watch(ctx, *,Anime):     
     anime_search = gogo.get_search_results(query=Anime)
     em = discord.Embed(description= "Reply with the Anime number",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
     em.set_author(name = "Anime search",icon_url=f"{client.user.avatar_url}")
@@ -2044,6 +2044,51 @@ async def read(ctx,*,word):
         em = discord.Embed(title="Not found")
         msg = await ctx.reply(embed=em,delete_after=30)
 
+@client.command(name="wallpaper",aliases = ["Wallpaper","wl","Wl"])
+async def wallpaper(ctx, *,word = None ):
+    try:
+        
+        if word == None:
+            word = 'anime'
+        word = word.replace(" ","+")
+        link = f"https://www.wallpaperflare.com/search?wallpaper={word}"
+        r = requests.get(link)
+        
+       # <a ="" href="https://www.wallpaperflare.com/akira-fudo-devilman-crybaby-red-wallpaper-znlue" target="_blank">
+#<img class="lazy loaded" itemprop="contentUrl" alt="Akira Fudo, devilman crybaby, red HD wallpaper" title="Akira Fudo, devilman crybaby, red HD wallpaper" data-src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" data-was-processed="true" width="400" height="250">
+#</a>   
+        walls = []
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all('a',attrs={"itemprop":"url"})
+        for span in spans:
+            walls.append(span.img['data-src'])
+        wall = random.choice(walls)
+        await ctx.send(wall)
+    except:
+        await ctx.reply("Not found")
+
+@client.command(name="mwallpaper",aliases = ["Mwallpaper","mwl","Mwl"])
+async def wallpaper_mobile(ctx, *,word = None ):
+    try:
+        
+        if word == None:
+            word = 'anime'
+        word = word.replace(" ","+")
+        link = f"https://www.wallpaperflare.com/search?wallpaper={word}&mobile=ok"
+        r = requests.get(link)
+        
+       # <a ="" href="https://www.wallpaperflare.com/akira-fudo-devilman-crybaby-red-wallpaper-znlue" target="_blank">
+#<img class="lazy loaded" itemprop="contentUrl" alt="Akira Fudo, devilman crybaby, red HD wallpaper" title="Akira Fudo, devilman crybaby, red HD wallpaper" data-src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" data-was-processed="true" width="400" height="250">
+#</a>   
+        walls = []
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all('a',attrs={"itemprop":"url"})
+        for span in spans:
+            walls.append(span.img['data-src'])
+        wall = random.choice(walls)
+        await ctx.send(wall)
+    except:
+        await ctx.reply("Not found")
 
 
 @client.command(name='userinfo',aliases=["whois","Whois","Userinfo"])
