@@ -2054,16 +2054,16 @@ async def wallpaper(ctx, *,word = None ):
         link = f"https://www.wallpaperflare.com/search?wallpaper={word}"
         r = requests.get(link)
         
-        print(link)
+        
         walls = []
         soup = BeautifulSoup(r.content,features="html.parser")
-        await asyncio.sleep(10)
+        
         spans = soup.find_all('img',attrs={"class":"lazy"})
-        print(len(spans))
+        
         for span in spans:
             walls.append(span['data-src'])
             
-        print(walls)
+        
         wall = random.choice(walls)
         await ctx.send(wall)
     
