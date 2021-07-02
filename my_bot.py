@@ -26,6 +26,7 @@ import numpy as np
 import urllib.parse, urllib.request, re
 from imdb import IMDb
 from bs4 import BeautifulSoup
+
 import certifi
 from pymongo import MongoClient
 import aiohttp
@@ -1432,11 +1433,13 @@ async def waifu_(ctx):
 @client.command(name='watch',aliases=["Watch"]) 
 async def watch(ctx, *,Anime):     
     anime_search = gogo.get_search_results(query=Anime)
+    print(anime_search)
     em = discord.Embed(description= "Reply with the Anime number",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
     em.set_author(name = "Anime search",icon_url=f"{client.user.avatar_url}")
     x=1
     srch = ""
     for title in anime_search:
+        print(title)
         srch += (f"{x} : {title.get('name')}\n\n")
         x = x+1
     #for title in anime_search:
@@ -1467,7 +1470,7 @@ async def watch(ctx, *,Anime):
             msg2 = await client.wait_for('message', check=check,timeout=30)
             msg3 = int(msg2.content)
             
-    
+            print(msg3)
             anime_link = gogo.get_episodes_link(animeid=id, episode_num=msg3)
             link = anime_link.get('(HDP-mp4)')
             link4 = anime_link.get('(1080P-mp4)')
@@ -1539,6 +1542,9 @@ async def define(ctx, *,word):
         await ctx.send(embed=em)
 @client.command(name='char',aliases=["Char"])
 async def char(ctx, *,word): 
+    
+        #link = f"https://anilist.co/search/characters?search={word}"
+
     link = f"https://myanimelist.net/character.php?cat=character&q={word}"
     r = requests.get(link)
     soup = BeautifulSoup(r.content,features="lxml")
@@ -1556,6 +1562,8 @@ async def char(ctx, *,word):
            # <a href="https://myanimelist.net/character/17/Naruto_Uzumaki">Uzumaki, Naruto</a><br><small>(Nine-Tails Jinchuuriki)</small>
            # </td>
 
+ 
+    
 @client.command(name='eplist',aliases=["Eplist"])
 async def eplist(ctx, *,word):  
     try:   
@@ -1991,21 +1999,25 @@ async def recommend(ctx):
 async def read(ctx,*,word): 
     try:
         word = word.replace(" ","_")
-        link = "https://mangakakalot.com/search/story/{}".format(word)
+        link = "https://manganato.com/search/story/{}".format(word)
         r = requests.get(link)
-        
         soup = BeautifulSoup(r.content,features="lxml")
-        spans = soup.find_all('h3',attrs={"class":"story_name"})
+        spans = soup.find_all('a',attrs={"class":"a-h text-nowrap item-title"})
+        chap = soup.find_all('a',attrs={"class":"item-chapter a-h text-nowrap"})
         names = ""
         namess =[]
+        linksss = []
         count = 1
-        for span in spans:
-            names += (f"{count}: {span.get_text(strip=True)}\n")
+        for span,chaps in zip(spans,chap):
+            names += (f"{count}: **{span.get_text(strip=True)}**\n<a:aooc:854035196634464307> __LATEST CHAP__ : [{chaps['title']}]({chaps['href']}) \n")
+            linksss.append(span['href'][21:])
             namess.append(span.get_text(strip=True))
             count += 1
             if count > 3:
-                break
-        em = discord.Embed(description= "Select the manga you wanna read...")    
+                break   
+
+            
+        em = discord.Embed(description= "<a:Stelaread:860390274773680149> **Select the manga you wanna read...**",color = ctx.author.color)    
         em.add_field(name="Mangas:",value= names)
         await ctx.reply(embed=em)
         try:
@@ -2014,9 +2026,9 @@ async def read(ctx,*,word):
             msg = await client.wait_for("message", check=check,timeout=30)    
             msg1 = int(msg.content)  
             msg1 = msg1 - 1  
-            spanss = soup.find_all('h3',attrs={"class":"story_name"})
         #project_hmeref = [i['href'] for i in soup.find_all('a',attrs={"rel" : "nofollow"},href=True)]
-            chapter = (spanss[msg1].a['href'])
+            chapter = (linksss[msg1])
+            
             await ctx.reply("Send the chapter number")
             try:
                 def check(msg2):
@@ -2024,7 +2036,7 @@ async def read(ctx,*,word):
                 msg2 = await client.wait_for("message", check=check,timeout=30)    
                 number = int(msg2.content)
                 
-                link2 = f"{chapter}/chapter-{number}"
+                link2 = f"https://readmanganato.com{chapter}/chapter-{number}"
                 
                 if "read-" in link2:
                     
@@ -2032,7 +2044,7 @@ async def read(ctx,*,word):
                     
                     link2 = (f"https://mangakakalot.com/chapter/{nam}/chapter_{number}")
                 
-                emb = discord.Embed(title=f"{namess[msg1]}",description=f"[Click here]({link2})")
+                emb = discord.Embed(title=f"{namess[msg1]}",description=f"[Click here for chapter {number}]({link2})",color = ctx.author.color)
                 await ctx.reply(embed=emb)
             except asyncio.TimeoutError:
                 em3 = discord.Embed(description="**Timeout**")   
@@ -2047,7 +2059,7 @@ async def read(ctx,*,word):
 @client.command(name="wallpaper",aliases = ["Wallpaper","wl","Wl"])
 async def wallpaper(ctx, *,word = None ):
     
-        
+    try:    
         if word == None:
             word = 'anime'
         word = word.replace(" ","+")
@@ -2056,8 +2068,7 @@ async def wallpaper(ctx, *,word = None ):
         
         
         walls = []
-        soup = BeautifulSoup(r.content,features="html.parser")
-        
+        soup = BeautifulSoup(r.content,features="lxml")
         spans = soup.find_all('img',attrs={"class":"lazy"})
         
         for span in spans:
@@ -2066,8 +2077,10 @@ async def wallpaper(ctx, *,word = None ):
         
         wall = random.choice(walls)
         await ctx.send(wall)
-    
-    
+
+    except:
+        await ctx.reply("Not found")
+
 
 @client.command(name="mwallpaper",aliases = ["Mwallpaper","mwl","Mwl"])
 async def wallpaper_mobile(ctx, *,word = None ):
@@ -2082,11 +2095,13 @@ async def wallpaper_mobile(ctx, *,word = None ):
        # <a ="" href="https://www.wallpaperflare.com/akira-fudo-devilman-crybaby-red-wallpaper-znlue" target="_blank">
 #<img class="lazy loaded" itemprop="contentUrl" alt="Akira Fudo, devilman crybaby, red HD wallpaper" title="Akira Fudo, devilman crybaby, red HD wallpaper" data-src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" src="https://c4.wallpaperflare.com/wallpaper/252/232/12/akira-fudo-devilman-crybaby-red-devil-hd-wallpaper-preview.jpg" data-was-processed="true" width="400" height="250">
 #</a>   
-        walls = []
+        
         soup = BeautifulSoup(r.content,features="lxml")
         spans = soup.find_all('a',attrs={"itemprop":"url"})
+        walls = []
         for span in spans:
             walls.append(span.img['data-src'])
+            
         wall = random.choice(walls)
         await ctx.send(wall)
     except:
@@ -2360,16 +2375,26 @@ async def poll(ctx,ques, *,msg: commands.clean_content):
 
 @client.command(name="f",aliases = ["F"])
 async def f(ctx,*,msg: commands.clean_content):
-    message = await ctx.send(f"Press 🇫 to pay respects to {msg}")  
+    message = await ctx.send(f"Press 🇫 to pay respects to **{msg}**")  
     await message.add_reaction("🇫")
+    count = 0
+    uss = []
     def check(reaction, user):
-        return str(reaction.emoji) == "🇫" and user != client.user and reaction.message.id == message.id
-    timeout = time.time() + 60*5     
+        return str(reaction.emoji) == "🇫" and user != client.user and reaction.message.id == message.id and user.id not in uss
     while True:     
-        reaction, user = await client.wait_for("reaction_add", check=check)
-        await ctx.send(f"{user.display_name} has paid their respects.")
-    
-    
+        try:
+            reaction, user = await client.wait_for("reaction_add", check=check,timeout= 25)
+            uss.append(user.id)
+            await ctx.send(f"**{user.display_name}** has paid their respects.")
+            count += 1
+        except asyncio.TimeoutError:
+            if count == 0:
+                await message.reply(f"nobody paid their respects to **{msg}**....")
+            if count == 1:
+                await message.reply(f"**1** person paid their respects to **{msg}**") 
+            if count > 1:
+                await message.reply(f"**{count}** people paid their respects to **{msg}**")       
+            return 
       
         
 
