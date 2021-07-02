@@ -2564,8 +2564,8 @@ async def help(ctx):
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `punch` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` ",inline=False)
-    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char`",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` `F` ",inline=False)
+    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char` `wallpaper`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
