@@ -2010,13 +2010,16 @@ async def read(ctx,*,word):
         count = 1
         for span,chaps in zip(spans,chap):
             names += (f"{count}: **{span.get_text(strip=True)}**\n<a:aooc:854035196634464307> __LATEST CHAP__ : [{chaps['title']}]({chaps['href']}) \n")
-            linksss.append(span['href'][21:])
+            if "readmanganato" in span['href']:
+                linksss.append(span['href'][25:])
+            else:    
+                linksss.append(span['href'][21:])
             namess.append(span.get_text(strip=True))
             count += 1
             if count > 3:
                 break   
 
-            
+           
         em = discord.Embed(description= "<a:Stelaread:860390274773680149> **Select the manga you wanna read...**",color = ctx.author.color)    
         em.add_field(name="Mangas:",value= names)
         await ctx.reply(embed=em)
@@ -2329,8 +2332,8 @@ async def post(ctx, *,id):
         channel = client.get_channel(837610754298478643) 
 
         msg1 = await channel.fetch_message(id1)
-        msg2 = await channel.fetch_message(id2)
-        message1 = await ctx.send("<@&836631353117900902> **Vote** for the following Submissions!!",embed = msg1.embeds[0])
+        msg2 = await channel.fetch_message(id2) #<@&836631353117900902> 
+        message1 = await ctx.send("**Vote for the following Submissions!!**",embed = msg1.embeds[0])
         message2 = await ctx.send(embed = msg2.embeds[0])
         await message1.add_reaction("<a:Stela_up:838153046537535549>")
         await message2.add_reaction("<a:Stela_up:838153046537535549>")
