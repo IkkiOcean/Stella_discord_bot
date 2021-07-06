@@ -1493,18 +1493,66 @@ async def watch(ctx, *,Anime):
         await ctx.send(embed=em)  
 
 @client.command(name='movie',aliases=["Movie","Series","series"])
-async def movie(ctx, *,msg):    
-    ia = IMDb()
-    movies = ia.search_movie(msg)
-    id = movies[0].movieID
-    
-    movie = ia.get_movie(id)
-    
-    plot = movie['plot'][0]
-    #clip = movie['vote details']
-    await ctx.send(plot)
-    
-    
+async def movie(ctx, *,name):
+    try:
+
+        name = name.replace(" ","+")  
+        link = f"https://www.imdb.com/find?s=tt&q={name}&ref_=nv_sr_sm"
+        
+        r = requests.get(link)
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all("td", {"class" : "result_text"})
+        result = ""
+        count = 1
+        linkk = []
+        names = []
+        for span in spans:
+            result += f"{count}. [{span.text}](https://www.imdb.com{span.a['href']})\n"
+            linkk.append(f"https://www.imdb.com{span.a['href']}")
+            names.append(span.text)
+            count += 1
+            if count > 7:
+                break
+        em = discord.Embed(title = "Result:",description= result,color = ctx.author.color)
+        message = await ctx.reply(embed = em)
+        emoji_numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"]
+        for i in range(count-1):
+            await message.add_reaction(emoji_numbers[i])
+        def check(reaction, user):
+                return str(reaction.emoji) in emoji_numbers and user != client.user and reaction.message.id == message.id and user == ctx.author
+            # This makes sure nobody except the command sender can interact with the "menu"
+        while True:
+            try:
+                reaction, user = await client.wait_for('reaction_add', check=check, timeout=30)
+                index = emoji_numbers.index(reaction.emoji)
+                rn = requests.get(f"{linkk[index]}plotsummary?ref_=tt_stry_pl#synopsis")
+                #ry = requests.get(f"{linkk[index]}?ref_=tt_stry_pl")
+                soupp = BeautifulSoup(rn.content,features="lxml")
+                #sou = BeautifulSoup(ry.content,features="lxml")
+                
+                #for nam in direct:
+                    
+                synop = soupp.find("li",{"class" : "ipl-zebra-list__item"})
+                poster = soupp.find("img",{"class" : "poster"})
+                emb = discord.Embed(title = names[index],description= synop.text,color = ctx.author.color)
+                try:
+                    img = f"{poster['src'][0:-24]}.jpg"
+                    emb.set_image(url = img)
+                except:
+                    emb.set_footer(text="No Image Found")
+                       
+                
+                await message.edit(embed =emb)
+                await message.remove_reaction(reaction, user)
+                for i in range(count-1):
+                    await message.remove_reaction(emoji_numbers[i],client.user) 
+            except asyncio.TimeoutError:
+                    return
+                  
+    except:
+        em = discord.Embed(title="Not found")
+        await ctx.send(embed=em)            
+                
 #['airing', 'akas', 'alternate versions', 'awards', 'connections', 'crazy credits', 'critic reviews', 'episodes', 'external reviews', 'external sites', 'faqs', 'full credits', 'goofs', 'keywords', 'list', 'locations', 'main', 'misc sites', 'news', 'official sites', 'parents guide', 'photo sites', 'plot', 'quotes', 'recommendations', 'release dates', 'release info', 'reviews', 'sound clips', 'soundtrack', 'synopsis', 'taglines', 'technical', 'trivia', 'tv schedule', 'video clips', 'vote details']
 insult_api_url = 'http://autoinsult.datahamster.com/index.php?style=3'
 @client.command(name='insult',aliases=["Insult"])
@@ -1993,8 +2041,27 @@ async def recommend(ctx):
             except asyncio.TimeoutError:   
                 return
 
+@client.command(name='similar',aliases=["Similar"])
+async def similar(ctx, *,name):
+    from mal import AnimeSearch
+    search = AnimeSearch(name) 
+    id = (search.results[0].mal_id)
+    link = f"https://myanimelist.net/anime/{id}/"
+    
+    r = requests.get(link)
+    soup = BeautifulSoup(r.content,features="lxml")
+    spans = soup.find_all('li',attrs={"class":"btn-anime"})
+    recom = ""
+    count = 1
+    for span in spans:
+        recom += f"{count}. [{span['title']}]({span.a['href']})\n"
+        count += 1
+        if count > 7:
+            break
+    em = discord.Embed(title = "Anime Recommendations:",description= recom,color = ctx.author.color)
+    await ctx.reply(embed = em)
 
-
+        
 @client.command(name='read',aliases=["Read"])
 async def read(ctx,*,word): 
     try:
@@ -2110,6 +2177,13 @@ async def wallpaper_mobile(ctx, *,word = None ):
     except:
         await ctx.reply("Not found")
 
+@client.command(name='rand',aliases=["Random","Rand","random"])
+async def rndm(ctx, number : int):
+    try:
+        result = random.randint(1,number)      
+        await ctx.send(result)  
+    except:
+        await ctx.reply("I need a number")
 
 @client.command(name='userinfo',aliases=["whois","Whois","Userinfo"])
 async def userinfo(ctx, member: discord.Member = None):
@@ -2567,8 +2641,8 @@ async def help(ctx):
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `punch` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` `F` ",inline=False)
-    em.add_field(name="🔧 Utility",value="`anime` `manga` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char` `wallpaper`",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` `F` `reddit` ",inline=False)
+    em.add_field(name="🔧 Utility",value="`anime` `manga` `movie` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
