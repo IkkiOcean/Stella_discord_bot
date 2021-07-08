@@ -2055,6 +2055,7 @@ async def similar(ctx, *,name):
         linkk = []
         namme = []
         try:
+            print(1)
             soup = BeautifulSoup(r.content,features="lxml")
             spans = soup.find_all('li',attrs={"class":"btn-anime"})
             
@@ -2065,7 +2066,9 @@ async def similar(ctx, *,name):
                 linkk.append(span.img['data-src'])
                 if count > 7:
                     break
+            print(3)    
         except:
+            print(2)
             sou = BeautifulSoup(r.content,features="lxml")
             spas = sou.find_all('li',attrs={"class":"btn-anime auto"})
             for spa in spas:
@@ -2075,6 +2078,7 @@ async def similar(ctx, *,name):
                 count += 1
                 if count > 7:
                     break
+            print(4)    
         em = discord.Embed(title = "Anime Recommendations:",description= recom,color = ctx.author.color)
         message = await ctx.reply(embed = em)
         emoji_numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"]
