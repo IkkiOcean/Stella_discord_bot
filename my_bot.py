@@ -2043,7 +2043,7 @@ async def recommend(ctx):
 
 @client.command(name='similar',aliases=["Similar"])
 async def similar(ctx, *,name):
-    try:
+    #try:
         from mal import AnimeSearch
         search = AnimeSearch(name) 
         id = (search.results[0].mal_id)
@@ -2051,19 +2051,92 @@ async def similar(ctx, *,name):
         
         r = requests.get(link)
         soup = BeautifulSoup(r.content,features="lxml")
-        spans = soup.find_all('li',attrs={"class":"btn-anime auto"})
+        spans = soup.find_all('li',attrs={"class":"btn-anime"})
         recom = ""
         count = 1
+        linkk = []
+        namme = []
         for span in spans:
             recom += f"{count}. [{span['title']}]({span.a['href']})\n"
             count += 1
+            namme.append(f"{count}. [{span['title']}]({span.a['href']})")
+            linkk.append(span.img['data-src'])
             if count > 7:
                 break
-        em = discord.Embed(title = "Anime Recommendations:",description= recom,color = ctx.author.color)
-        await ctx.reply(embed = em)
-    except:
+        if recom == "":
+            
+            sou = BeautifulSoup(r.content,features="lxml")
+            spas = sou.find_all('li',attrs={"class":"btn-anime auto"})
+            reco = ""
+            coun = 1
+            linnk = []
+            name = []
+            for spa in spas:
+                recom += f"{coun}. [{spa['title']}]({spa.a['href']})\n"
+                name.append(f"{coun}. [{spa['title']}]({spa.a['href']})")
+                linnk.append(spa.img['src'])
+                coun += 1
+                if coun > 7:
+                    break
+            em = discord.Embed(title = "Anime Recommendations:",description= reco,color = ctx.author.color)
+            message = await ctx.reply(embed = em)
+            emoji_numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"]
+            for i in range(count-1):
+                await message.add_reaction(emoji_numbers[i])
+            def check(reaction, user):
+                    return str(reaction.emoji) in emoji_numbers and user != client.user and reaction.message.id == message.id and user == ctx.author
+                # This makes sure nobody except the command sender can interact with the "menu"
+            while True:
+                try:
+                    reaction, user = await client.wait_for('reaction_add', check=check, timeout=20)
+                    index = emoji_numbers.index(reaction.emoji)
+                    emb = discord.Embed(description = name[index],color = ctx.author.color)
+                    try:
+                        image = linnk[index].replace("/r/90x140","")
+                        emb.set_image(url = image)
+                    except:
+                        emb.set_footer(text="No Image Found")
+                        
+                    
+                    await message.edit(embed =emb)
+                    await message.remove_reaction(reaction, user)
+                    for i in range(count-1):
+                        await message.remove_reaction(emoji_numbers[i],client.user) 
+                except asyncio.TimeoutError:
+                        return
+        else:
+            
+            em = discord.Embed(title = "Anime Recommendations:",description= recom,color = ctx.author.color)
+            message = await ctx.reply(embed = em)    
+            
+            emoji_numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"]
+            for i in range(count-1):
+                await message.add_reaction(emoji_numbers[i])
+            def check(reaction, user):
+                    return str(reaction.emoji) in emoji_numbers and user != client.user and reaction.message.id == message.id and user == ctx.author
+                # This makes sure nobody except the command sender can interact with the "menu"
+            while True:
+                try:
+                    reaction, user = await client.wait_for('reaction_add', check=check, timeout=20)
+                    index = emoji_numbers.index(reaction.emoji)
+                    emb = discord.Embed(description = namme[index],color = ctx.author.color)
+                    try:
+                        image = linkk[index].replace("/r/90x140","")
+                        emb.set_image(url = image)
+                    except:
+                        emb.set_footer(text="No Image Found")
+                        
+                    
+                    await message.edit(embed =emb)
+                    await message.remove_reaction(reaction, user)
+                    for i in range(count-1):
+                        await message.remove_reaction(emoji_numbers[i],client.user) 
+                except asyncio.TimeoutError:
+                        return
+            
+    #except:
         
-        return
+       # return
 
         
 @client.command(name='read',aliases=["Read"])
