@@ -2059,9 +2059,10 @@ async def similar(ctx, *,name):
             print(1)
             soup = BeautifulSoup(r.content,features="lxml")
             spans = soup.find_all('li',attrs={"class":"btn-anime"})
-            
+            print(spans)
             for span in spans:
                 recom += f"{count}. [{span['title']}]({span.a['href']})\n"
+                print(span)
                 count += 1
                 namme.append(f"{count}. [{span['title']}]({span.a['href']})")
                 linkk.append(span.img['data-src'])
