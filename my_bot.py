@@ -2074,12 +2074,15 @@ async def similar(ctx, *,name):
             spas = sou.find_all('li',attrs={"class":"btn-anime auto"})
             for spa in spas:
                 recom += f"{count}. [{spa['title']}]({spa.a['href']})\n"
+                print(spa)
                 namme.append(f"{count}. [{spa['title']}]({spa.a['href']})")
                 linkk.append(spa.img['src'])
                 count += 1
                 if count > 7:
                     break
-            print(4)    
+            print(4) 
+              
+            print(recom)
         em = discord.Embed(title = "Anime Recommendations:",description= recom,color = ctx.author.color)
         message = await ctx.reply(embed = em)
         emoji_numbers = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣"]
