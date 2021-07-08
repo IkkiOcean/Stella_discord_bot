@@ -2050,12 +2050,12 @@ async def similar(ctx, *,name):
         link = f"https://myanimelist.net/anime/{id}/"
         
         r = requests.get(link)
-        
+        recom = ""
+        count = 1
+        linkk = []
+        namme = []
         try:
-            recom = ""
-            count = 1
-            linkk = []
-            namme = []
+            
             print(1)
             soup = BeautifulSoup(r.content,features="lxml")
             spans = soup.find_all('li',attrs={"class":"btn-anime"})
@@ -2070,6 +2070,7 @@ async def similar(ctx, *,name):
             print(3)    
         except:
             print(2)
+
             sou = BeautifulSoup(r.content,features="lxml")
             spas = sou.find_all('li',attrs={"class":"btn-anime auto"})
             for spa in spas:
