@@ -2043,23 +2043,27 @@ async def recommend(ctx):
 
 @client.command(name='similar',aliases=["Similar"])
 async def similar(ctx, *,name):
-    from mal import AnimeSearch
-    search = AnimeSearch(name) 
-    id = (search.results[0].mal_id)
-    link = f"https://myanimelist.net/anime/{id}/"
-    
-    r = requests.get(link)
-    soup = BeautifulSoup(r.content,features="lxml")
-    spans = soup.find_all('li',attrs={"class":"btn-anime"})
-    recom = ""
-    count = 1
-    for span in spans:
-        recom += f"{count}. [{span['title']}]({span.a['href']})\n"
-        count += 1
-        if count > 7:
-            break
-    em = discord.Embed(title = "Anime Recommendations:",description= recom,color = ctx.author.color)
-    await ctx.reply(embed = em)
+    try:
+        from mal import AnimeSearch
+        search = AnimeSearch(name) 
+        id = (search.results[0].mal_id)
+        link = f"https://myanimelist.net/anime/{id}/"
+        
+        r = requests.get(link)
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all('li',attrs={"class":"btn-anime auto"})
+        recom = ""
+        count = 1
+        for span in spans:
+            recom += f"{count}. [{span['title']}]({span.a['href']})\n"
+            count += 1
+            if count > 7:
+                break
+        em = discord.Embed(title = "Anime Recommendations:",description= recom,color = ctx.author.color)
+        await ctx.reply(embed = em)
+    except:
+        
+        return
 
         
 @client.command(name='read',aliases=["Read"])
