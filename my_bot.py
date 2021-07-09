@@ -25,10 +25,9 @@ from waifu import waifupics, waifuname, waifuseries
 from gogoanimeapi import gogoanime as gogo
 import numpy as np
 import urllib.parse, urllib.request, re
-from imdb import IMDb
+
 from bs4 import BeautifulSoup
 
-from selenium import webdriver
 import certifi
 from pymongo import MongoClient, database
 import aiohttp
@@ -1465,10 +1464,8 @@ async def watch(ctx, *,anime):
         #r4 = requests.get(link4)
         
         url = link4
-        options = webdriver.ChromeOptions()
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        driver = webdriver.Chrome(options=options)
-        r4 =driver.get(url)
+        
+        r4 =request.get(url)
         soup4 = BeautifulSoup(r4.content,features="lxml")
         print(soup4)
         spans4 = soup4.find_all("div", {"class" : "dowload"})
