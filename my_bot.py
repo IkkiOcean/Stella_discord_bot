@@ -1,3 +1,4 @@
+from threading import Timer
 import discord
 from discord import embeds
 from discord import user
@@ -27,8 +28,9 @@ import urllib.parse, urllib.request, re
 from imdb import IMDb
 from bs4 import BeautifulSoup
 
+from selenium import webdriver
 import certifi
-from pymongo import MongoClient
+from pymongo import MongoClient, database
 import aiohttp
 import praw
 #urban = UrbanClient()
@@ -1431,66 +1433,51 @@ async def waifu_(ctx):
         
 #gogoanime
 @client.command(name='watch',aliases=["Watch"]) 
-async def watch(ctx, *,Anime):     
-    anime_search = gogo.get_search_results(query=Anime)
-    print(anime_search)
-    em = discord.Embed(description= "Reply with the Anime number",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
-    em.set_author(name = "Anime search",icon_url=f"{client.user.avatar_url}")
-    x=1
-    srch = ""
-    for title in anime_search:
-        print(title)
-        srch += (f"{x} : {title.get('name')}\n\n")
-        x = x+1
-    #for title in anime_search:
-        #em.add_field(name=f"{x} : {title.get('name')}",value="_")
-        #x = x+1
-    em.add_field(name="Search Result: ",value=srch)   
-    await ctx.send(embed = em)   
-    try:
-        def check(msg):
-            return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit() 
-
-        msg = await client.wait_for("message", check=check,timeout=30) 
- 
-        msg1 = int(msg.content)
-        anime = anime_search[(msg1)-1]
-        id = anime.get('animeid')
-        anime_details = gogo.get_anime_details(animeid=id)
-        plot = anime_details.get('plot_summary')
-        title = anime_details.get('title')
-        episode = anime_details.get('episodes')
-        image = anime_details.get('image_url')
-        embed = discord.Embed(description= f"{plot}",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
-        embed.set_author(name = title,icon_url=f"{client.user.avatar_url}")
-        embed.add_field(name="Episodes",value=f"{episode} episodes available\n**Reply with Episode Number**")
-        embed.set_thumbnail(url=image)
-        await ctx.send(embed=embed)  
-        try:
-            msg2 = await client.wait_for('message', check=check,timeout=30)
-            msg3 = int(msg2.content)
-            
-            print(msg3)
-            anime_link = gogo.get_episodes_link(animeid=id, episode_num=msg3)
-            link = anime_link.get('(HDP-mp4)')
-            link4 = anime_link.get('(1080P-mp4)')
-            link2 = anime_link.get('DoodStream')
-            link3 = anime_link.get('StreamTape')
-            link5 = anime_link.get('(720P-mp4)')
-            link6 = anime_link.get('(360P-mp4)')
-            emb = discord.Embed(description=f'Download link of Episode {msg3} :\n[Download Now(HD)]({link})\n[Download Now(1080p)]({link4})\n[Download Now(720p)]({link5})\n[Download Now(360p)]({link6})')
-            emb.set_author(name = title,icon_url=f"{client.user.avatar_url}")
-            emb.add_field(name="Watch",value=f"[1) Watch Now ]({link2})\n[2) Watch Now]({link3})")
-            emb.set_thumbnail(url=image)
-            await ctx.send(embed = emb)
-        except asyncio.TimeoutError:
-            em1 = discord.Embed(description="**Timeout**") 
-            
-            await ctx.send(embed=em1)    
-    except asyncio.TimeoutError:
-        em = discord.Embed(description="**Timeout**") 
-         
-        await ctx.send(embed=em)  
+async def watch(ctx, *,anime):     
+    #try:
+        link = f"https://gogoanime.pe//search.html?keyword={anime}"
+        r = requests.get(link)
+        soup = BeautifulSoup(r.content,features="lxml")
+        spans = soup.find_all("div", {"class" : "img"})
+        count = 1
+        lis = ""
+        lin = []
+        for span in spans:
+            lis += f"{count}. {span.a['title']}"
+            lin.append(span.a['href'])
+            count += 1
+            if count > 14:
+                break
+        link2 = f"https://gogoanime.pe{lin[0]}"
+        r2 = requests.get(link2)
+        soup2 = BeautifulSoup(r2.content,features="lxml")
+        spans2 = soup2.find_all("p", {"class" : "type"})
+        spas3 = soup2.find("a",{"class" : "active"})
+        print(spans2[1].text)
+        print(f"last episode : {spas3['ep_end']}")
+        lin2 = lin[0].replace("category/","")
+        link3 = f"https://gogoanime.pe{lin2}-episode-{8}"
+        r3 = requests.get(link3)
+        soup3 = BeautifulSoup(r3.content,features="lxml")
+        spans3 = soup3.find("li", {"class" : "dowloads"})
+        print(spans3.a['href'])
+        link4 = spans3.a['href']
+        #r4 = requests.get(link4)
+        
+        url = link4
+        options = webdriver.ChromeOptions()
+        options.add_argument("--disable-blink-features=AutomationControlled")
+        driver = webdriver.Chrome(options=options)
+        r4 =driver.get(url)
+        soup4 = BeautifulSoup(r4.content,features="lxml")
+        print(soup4)
+        spans4 = soup4.find_all("div", {"class" : "dowload"})
+        print(spans4)
+        #down = ""
+        for span4 in spans4:
+            print(span4.a['href'])
+            #down += f"[{span4.a['href']}]({span4.a['download']})\n"
+       # print(down)
 
 @client.command(name='movie',aliases=["Movie","Series","series"])
 async def movie(ctx, *,name):
@@ -1526,23 +1513,72 @@ async def movie(ctx, *,name):
                 reaction, user = await client.wait_for('reaction_add', check=check, timeout=30)
                 index = emoji_numbers.index(reaction.emoji)
                 rn = requests.get(f"{linkk[index]}plotsummary?ref_=tt_stry_pl#synopsis")
-                #ry = requests.get(f"{linkk[index]}?ref_=tt_stry_pl")
+                ry = requests.get(f"{linkk[index]}?ref_=tt_stry_pl")
                 soupp = BeautifulSoup(rn.content,features="lxml")
-                #sou = BeautifulSoup(ry.content,features="lxml")
+                sou = BeautifulSoup(ry.content,features="lxml")
+                genres = sou.find_all("div",{"class" : "see-more inline canwrap"})
+                genre = genres[1].text
+                genre = genre.replace("\n","")
+                genre = genre[8:]
                 
+                #director
                 #for nam in direct:
-                    
+                details = sou.find_all("div",{"class" : "txt-block"})
+                date= ""
+                time = ""
+                gross = ""
+                comp = ""
+                lang = ""
+                for detail in details:
+                        if detail.h4 != None:
+                            
+                            if detail.h4.text == "Release Date:":
+                                date = detail.h4.nextSibling 
+                            if detail.h4.text == "Runtime:":    
+                                time = detail.h4.parent.text
+                                time = time.replace("\n","")
+                                time = time[8:]
+                            if detail.h4.text == "Cumulative Worldwide Gross:":    
+                                gross = detail.h4.nextSibling 
+                            if detail.h4.text == "Production Co:":    
+                                comp = detail.h4.parent.text
+                                comp = comp.replace("\n","")
+                                comp = comp[15:-16]
+                            if detail.h4.text == "Language:":    
+                                lang = detail.h4.parent.text 
+                                lang = lang.replace("\n","")  
+                                lang = lang[9:]      
+                if date == "":
+                    date = "Not Available"
+                if time == "":
+                    time = "Not Available"  
+                if gross == "":
+                    gross = "Not Available"                 
+                if comp == "":
+                    comp = "Not Available"
+                if lang == "":
+                    lang = "Not Available"  
+                      
                 synop = soupp.find("li",{"class" : "ipl-zebra-list__item"})
                 poster = soupp.find("img",{"class" : "poster"})
-                emb = discord.Embed(title = names[index],description= synop.text,color = ctx.author.color)
+                emb = discord.Embed(title = names[index],description= f"{synop.text}",color = ctx.author.color)
+                emb.add_field(name="Genres:",value=genre)
+                emb.add_field(name="Release Date:",value=date)
+                emb.add_field(name="Runtime:",value=time)
+                emb.add_field(name="Worldwide Gross:",value=gross)
+                emb.add_field(name="Production Co.:",value=comp)
+                emb.add_field(name="Language:",value=lang)
                 try:
+                    
                     img = f"{poster['src'][0:-24]}.jpg"
                     emb.set_image(url = img)
                 except:
+                    
                     emb.set_footer(text="No Image Found")
                        
                 
                 await message.edit(embed =emb)
+                
                 await message.remove_reaction(reaction, user)
                 for i in range(count-1):
                     await message.remove_reaction(emoji_numbers[i],client.user) 
@@ -2059,10 +2095,11 @@ async def similar(ctx, *,name):
             print(1)
             soup = BeautifulSoup(r.content,features="lxml")
             spans = soup.find_all('li',attrs={"class":"btn-anime"})
-            print(spans)
+            
             for span in spans:
                 recom += f"{count}. [{span['title']}]({span.a['href']})\n"
                 print(span)
+                
                 count += 1
                 namme.append(f"{count}. [{span['title']}]({span.a['href']})")
                 linkk.append(span.img['data-src'])
