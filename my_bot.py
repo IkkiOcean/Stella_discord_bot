@@ -11,7 +11,7 @@ import requests #requests
 from discord.errors import DiscordServerError, Forbidden
 import random, textwrap
 import datetime
-#import json
+import json 
 import os
 from PIL import Image, ImageFont, ImageDraw  #pip install Pillow
 from io import BytesIO
@@ -21,11 +21,14 @@ import numpy
 import mal
 from mal import *
 import asyncio
+
+from requests.api import delete
+
 from waifu import waifupics, waifuname, waifuseries
 from gogoanimeapi import gogoanime as gogo
 import numpy as np
 import urllib.parse, urllib.request, re
-
+from asyncio import gather
 from bs4 import BeautifulSoup
 
 import certifi
@@ -33,7 +36,7 @@ from pymongo import MongoClient, database
 import aiohttp
 import praw
 #urban = UrbanClient()
-os.chdir(r".vscode")#G:\bot\stella\.vscode
+os.chdir(r"G:\bot\stella")#G:\bot\stella\.vscode
 
 #prefix...................]
 intents = discord.Intents.all()
@@ -50,7 +53,7 @@ client = commands.Bot(command_prefix = ('stela ','S.','s.','Stela '), intents = 
 cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
 db = cluster["discord"]  
 mal_collect = db["mal"]             
-
+animetriv_collect = db["anime-trivia"]
 reddit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
                     client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
                     #username = 'ItzStela',
@@ -1431,54 +1434,17 @@ async def waifu_(ctx):
         
         
 #gogoanime
-@client.command(name='watch',aliases=["Watch"]) 
-async def watch(ctx, *,anime):     
-    #try:
-        link = f"https://gogoanime.pe//search.html?keyword={anime}"
-        r = requests.get(link)
-        soup = BeautifulSoup(r.content,features="lxml")
-        spans = soup.find_all("div", {"class" : "img"})
-        count = 1
-        lis = ""
-        lin = []
-        for span in spans:
-            lis += f"{count}. {span.a['title']}"
-            lin.append(span.a['href'])
-            count += 1
-            if count > 14:
-                break
-        link2 = f"https://gogoanime.pe{lin[0]}"
-        r2 = requests.get(link2)
-        soup2 = BeautifulSoup(r2.content,features="lxml")
-        spans2 = soup2.find_all("p", {"class" : "type"})
-        spas3 = soup2.find("a",{"class" : "active"})
-        print(spans2[1].text)
-        print(f"last episode : {spas3['ep_end']}")
-        lin2 = lin[0].replace("category/","")
-        link3 = f"https://gogoanime.pe{lin2}-episode-{8}"
-        r3 = requests.get(link3)
-        soup3 = BeautifulSoup(r3.content,features="lxml")
-        spans3 = soup3.find("li", {"class" : "dowloads"})
-        print(spans3.a['href'])
-        link4 = spans3.a['href']
-        #r4 = requests.get(link4)
-        
-        url = link4
-        
-        r4 =request.get(url)
-        soup4 = BeautifulSoup(r4.content,features="lxml")
-        print(soup4)
-        spans4 = soup4.find_all("div", {"class" : "dowload"})
-        print(spans4)
-        #down = ""
-        for span4 in spans4:
-            print(span4.a['href'])
-            #down += f"[{span4.a['href']}]({span4.a['download']})\n"
-       # print(down)
 
+@client.command(name='ck')
+async def movie(ctx):       
+    ry = requests.get("https://www.imdb.com/title/tt0848228/")
+    print(ry.content)
+    soup = BeautifulSoup(ry.content,features="lxml")
+    gen = soup.find(text = "genres")
+    print(gen)
 @client.command(name='movie',aliases=["Movie","Series","series"])
 async def movie(ctx, *,name):
-    try:
+    #try:
 
         name = name.replace(" ","+")  
         link = f"https://www.imdb.com/find?s=tt&q={name}&ref_=nv_sr_sm"
@@ -1486,6 +1452,7 @@ async def movie(ctx, *,name):
         r = requests.get(link)
         soup = BeautifulSoup(r.content,features="lxml")
         spans = soup.find_all("td", {"class" : "result_text"})
+        
         result = ""
         count = 1
         linkk = []
@@ -1506,65 +1473,20 @@ async def movie(ctx, *,name):
                 return str(reaction.emoji) in emoji_numbers and user != client.user and reaction.message.id == message.id and user == ctx.author
             # This makes sure nobody except the command sender can interact with the "menu"
         while True:
-            try:
+            #try:
                 reaction, user = await client.wait_for('reaction_add', check=check, timeout=30)
                 index = emoji_numbers.index(reaction.emoji)
                 rn = requests.get(f"{linkk[index]}plotsummary?ref_=tt_stry_pl#synopsis")
-                ry = requests.get(f"{linkk[index]}?ref_=tt_stry_pl")
+               # ry = requests.get(f"{linkk[index]}")
+               # print(json.load(ry))
                 soupp = BeautifulSoup(rn.content,features="lxml")
-                sou = BeautifulSoup(ry.content,features="lxml")
-                genres = sou.find_all("div",{"class" : "see-more inline canwrap"})
-                genre = genres[1].text
-                genre = genre.replace("\n","")
-                genre = genre[8:]
+                #sou = BeautifulSoup(ry.content,features='html.parser')
+                print(f"{linkk[index]}?ref_=tt_stry_pl")
                 
-                #director
-                #for nam in direct:
-                details = sou.find_all("div",{"class" : "txt-block"})
-                date= ""
-                time = ""
-                gross = ""
-                comp = ""
-                lang = ""
-                for detail in details:
-                        if detail.h4 != None:
-                            
-                            if detail.h4.text == "Release Date:":
-                                date = detail.h4.nextSibling 
-                            if detail.h4.text == "Runtime:":    
-                                time = detail.h4.parent.text
-                                time = time.replace("\n","")
-                                time = time[8:]
-                            if detail.h4.text == "Cumulative Worldwide Gross:":    
-                                gross = detail.h4.nextSibling 
-                            if detail.h4.text == "Production Co:":    
-                                comp = detail.h4.parent.text
-                                comp = comp.replace("\n","")
-                                comp = comp[15:-16]
-                            if detail.h4.text == "Language:":    
-                                lang = detail.h4.parent.text 
-                                lang = lang.replace("\n","")  
-                                lang = lang[9:]      
-                if date == "":
-                    date = "Not Available"
-                if time == "":
-                    time = "Not Available"  
-                if gross == "":
-                    gross = "Not Available"                 
-                if comp == "":
-                    comp = "Not Available"
-                if lang == "":
-                    lang = "Not Available"  
                       
                 synop = soupp.find("li",{"class" : "ipl-zebra-list__item"})
                 poster = soupp.find("img",{"class" : "poster"})
                 emb = discord.Embed(title = names[index],description= f"{synop.text}",color = ctx.author.color)
-                emb.add_field(name="Genres:",value=genre)
-                emb.add_field(name="Release Date:",value=date)
-                emb.add_field(name="Runtime:",value=time)
-                emb.add_field(name="Worldwide Gross:",value=gross)
-                emb.add_field(name="Production Co.:",value=comp)
-                emb.add_field(name="Language:",value=lang)
                 try:
                     
                     img = f"{poster['src'][0:-24]}.jpg"
@@ -1579,12 +1501,12 @@ async def movie(ctx, *,name):
                 await message.remove_reaction(reaction, user)
                 for i in range(count-1):
                     await message.remove_reaction(emoji_numbers[i],client.user) 
-            except asyncio.TimeoutError:
-                    return
+            #except asyncio.TimeoutError:
+                    #return
                   
-    except:
-        em = discord.Embed(title="Not found")
-        await ctx.send(embed=em)            
+    #except:
+        #em = discord.Embed(title="Not found")
+        #await ctx.send(embed=em)            
                 
 #['airing', 'akas', 'alternate versions', 'awards', 'connections', 'crazy credits', 'critic reviews', 'episodes', 'external reviews', 'external sites', 'faqs', 'full credits', 'goofs', 'keywords', 'list', 'locations', 'main', 'misc sites', 'news', 'official sites', 'parents guide', 'photo sites', 'plot', 'quotes', 'recommendations', 'release dates', 'release info', 'reviews', 'sound clips', 'soundtrack', 'synopsis', 'taglines', 'technical', 'trivia', 'tv schedule', 'video clips', 'vote details']
 insult_api_url = 'http://autoinsult.datahamster.com/index.php?style=3'
@@ -2721,6 +2643,309 @@ async def reroll(ctx,id_ : int):
    #     message=await ctx.send(embed=embed)
     #    i += 1
        # chosen_index = i
+
+
+             
+client = commands.Bot(command_prefix = ('stela ','S.','s.','Stela '), intents = intents)
+async def dm_helper(player: discord.User,question , answer , option , options):
+    #if player.bot:
+    #    return random.choice(emojis)
+    
+    
+    embedd = discord.Embed(title = "Chase the Runner",description = f"**Type the Answer of the Question!**\n{question}\n\n{option}\n`Type cancel to cancel the game`") 
+    msg = await player.send(embed = embedd)
+    def check(res):
+        return res.content.lower() in options and res.author == player 
+        
+
+    try:
+        
+        res = await client.wait_for('message',check=check,timeout=30)
+        
+        if res.content.lower() == "cancel":
+            return "cancel"
+        if res.content.lower() == answer.lower():
+            embed4 = discord.Embed(title = "Chase the Runner",description = f"**Answer the Question!**\n{question}\n`{res.content}` - **Correct Answer: +1**") 
+            await msg.edit(embed = embed4)
+            return [1]   
+        else:    
+            embed2 = discord.Embed(title = "Chase the Runner",description = f"**Answer the Question!**\n{question}\n**Wrong Answer: +0**") 
+            await msg.edit(embed = embed2)
+            return [0]
+    except asyncio.TimeoutError:
+        embed3 = discord.Embed(title = "Chase the Runner",description = f"timeout....") 
+        await msg.edit(embed = embed3,delete_after = 10)
+        return [0,1]
+
+    
+    
+@client.command(name='challenge',pass_context = True,aliases=["Challenge"])    
+async def challenge(ctx, member : discord.Member):
+    if ctx.author != member:
+        mem1 = ctx.author
+        mem2 = member
+        htmlcodes = (("'",'&#039;'),('"','&quot;'),(">",'&GT;'),('<','&lt;'),('&','&amp;'))
+        
+        em = discord.Embed(title = "Chase the Runner",description = f"You have been challenged by {mem1.mention}\nYou have to answer as many questions as you can, time for each question is 40 sec\n`Do you accept the challenge?`")
+        msg = await ctx.send(mem2.mention,embed = em)
+        await msg.add_reaction("❌")
+        await msg.add_reaction("✅")
+        emoji_numbers = ["✅","❌"]
+        def check1(reaction, user):
+            return str(reaction.emoji) in ["✅","❌"] and user != client.user and reaction.message.id == msg.id and user.id == mem2.id
+        reaction, user = await client.wait_for('reaction_add',check = check1,timeout = 40) 
+        await msg.remove_reaction(reaction, mem2)
+        i = 0
+        while i < 2:
+            await msg.remove_reaction(emoji_numbers[i],client.user)
+            i += 1
+        if str(reaction.emoji) == "✅":
+            money = 0
+            name = "True"
+            work = "True"
+            count = 0
+            
+            while name == "True":
+                api1 = "https://opentdb.com/api.php?amount=45&category=31&difficulty=easy&type=multiple"
+                api2 = "https://opentdb.com/api.php?amount=50&category=31&difficulty=medium&type=multiple"
+                api3 = "https://opentdb.com/api.php?amount=37&category=31&difficulty=hard&type=multiple"
+                api = random.choice([api1,api2,api3])
+                r = requests.get(api).json()
+                leng = (len(r['results'])-1)
+                
+                choose = random.randint(0,leng)
+                qu = (r['results'][choose]['question'])
+                
+                ans = (r['results'][choose]['correct_answer'])
+                wrong = r['results'][choose]['incorrect_answers']
+                options = []
+                options.append(wrong[0])
+                options.append(wrong[1])
+                options.append(ans)
+                options.append(wrong[2])
+                shuffled = random.sample(options, len(options))
+               
+                    
+                option = ""
+                nom = 1
+                for shuffle in shuffled:
+
+                    option += f"{nom}. {shuffle}\n"  
+                    nom += 1 
+    
+                for code in htmlcodes:
+                    option = option.replace(code[1],code[0])
+                    options[0] = options[i].replace(code[1],code[0])
+                    options[1] = options[i].replace(code[1],code[0])
+                    options[2] = options[i].replace(code[1],code[0])
+                    options[3] = options[i].replace(code[1],code[0])
+                    qu = qu.replace(code[1],code[0]) 
+                    ans = ans.replace(code[1],code[0])
+                for i in range(len(options)):
+                    options[i] = options[i].lower() 
+                
+                def check(response):
+                    return response.content.lower() in options and response.author == mem2 and response.channel == ctx.channel
+                embe = discord.Embed(title = "Chase the Runner",description = f"{qu}\n\n{option}")    
+                await msg.edit(embed = embe)
+                try:
+                    
+                    response= await client.wait_for('message', check= check, timeout= 20)
+                    
+                    if response.content.lower() == ans.lower():
+                        money += 1
+                        count += 1
+                        if count > 8:
+                            name = "False"
+                            
+                    else:
+                        name = "False"        
+                        
+                except asyncio.TimeoutError:
+                    #ms = await ctx.send(f"**Timeout**",delete = 20)
+                     
+                    name = "False"
+                  
+            embed = discord.Embed(title = "Chase the Runner",description = f"**Robbery ended**\nYou robbed {money*100}+ Respect") 
+            await msg.edit(embed =embed)        
+            await ctx.send(f"{mem1.mention}|{mem2.mention}`Come in Dm \nChase will start in 30 sec`")
+            
+            TPA = 0
+            TPB = 2
+            
+            api1 = "https://opentdb.com/api.php?amount=45&category=31&difficulty=easy&type=multiple"
+            api2 = "https://opentdb.com/api.php?amount=50&category=31&difficulty=medium&type=multiple"
+            api3 = "https://opentdb.com/api.php?amount=37&category=31&difficulty=hard&type=multiple"
+            api = random.choice([api1,api2,api3])
+            r = requests.get(api).json()
+            lengg = (len(r['results'])-1)
+            choice = random.randint(0,lengg)
+            q = (r['results'][choice]['question'])
+            anss = (r['results'][choice]['correct_answer'])
+            wrongg = r['results'][choice]['incorrect_answers']
+            optionss = []
+            optionss.append(wrongg[0])
+            optionss.append(wrongg[1])
+            optionss.append(anss)
+            optionss.append(wrongg[2])
+            shuffledd = random.sample(optionss, len(optionss))
+            optionss.append("cancel")
+            
+            
+            
+            optio = ""
+            no = 1
+            for shuffles in shuffledd:
+                optio += f"{no}. {shuffles}\n"  
+                no += 1  
+            
+            for code in htmlcodes:
+                    optio = optio.replace(code[1],code[0])
+                    optionss[0] = optionss[i].replace(code[1],code[0])
+                    optionss[1] = optionss[i].replace(code[1],code[0])
+                    optionss[2] = optionss[i].replace(code[1],code[0])
+                    optionss[3] = optionss[i].replace(code[1],code[0])
+                    q = q.replace(code[1],code[0]) 
+                    anss = anss.replace(code[1],code[0])
+            for i in range(len(optionss)):
+                optionss[i] = optionss[i].lower() 
+                
+            dead = 1    
+            await asyncio.sleep(20)
+            await mem1.send("`Chase is starting Now!!`")
+            await mem2.send("`Chase is starting Now!!`") 
+            while work == "True":
+                point1 = dm_helper(mem1, q, anss,optio,optionss )  # Note no "await"
+                point2 = dm_helper(mem2, q, anss,optio,optionss)
+                pointA, pointB = await gather(point1, point2)
+                if (pointA or pointB) != "cancel":
+                    TPA += pointA[0]
+                    TPB += pointB[0]
+                    
+                    api1 = "https://opentdb.com/api.php?amount=45&category=31&difficulty=easy&type=multiple"
+                    api2 = "https://opentdb.com/api.php?amount=50&category=31&difficulty=medium&type=multiple"
+                    api3 = "https://opentdb.com/api.php?amount=37&category=31&difficulty=hard&type=multiple"
+                    api = random.choice([api1,api2,api3])
+                    r = requests.get(api).json()
+                    lengg = (len(r['results'])-1)
+                    choice = random.randint(0,lengg)
+                    q = (r['results'][choice]['question'])
+
+                    anss = (r['results'][choice]['correct_answer'])
+                    wrongg = r['results'][choice]['incorrect_answers']
+                    optionss = []
+                    optionss.append(wrongg[0])
+                    optionss.append(wrongg[1])
+                    optionss.append(anss)
+                    optionss.append(wrongg[2])
+                    shuffledd = random.sample(optionss, len(optionss))
+                    optionss.append("cancel")
+                    
+                    
+                    optio = ""
+                    no = 1
+                    for shuffles in shuffledd:
+                        optio += f"{no}. {shuffles}\n"  
+                        no += 1  
+                    
+                    for code in htmlcodes:
+                        optio = optio.replace(code[1],code[0])
+                        optionss[0] = optionss[i].replace(code[1],code[0])
+                        optionss[1] = optionss[i].replace(code[1],code[0])
+                        optionss[2] = optionss[i].replace(code[1],code[0])
+                        optionss[3] = optionss[i].replace(code[1],code[0])
+                    q = q.replace(code[1],code[0]) 
+                    anss = anss.replace(code[1],code[0])
+                    for i in range(len(optionss)):
+                        optionss[i] = optionss[i].lower()
+                    
+                    rd = "﹏ "
+                    run = "<a:Stela_run:863405565002776609>"
+                    chase = "<a:Stela_Chase:863405726072307723>"
+                    scene = f'{(8-(TPB+1))*rd}{run}{((TPB-TPA)-1)*rd}{chase}{TPA*rd}'
+                    
+                    if len(pointA) == 2 and len(pointB) == 2:
+                        
+                        if  pointA[1] == 1 and pointB[1] == 1:
+                            
+                            dead += 1
+                            
+                    if len(pointA) != 2 or len(pointB) != 2:
+                        dead = 1 
+                             
+                    if dead > 3:
+                        await mem1.send(f"Game has been terminated because of inactivity")
+                        await mem2.send(f"Game has been terminated because of inactivity") 
+                        work = "False"    
+
+                    if TPA == TPB:
+                        await mem1.send(f"**You Caught** {mem2} congrats!\n{scene}")
+                        await mem2.send(f"**You Loose...**\n{mem1} Caught You!\n{scene}") 
+                        work = "False"
+                    if TPB == 7 and TPA < 7:
+                        await mem1.send(f"**You Loose...**\n{mem2} ran away with {money*100}+ Respect  ;-;\n{scene}")
+                        await mem2.send(f"**You Win**\nYou succefully ran away from {mem1} with {money*100}+ Respect \n{scene}") 
+                        work = "False"
+                    else:
+                        #emb2 = discord.Embed(title = "Chase the Runner",description = chase)
+                        await mem1.send(scene,delete_after = 10)
+                        await mem2.send(scene,delete_after = 10)   
+                else:
+                    await mem1.send("Game has been cancelled")
+                    await mem2.send("Game has been cancelled")   
+                    work = "False"       
+        if str(reaction.emoji) == "❌":
+            emb = discord.Embed(title = "Chase the Runner",description = f"{mem2.mention} Declined the Challenge!")
+            await msg.edit(embed = emb)  
+    else:
+        await ctx.reply("How can you play with yourself.. Dummy")        
+#client.remove_command("help")
+         
+           
+@client.command(name='upload')    
+async def upload(ctx, *,question):
+    print(ctx.author.id)
+    if ctx.author.id == 745006368175423489:
+        print(1)
+        def check(response):
+            return  response.author.id == ctx.author.id and response.channel == ctx.channel
+        count = 1
+        options = []
+        while count < 5:    
+                
+            await ctx.reply(f"Send the {count} option")
+            try:
+                response= await client.wait_for('message', check= check, timeout= 60)
+                await ctx.send(response.content)
+                options.append(response.content)
+                count += 1
+            except:    
+                await ctx.send("smtg went wrong")
+
+        await ctx.reply(f"Send the correct answer")     
+        res= await client.wait_for('message', check= check, timeout= 60)  
+        await ctx.send(res.content)
+        answer =  res.content
+        result = ""
+        for optio in options:
+            result += f"{optio}\n"
+        emb = discord.Embed(description = f"{question}\n\n{result}\n\nCorrect answer : {answer}")
+        msg =await ctx.send(embed = emb)
+        await msg.add_reaction("❌")
+        await msg.add_reaction("✅")
+        def check1(reaction, user):
+                return str(reaction.emoji) in ["✅","❌"] and user != client.user and reaction.message.id == msg.id and user.id == ctx.author.id
+        reaction, user = await client.wait_for('reaction_add',check = check1,timeout = 40) 
+        if str(reaction.emoji) == "✅": 
+            userid = ctx.author.id
+            post = {"_id": userid,"question": question, "options" : options,"answer" : answer }
+            animetriv_collect.insert_one(post)
+            emb = discord.Embed(description = f"{question}\n\n{result}\n\nCorrect answer : {answer}\n\n'Added Successfully")
+            await msg.edit(embed = emb)
+        if str(reaction.emoji) == "❌":    
+            await ctx.send("cancelled")
+    else:
+        return
 #help...............................
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
