@@ -2646,7 +2646,7 @@ async def reroll(ctx,id_ : int):
 
 
              
-client = commands.Bot(command_prefix = ('stela ','S.','s.','Stela '), intents = intents)
+
 async def dm_helper(player: discord.User,question , answer , option , options):
     #if player.bot:
     #    return random.choice(emojis)
