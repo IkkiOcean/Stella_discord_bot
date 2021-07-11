@@ -2735,10 +2735,10 @@ async def challenge(ctx, member : discord.Member):
     
                 for code in htmlcodes:
                     option = option.replace(code[1],code[0])
-                    options[0] = options[i].replace(code[1],code[0])
-                    options[1] = options[i].replace(code[1],code[0])
-                    options[2] = options[i].replace(code[1],code[0])
-                    options[3] = options[i].replace(code[1],code[0])
+                    options[0] = options[0].replace(code[1],code[0])
+                    options[1] = options[1].replace(code[1],code[0])
+                    options[2] = options[2].replace(code[1],code[0])
+                    options[3] = options[3].replace(code[1],code[0])
                     qu = qu.replace(code[1],code[0]) 
                     ans = ans.replace(code[1],code[0])
                 for i in range(len(options)):
@@ -2749,6 +2749,7 @@ async def challenge(ctx, member : discord.Member):
                 embe = discord.Embed(title = "Chase the Runner",description = f"{qu}\n\n{option}")    
                 await msg.edit(embed = embe)
                 try:
+                    
                     
                     response= await client.wait_for('message', check= check, timeout= 20)
                     
@@ -2801,10 +2802,10 @@ async def challenge(ctx, member : discord.Member):
             
             for code in htmlcodes:
                     optio = optio.replace(code[1],code[0])
-                    optionss[0] = optionss[i].replace(code[1],code[0])
-                    optionss[1] = optionss[i].replace(code[1],code[0])
-                    optionss[2] = optionss[i].replace(code[1],code[0])
-                    optionss[3] = optionss[i].replace(code[1],code[0])
+                    optionss[0] = optionss[0].replace(code[1],code[0])
+                    optionss[1] = optionss[1].replace(code[1],code[0])
+                    optionss[2] = optionss[2].replace(code[1],code[0])
+                    optionss[3] = optionss[3].replace(code[1],code[0])
                     q = q.replace(code[1],code[0]) 
                     anss = anss.replace(code[1],code[0])
             for i in range(len(optionss)):
@@ -2850,12 +2851,12 @@ async def challenge(ctx, member : discord.Member):
                     
                     for code in htmlcodes:
                         optio = optio.replace(code[1],code[0])
-                        optionss[0] = optionss[i].replace(code[1],code[0])
-                        optionss[1] = optionss[i].replace(code[1],code[0])
-                        optionss[2] = optionss[i].replace(code[1],code[0])
-                        optionss[3] = optionss[i].replace(code[1],code[0])
-                    q = q.replace(code[1],code[0]) 
-                    anss = anss.replace(code[1],code[0])
+                        optionss[0] = optionss[0].replace(code[1],code[0])
+                        optionss[1] = optionss[1].replace(code[1],code[0])
+                        optionss[2] = optionss[2].replace(code[1],code[0])
+                        optionss[3] = optionss[3].replace(code[1],code[0])
+                        q = q.replace(code[1],code[0]) 
+                        anss = anss.replace(code[1],code[0])
                     for i in range(len(optionss)):
                         optionss[i] = optionss[i].lower()
                     
@@ -2941,11 +2942,12 @@ async def upload(ctx, *,question):
             post = {"_id": userid,"question": question, "options" : options,"answer" : answer }
             animetriv_collect.insert_one(post)
             emb = discord.Embed(description = f"{question}\n\n{result}\n\nCorrect answer : {answer}\n\n'Added Successfully")
-            await msg.edit(embed = emb)
+            await msg.edit(embed = em)
         if str(reaction.emoji) == "❌":    
             await ctx.send("cancelled")
     else:
         return
+
 #help...............................
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
