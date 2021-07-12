@@ -2663,7 +2663,7 @@ async def dm_helper(player: discord.User,question , answer , option , options):
         res = await client.wait_for('message',check=check,timeout=30)
         
         if res.content.lower() == "cancel":
-            return "cancel"
+            return ["cancel"]
         if res.content.lower() == answer.lower():
             embed4 = discord.Embed(title = "Chase the Runner",description = f"**Answer the Question!**\n{question}\n`{res.content}` - **Correct Answer: +1**") 
             await msg.edit(embed = embed4)
@@ -2693,163 +2693,115 @@ async def challenge(ctx, member : discord.Member):
         emoji_numbers = ["✅","❌"]
         def check1(reaction, user):
             return str(reaction.emoji) in ["✅","❌"] and user != client.user and reaction.message.id == msg.id and user.id == mem2.id
-        reaction, user = await client.wait_for('reaction_add',check = check1,timeout = 40) 
-        await msg.remove_reaction(reaction, mem2)
-        i = 0
-        while i < 2:
-            await msg.remove_reaction(emoji_numbers[i],client.user)
-            i += 1
-        if str(reaction.emoji) == "✅":
-            money = 0
-            name = "True"
-            work = "True"
-            count = 0
-            
-            while name == "True":
-                api1 = "https://opentdb.com/api.php?amount=45&category=31&difficulty=easy&type=multiple"
-                api2 = "https://opentdb.com/api.php?amount=50&category=31&difficulty=medium&type=multiple"
-                api3 = "https://opentdb.com/api.php?amount=37&category=31&difficulty=hard&type=multiple"
-                api = random.choice([api1,api2,api3])
-                r = requests.get(api).json()
-                leng = (len(r['results'])-1)
+        try:
+            reaction, user = await client.wait_for('reaction_add',check = check1,timeout = 40) 
+            await msg.remove_reaction(reaction, mem2)
+            i = 0
+            while i < 2:
+                await msg.remove_reaction(emoji_numbers[i],client.user)
+                i += 1
+            if str(reaction.emoji) == "✅":
+                money = 0
+                name = "True"
+                work = "True"
+                count = 0
                 
-                choose = random.randint(0,leng)
-                qu = (r['results'][choose]['question'])
-                
-                ans = (r['results'][choose]['correct_answer'])
-                wrong = r['results'][choose]['incorrect_answers']
-                options = []
-                options.append(wrong[0])
-                options.append(wrong[1])
-                options.append(ans)
-                options.append(wrong[2])
-                shuffled = random.sample(options, len(options))
-               
-                    
-                option = ""
-                nom = 1
-                for shuffle in shuffled:
-
-                    option += f"{nom}. {shuffle}\n"  
-                    nom += 1 
-    
-                for code in htmlcodes:
-                    option = option.replace(code[1],code[0])
-                    options[0] = options[0].replace(code[1],code[0])
-                    options[1] = options[1].replace(code[1],code[0])
-                    options[2] = options[2].replace(code[1],code[0])
-                    options[3] = options[3].replace(code[1],code[0])
-                    qu = qu.replace(code[1],code[0]) 
-                    ans = ans.replace(code[1],code[0])
-                for i in range(len(options)):
-                    options[i] = options[i].lower() 
-                
-                def check(response):
-                    return response.content.lower() in options and response.author == mem2 and response.channel == ctx.channel
-                embe = discord.Embed(title = "Chase the Runner",description = f"{qu}\n\n{option}")    
-                await msg.edit(embed = embe)
-                try:
-                    
-                    
-                    response= await client.wait_for('message', check= check, timeout= 20)
-                    
-                    if response.content.lower() == ans.lower():
-                        money += 1
-                        count += 1
-                        if count > 8:
-                            name = "False"
-                            
-                    else:
-                        name = "False"        
-                        
-                except asyncio.TimeoutError:
-                    #ms = await ctx.send(f"**Timeout**",delete = 20)
-                     
-                    name = "False"
-                  
-            embed = discord.Embed(title = "Chase the Runner",description = f"**Robbery ended**\nYou robbed {money*100}+ Respect") 
-            await msg.edit(embed =embed)        
-            await ctx.send(f"{mem1.mention}|{mem2.mention}`Come in Dm \nChase will start in 30 sec`")
-            
-            TPA = 0
-            TPB = 2
-            
-            api1 = "https://opentdb.com/api.php?amount=45&category=31&difficulty=easy&type=multiple"
-            api2 = "https://opentdb.com/api.php?amount=50&category=31&difficulty=medium&type=multiple"
-            api3 = "https://opentdb.com/api.php?amount=37&category=31&difficulty=hard&type=multiple"
-            api = random.choice([api1,api2,api3])
-            r = requests.get(api).json()
-            lengg = (len(r['results'])-1)
-            choice = random.randint(0,lengg)
-            q = (r['results'][choice]['question'])
-            anss = (r['results'][choice]['correct_answer'])
-            wrongg = r['results'][choice]['incorrect_answers']
-            optionss = []
-            optionss.append(wrongg[0])
-            optionss.append(wrongg[1])
-            optionss.append(anss)
-            optionss.append(wrongg[2])
-            shuffledd = random.sample(optionss, len(optionss))
-            optionss.append("cancel")
-            
-            
-            
-            optio = ""
-            no = 1
-            for shuffles in shuffledd:
-                optio += f"{no}. {shuffles}\n"  
-                no += 1  
-            
-            for code in htmlcodes:
-                    optio = optio.replace(code[1],code[0])
-                    optionss[0] = optionss[0].replace(code[1],code[0])
-                    optionss[1] = optionss[1].replace(code[1],code[0])
-                    optionss[2] = optionss[2].replace(code[1],code[0])
-                    optionss[3] = optionss[3].replace(code[1],code[0])
-                    q = q.replace(code[1],code[0]) 
-                    anss = anss.replace(code[1],code[0])
-            for i in range(len(optionss)):
-                optionss[i] = optionss[i].lower() 
-                
-            dead = 1    
-            await asyncio.sleep(20)
-            await mem1.send("`Chase is starting Now!!`")
-            await mem2.send("`Chase is starting Now!!`") 
-            while work == "True":
-                point1 = dm_helper(mem1, q, anss,optio,optionss )  # Note no "await"
-                point2 = dm_helper(mem2, q, anss,optio,optionss)
-                pointA, pointB = await gather(point1, point2)
-                if (pointA or pointB) != "cancel":
-                    TPA += pointA[0]
-                    TPB += pointB[0]
-                    
+                while name == "True":
                     api1 = "https://opentdb.com/api.php?amount=45&category=31&difficulty=easy&type=multiple"
                     api2 = "https://opentdb.com/api.php?amount=50&category=31&difficulty=medium&type=multiple"
                     api3 = "https://opentdb.com/api.php?amount=37&category=31&difficulty=hard&type=multiple"
                     api = random.choice([api1,api2,api3])
                     r = requests.get(api).json()
-                    lengg = (len(r['results'])-1)
-                    choice = random.randint(0,lengg)
-                    q = (r['results'][choice]['question'])
+                    leng = (len(r['results'])-1)
+                    
+                    choose = random.randint(0,leng)
+                    qu = (r['results'][choose]['question'])
+                    
+                    ans = (r['results'][choose]['correct_answer'])
+                    wrong = r['results'][choose]['incorrect_answers']
+                    options = []
+                    options.append(wrong[0])
+                    options.append(wrong[1])
+                    options.append(ans)
+                    options.append(wrong[2])
+                    shuffled = random.sample(options, len(options))
+                
+                        
+                    option = ""
+                    nom = 1
+                    for shuffle in shuffled:
 
-                    anss = (r['results'][choice]['correct_answer'])
-                    wrongg = r['results'][choice]['incorrect_answers']
-                    optionss = []
-                    optionss.append(wrongg[0])
-                    optionss.append(wrongg[1])
-                    optionss.append(anss)
-                    optionss.append(wrongg[2])
-                    shuffledd = random.sample(optionss, len(optionss))
-                    optionss.append("cancel")
-                    
-                    
-                    optio = ""
-                    no = 1
-                    for shuffles in shuffledd:
-                        optio += f"{no}. {shuffles}\n"  
-                        no += 1  
-                    
+                        option += f"{nom}. {shuffle}\n"  
+                        nom += 1 
+        
                     for code in htmlcodes:
+                        option = option.replace(code[1],code[0])
+                        options[0] = options[0].replace(code[1],code[0])
+                        options[1] = options[1].replace(code[1],code[0])
+                        options[2] = options[2].replace(code[1],code[0])
+                        options[3] = options[3].replace(code[1],code[0])
+                        qu = qu.replace(code[1],code[0]) 
+                        ans = ans.replace(code[1],code[0])
+                    for i in range(len(options)):
+                        options[i] = options[i].lower() 
+                    
+                    def check(response):
+                        return response.content.lower() in options and response.author == mem2 and response.channel == ctx.channel
+                    embe = discord.Embed(title = "Chase the Runner",description = f"{qu}\n\n{option}")    
+                    await msg.edit(embed = embe)
+                    try:
+                        
+                        
+                        response= await client.wait_for('message', check= check, timeout= 45)
+                        
+                        if response.content.lower() == ans.lower():
+                            money += 1
+                            count += 1
+                            if count > 8:
+                                name = "False"
+                                
+                        else:
+                            name = "False"        
+                            
+                    except asyncio.TimeoutError:
+                        #ms = await ctx.send(f"**Timeout**",delete = 20)
+                        
+                        name = "False"
+                    
+                embed = discord.Embed(title = "Chase the Runner",description = f"**Robbery ended**\nYou robbed {money*100}+ Respect") 
+                await msg.edit(embed =embed)        
+                await ctx.send(f"{mem1.mention}|{mem2.mention}`Come in Dm \nChase will start in 30 sec`")
+                
+                TPA = 0
+                TPB = 2
+                
+                api1 = "https://opentdb.com/api.php?amount=45&category=31&difficulty=easy&type=multiple"
+                api2 = "https://opentdb.com/api.php?amount=50&category=31&difficulty=medium&type=multiple"
+                api3 = "https://opentdb.com/api.php?amount=37&category=31&difficulty=hard&type=multiple"
+                api = random.choice([api1,api2,api3])
+                r = requests.get(api).json()
+                lengg = (len(r['results'])-1)
+                choice = random.randint(0,lengg)
+                q = (r['results'][choice]['question'])
+                anss = (r['results'][choice]['correct_answer'])
+                wrongg = r['results'][choice]['incorrect_answers']
+                optionss = []
+                optionss.append(wrongg[0])
+                optionss.append(wrongg[1])
+                optionss.append(anss)
+                optionss.append(wrongg[2])
+                shuffledd = random.sample(optionss, len(optionss))
+                optionss.append("cancel")
+                
+                
+                
+                optio = ""
+                no = 1
+                for shuffles in shuffledd:
+                    optio += f"{no}. {shuffles}\n"  
+                    no += 1  
+                
+                for code in htmlcodes:
                         optio = optio.replace(code[1],code[0])
                         optionss[0] = optionss[0].replace(code[1],code[0])
                         optionss[1] = optionss[1].replace(code[1],code[0])
@@ -2857,47 +2809,100 @@ async def challenge(ctx, member : discord.Member):
                         optionss[3] = optionss[3].replace(code[1],code[0])
                         q = q.replace(code[1],code[0]) 
                         anss = anss.replace(code[1],code[0])
-                    for i in range(len(optionss)):
-                        optionss[i] = optionss[i].lower()
+                for i in range(len(optionss)):
+                    optionss[i] = optionss[i].lower() 
                     
-                    rd = "﹏ "
-                    run = "<a:Stela_run:863405565002776609>"
-                    chase = "<a:Stela_Chase:863405726072307723>"
-                    scene = f'{(8-(TPB+1))*rd}{run}{((TPB-TPA)-1)*rd}{chase}{TPA*rd}'
-                    
-                    if len(pointA) == 2 and len(pointB) == 2:
+                dead = 1    
+                await asyncio.sleep(20)
+                await mem1.send("`Chase is starting Now!!`")
+                await mem2.send("`Chase is starting Now!!`") 
+                while work == "True":
+                    point1 = dm_helper(mem1, q, anss,optio,optionss )  # Note no "await"
+                    point2 = dm_helper(mem2, q, anss,optio,optionss)
+                    pointA, pointB = await gather(point1, point2)
+                    if pointA[0] != "cancel" and pointB[0] != "cancel" :
+                        TPA += pointA[0]
+                        TPB += pointB[0]
                         
-                        if  pointA[1] == 1 and pointB[1] == 1:
-                            
-                            dead += 1
-                            
-                    if len(pointA) != 2 or len(pointB) != 2:
-                        dead = 1 
-                             
-                    if dead > 3:
-                        await mem1.send(f"Game has been terminated because of inactivity")
-                        await mem2.send(f"Game has been terminated because of inactivity") 
-                        work = "False"    
+                        api1 = "https://opentdb.com/api.php?amount=45&category=31&difficulty=easy&type=multiple"
+                        api2 = "https://opentdb.com/api.php?amount=50&category=31&difficulty=medium&type=multiple"
+                        api3 = "https://opentdb.com/api.php?amount=37&category=31&difficulty=hard&type=multiple"
+                        api = random.choice([api1,api2,api3])
+                        r = requests.get(api).json()
+                        lengg = (len(r['results'])-1)
+                        choice = random.randint(0,lengg)
+                        q = (r['results'][choice]['question'])
 
-                    if TPA == TPB:
-                        await mem1.send(f"**You Caught** {mem2} congrats!\n{scene}")
-                        await mem2.send(f"**You Loose...**\n{mem1} Caught You!\n{scene}") 
-                        work = "False"
-                    if TPB == 7 and TPA < 7:
-                        await mem1.send(f"**You Loose...**\n{mem2} ran away with {money*100}+ Respect  ;-;\n{scene}")
-                        await mem2.send(f"**You Win**\nYou succefully ran away from {mem1} with {money*100}+ Respect \n{scene}") 
-                        work = "False"
+                        anss = (r['results'][choice]['correct_answer'])
+                        wrongg = r['results'][choice]['incorrect_answers']
+                        optionss = []
+                        optionss.append(wrongg[0])
+                        optionss.append(wrongg[1])
+                        optionss.append(anss)
+                        optionss.append(wrongg[2])
+                        shuffledd = random.sample(optionss, len(optionss))
+                        optionss.append("cancel")
+                        
+                        
+                        optio = ""
+                        no = 1
+                        for shuffles in shuffledd:
+                            optio += f"{no}. {shuffles}\n"  
+                            no += 1  
+                        
+                        for code in htmlcodes:
+                            optio = optio.replace(code[1],code[0])
+                            optionss[0] = optionss[0].replace(code[1],code[0])
+                            optionss[1] = optionss[1].replace(code[1],code[0])
+                            optionss[2] = optionss[2].replace(code[1],code[0])
+                            optionss[3] = optionss[3].replace(code[1],code[0])
+                            q = q.replace(code[1],code[0]) 
+                            anss = anss.replace(code[1],code[0])
+                        for i in range(len(optionss)):
+                            optionss[i] = optionss[i].lower()
+                        
+                        rd = "﹏ "
+                        run = "<a:Stela_run:863405565002776609>"
+                        chase = "<a:Stela_Chase:863405726072307723>"
+                        scene = f'{(8-(TPB+1))*rd}{run}{((TPB-TPA)-1)*rd}{chase}{TPA*rd}'
+                        
+                        if len(pointA) == 2 and len(pointB) == 2:
+                            
+                            if  pointA[1] == 1 and pointB[1] == 1:
+                                
+                                dead += 1
+                                
+                        if len(pointA) != 2 or len(pointB) != 2:
+                            dead = 1 
+                                
+                        if dead > 3:
+                            await mem1.send(f"Game has been terminated because of inactivity")
+                            await mem2.send(f"Game has been terminated because of inactivity") 
+                            work = "False"    
+
+                        if TPA == TPB:
+                            await mem1.send(f"**You Caught** {mem2} congrats!\n{scene}")
+                            await mem2.send(f"**You Loose...**\n{mem1} Caught You!\n{scene}") 
+                            work = "False"
+                        if TPB == 7 and TPA < 7:
+                            await mem1.send(f"**You Loose...**\n{mem2} ran away with {money*100}+ Respect  ;-;\n{scene}")
+                            await mem2.send(f"**You Win**\nYou succefully ran away from {mem1} with {money*100}+ Respect \n{scene}") 
+                            work = "False"
+                        else:
+                            #emb2 = discord.Embed(title = "Chase the Runner",description = chase)
+                            await mem1.send(scene,delete_after = 10)
+                            await mem2.send(scene,delete_after = 10)   
                     else:
-                        #emb2 = discord.Embed(title = "Chase the Runner",description = chase)
-                        await mem1.send(scene,delete_after = 10)
-                        await mem2.send(scene,delete_after = 10)   
-                else:
-                    await mem1.send("Game has been cancelled")
-                    await mem2.send("Game has been cancelled")   
-                    work = "False"       
-        if str(reaction.emoji) == "❌":
-            emb = discord.Embed(title = "Chase the Runner",description = f"{mem2.mention} Declined the Challenge!")
-            await msg.edit(embed = emb)  
+                        await mem1.send("Game has been cancelled")
+                        await mem2.send("Game has been cancelled")   
+                        work = "False"       
+            if str(reaction.emoji) == "❌":
+                emb = discord.Embed(title = "Chase the Runner",description = f"{mem2.mention} Declined the Challenge!")
+                await msg.edit(embed = emb)  
+        except asyncio.TimeoutError:
+            embbb = discord.Embed(title = "Chase the Runner",description = f"You have been challenged by {mem1.mention}\nYou have to answer as many questions as you can, time for each question is 45 sec\n`Timeout`")
+            await msg.edit(embed = embbb)
+            
     else:
         await ctx.reply("How can you play with yourself.. Dummy")        
 #client.remove_command("help")
