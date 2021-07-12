@@ -2909,7 +2909,7 @@ async def challenge(ctx, member : discord.Member):
          
            
 @client.command(name='upload')    
-async def upload(ctx, num,*,question):
+async def upload(ctx, num : int,*,question):
     print(ctx.author.id)
     if ctx.author.id == 745006368175423489:
         print(1)
