@@ -2909,7 +2909,7 @@ async def challenge(ctx, member : discord.Member):
          
            
 @client.command(name='upload')    
-async def upload(ctx, *,question):
+async def upload(ctx, num,*,question):
     print(ctx.author.id)
     if ctx.author.id == 745006368175423489:
         print(1)
@@ -2917,7 +2917,8 @@ async def upload(ctx, *,question):
             return  response.author.id == ctx.author.id and response.channel == ctx.channel
         count = 1
         options = []
-        while count < 5:    
+        num += 1
+        while count < num:    
                 
             await ctx.reply(f"Send the {count} option")
             try:
@@ -2943,16 +2944,15 @@ async def upload(ctx, *,question):
                 return str(reaction.emoji) in ["✅","❌"] and user != client.user and reaction.message.id == msg.id and user.id == ctx.author.id
         reaction, user = await client.wait_for('reaction_add',check = check1,timeout = 40) 
         if str(reaction.emoji) == "✅": 
-            userid = ctx.author.id
-            post = {"_id": userid,"question": question, "options" : options,"answer" : answer }
+            count = animetriv_collect.find().count()
+            post = {"_id": count,"question": question, "options" : options,"answer" : answer }
             animetriv_collect.insert_one(post)
             emb = discord.Embed(description = f"{question}\n\n{result}\n\nCorrect answer : {answer}\n\n'Added Successfully")
-            await msg.edit(embed = em)
+            await msg.edit(embed = emb)
         if str(reaction.emoji) == "❌":    
             await ctx.send("cancelled")
     else:
         return
-
 #help...............................
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
@@ -2963,7 +2963,7 @@ async def help(ctx):
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `punch` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` `F` `reddit` ",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `movie` `version` `dm` `avatar` `Bot` `search` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
