@@ -4,7 +4,7 @@ from discord import embeds
 from discord import user
 from discord.client import Client
 from discord.colour import Color #pip install discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from discord.ext.commands import BucketType, Greedy
 from discord.member import Member
 import requests #requests
@@ -23,7 +23,7 @@ from mal import *
 import asyncio
 
 from requests.api import delete
-
+from lxml import html
 from waifu import waifupics, waifuname, waifuseries
 import numpy as np
 import urllib.parse, urllib.request, re
@@ -53,6 +53,7 @@ cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3y
 db = cluster["discord"]  
 mal_collect = db["mal"]             
 animetriv_collect = db["anime-trivia"]
+upd = db["anime-updates"]
 reddit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
                     client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
                     #username = 'ItzStela',
@@ -82,6 +83,7 @@ async def on_command_error(ctx,error):
 @client.event
 async def on_ready():
     #status
+    
     await client.change_presence(activity=discord.Streaming(name=' in Anime Ocean | use S. or Stela ',url=('https://discord.gg/H7MDM37')))
 
     #welcome 
@@ -89,6 +91,7 @@ async def on_ready():
 
     await general_channel.send('Hello Master')
     print("bot is online")
+    await checkNewLoop.start()
      
 #@client.event
 #async def on_message(message):
@@ -3028,6 +3031,58 @@ async def upload(ctx, num : int,*,question):
             await ctx.send("cancelled")
     else:
         return
+
+
+
+
+
+
+@tasks.loop(minutes= 15)
+async def checkNewLoop():
+    user = client.get_channel(765216983666524180)
+    anime = check_new()
+    if anime == []:
+        print("nothing new")
+    else:    
+        for ani in anime:
+            title = ani['titles']
+            episode = ani['episodes']
+            watch = ani['watch']
+            image = ani['image']
+            em = discord.Embed(title = title,description = f"{episode} just dropped\n\n[Click Here to watch]({watch})")
+            em.set_image(url = image)
+            await user.send(embed = em)
+    print(f'checked') 
+
+    
+
+
+def check_new():
+    link = "https://animixplay.to"
+    r = requests.get(link)
+    tree = html.fromstring(r.content)
+    newanime = []
+    anime = tree.xpath('//*[@id="resultplace"]/ul/li')
+    for anim in anime:
+        title = (anim.xpath('.//a/div[@class = "details"]/p[@class = "name"]')[0].text)
+        episode = (anim.xpath('.//a/div[@class = "details"]/p[@class = "infotext"]')[0].text)
+        posst = {'titles' : title,'episodes' : episode}
+        ccc = upd.find_one(posst)
+        
+        if ccc == None:
+            watch = anim.xpath('.//a/@href')
+            image = anim.xpath('.//a/div[@class = "searchimg"]/img/@src')
+            watchh = link + watch[0]
+            upd.insert_one(posst)
+            newanime.append({'titles' : title,'episodes' : episode,'watch' : watchh,'image': image[0]})
+       
+    return newanime
+           
+            
+        
+    
+
+
 #help...............................
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
@@ -3279,7 +3334,7 @@ async def watch(ctx):
     em = discord.Embed(description="Use it to find download/Watch Link of anime",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
-    em.add_field(name="**Usage**",value="`S.search <Name of the anime>`")
+    em.add_field(name="**Usage**",value="`S.watch <Name of the anime>`")
     await ctx.send(embed=em)
 
 @help.command()
