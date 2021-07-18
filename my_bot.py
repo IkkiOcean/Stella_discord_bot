@@ -3180,7 +3180,6 @@ async def airing(ctx):
                         y -= 10
                         
                         for name,idd in zip(titles[x:y],animeid[x:y]):
-                            print(x)
                             namee += f'{titles.index(name)+1}. {name} - `{idd}`\n\n'
                         emb = discord.Embed(title = "Airing Animes:",description = namee)
                         emb.set_footer(text = f"{cur_page}/{pages}")
@@ -3281,6 +3280,7 @@ async def help(ctx):
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
+    em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing`",inline=False)
     em.add_field(name="🔧 Utility",value="`anime` `manga` `movie` `version` `dm` `avatar` `Bot` `watch` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
