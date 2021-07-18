@@ -29,7 +29,7 @@ import numpy as np
 import urllib.parse, urllib.request, re
 from asyncio import gather
 from bs4 import BeautifulSoup
-
+import math
 import certifi
 from pymongo import MongoClient, database
 import aiohttp
@@ -54,6 +54,7 @@ db = cluster["discord"]
 mal_collect = db["mal"]             
 animetriv_collect = db["anime-trivia"]
 upd = db["anime-updates"]
+listed = db["watchlist"]
 reddit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
                     client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
                     #username = 'ItzStela',
@@ -3035,11 +3036,31 @@ async def upload(ctx, num : int,*,question):
 
 
 
-
+def findname(id):
+    link = f"https://myanimelist.net/anime/{id}"
+    r = requests.get(link)
+    tree = html.fromstring(r.content)
+    anime = tree.xpath('//*[@itemprop = "name"]/h1/strong')[0].text
+    if anime != []:
+        return anime
+    else:
+        return None    
+def findid(anime):
+    link = f"https://myanimelist.net/anime.php?cat=anime&q={anime}"
+    r = requests.get(link)
+    tree = html.fromstring(r.content)
+    anime = tree.xpath('//*/td[@class = "borderClass bgColor0"]/div[1]/a[1]/@href')
+    if anime != []:
+        id = anime[0].split('/')
+        animeid = id[4]
+        return animeid
+    else:
+        return None
 
 @tasks.loop(minutes= 15)
 async def checkNewLoop():
-    user = client.get_channel(765216983666524180)
+
+    channel = client.get_channel(772496570436419592)
     anime = check_new()
     if anime == []:
         print("nothing new")
@@ -3049,13 +3070,27 @@ async def checkNewLoop():
             episode = ani['episodes']
             watch = ani['watch']
             image = ani['image']
+            id = ani['id']
             em = discord.Embed(title = title,description = f"{episode} just dropped\n\n[Click Here to watch]({watch})")
             em.set_image(url = image)
-            await user.send(embed = em)
+            await channel.send(embed = em)
+            #animeid = ani['id']
+            if id != "None":
+                docs = listed.find({"watchlist": id, "toggle" : 1}) 
+                if docs != None:
+                    users = []
+                    for doc in docs: 
+                        users.append(doc['_id'])
+                        
+                    for user in users:
+                        member = client.get_user(user)
+                        try:
+                            await member.send(embed = em)
+                        except:    
+                            print("can't dm")
+
+             
     print(f'checked') 
-
-    
-
 
 def check_new():
     link = "https://animixplay.to"
@@ -3068,15 +3103,167 @@ def check_new():
         episode = (anim.xpath('.//a/div[@class = "details"]/p[@class = "infotext"]')[0].text)
         posst = {'titles' : title,'episodes' : episode}
         ccc = upd.find_one(posst)
-        
+        titlee = title.replace("(Dub)","")
         if ccc == None:
             watch = anim.xpath('.//a/@href')
             image = anim.xpath('.//a/div[@class = "searchimg"]/img/@src')
             watchh = link + watch[0]
+            id = findid(titlee)
             upd.insert_one(posst)
-            newanime.append({'titles' : title,'episodes' : episode,'watch' : watchh,'image': image[0]})
-       
+            if id  != None:
+                newanime.append({'titles' : title,'episodes' : episode,'watch' : watchh,'image': image[0],'id' : id})
+            elif id == None:
+                newanime.append({'titles' : title,'episodes' : episode,'watch' : watchh,'image': image[0],'id' : 'None'})
     return newanime
+           
+            
+        
+@client.event
+async def on_ready():
+    checkNewLoop.start()
+
+@client.command(name='airing',aliases=["Airing","air"])
+async def airing(ctx):
+            r = requests.get('https://myanimelist.net/anime/season')
+            mall = html.fromstring(r.content)
+            anime = mall.xpath('//*/div[@class = "seasonal-anime js-seasonal-anime"]')
+            
+            titles = []
+            
+            animeid = []
+            for ani in anime:
+                name = ani.xpath('.//h2[@class = "h2_anime_title"]/a')[0].text
+                link =  ani.xpath('.//h2[@class = "h2_anime_title"]/a/@href')[0]
+                id = link.split('/')
+                animeid.append(id[4])
+                titles.append(name)
+    
+            
+            
+            def check(reaction, user):
+                return user == ctx.author and str(reaction.emoji) in ["◀️", "▶️"]
+            x = -10
+            y = 0
+            cur_page = 1
+            x = 0
+            y = 10
+            namee = ""
+            
+            pages = math.ceil(len(titles)/10)
+            for name,idd in zip(titles[x:y],animeid[x:y]):
+                namee += f'{titles.index(name)+1}. {name} - `{idd}`\n\n'
+            embb = discord.Embed(title = "Airing Animes:",description = namee)
+            embb.set_footer(text = f"{cur_page}/{pages}")
+            message = await ctx.send(embed = embb) 
+            await message.add_reaction("◀️")
+            await message.add_reaction("▶️")
+            
+            while True:
+                try:
+                    reaction, user = await client.wait_for("reaction_add", timeout=60, check=check)
+                    if str(reaction.emoji) == "▶️" and cur_page != pages:
+                        namee = ""
+                        cur_page += 1
+                        x += 10
+                        y += 10
+                        for name,idd in zip(titles[x:y],animeid[x:y]):
+                            namee += f'{titles.index(name)+1}. {name} - `{idd}`\n\n'
+                        if namee != None:    
+                            em = discord.Embed(title = "Airing Animes:",description = namee)
+                            em.set_footer(text = f"{cur_page}/{pages}")
+                            await message.edit(embed = em)
+                        
+                    elif str(reaction.emoji) == "◀️" and cur_page > 1:
+                        namee = ""
+                        cur_page -= 1    
+                        x -= 10
+                        y -= 10
+                        
+                        for name,idd in zip(titles[x:y],animeid[x:y]):
+                            print(x)
+                            namee += f'{titles.index(name)+1}. {name} - `{idd}`\n\n'
+                        emb = discord.Embed(title = "Airing Animes:",description = namee)
+                        emb.set_footer(text = f"{cur_page}/{pages}")
+                        await message.edit(embed = emb)
+                except asyncio.TimeoutError:
+                    return    
+            #listed.update_one({"_id": userid},{"$push":{"watchlist": anime}})
+            #print(len(doc['watchlist']))
+            #print(doc['watchlist'])
+
+@client.command(name='awl',aliases=["addwatchlist"])
+async def addwatchlist(ctx, code):  
+    userid = ctx.author.id
+    r = requests.get('https://myanimelist.net/anime/season')
+    mall = html.fromstring(r.content)
+    anime = mall.xpath('//*/div[@class = "seasonal-anime js-seasonal-anime"]')
+    animeid = []
+    for ani in anime:
+        link =  ani.xpath('.//h2[@class = "h2_anime_title"]/a/@href')[0]
+        id = link.split('/')
+        animeid.append(id[4])
+    if code in animeid:
+        doc = listed.find_one({"_id": userid})  
+        if doc == None:
+            listed.insert_one({"_id": userid,"watchlist" : [],"toggle" : 1})
+            listed.update_one({"_id": userid},{"$push":{"watchlist": code}})
+            await ctx.reply(f"`{code} - {findname(code)} has been added in watchlist`")
+        elif doc != None and len(doc['watchlist']) < 10:
+            listed.update_one({"_id": userid},{"$push":{"watchlist": code}})
+            await ctx.reply(f"`{code} - {findname(code)} has been added in watchlist`")
+        else:
+            await ctx.reply("`your watchlist is full, remove any anime to enter new one`")  
+    else:
+        await ctx.reply("`Cant find the anime, Maybe its not airing right now`")        
+
+@client.command(name='rwl',aliases=["removewatchlist"])
+async def removewatchlist(ctx, code):  
+    userid = ctx.author.id
+    doc = listed.find_one({"_id": userid})  
+    if doc == None:
+        listed.insert_one({"_id": userid,"watchlist" : [],"toggle" : 1})
+        await ctx.reply(f"`your watchlist is already empty`")
+    elif doc != None and len(doc['watchlist']) > 0 and code in (doc['watchlist']):
+        listed.update_one({"_id": userid},{"$pull":{"watchlist": code}})
+        await ctx.reply(f"`{code} - {findname(code)} has been removed from your watchlist`")
+    elif doc != None and len(doc['watchlist']) == 0:
+        await ctx.reply("`your watchlist is already empty`")
+    else:
+        await ctx.reply("`Its not in your watchlist`")
+
+@client.command(name='watchlist',aliases=["Watchlist"])
+async def watchlist(ctx,member: discord.Member = None):
+    url = "https://myanimelist.net/anime/"
+    if member == None:
+        member = ctx.author
+    userid = member.id
+    doc = listed.find_one({"_id": userid})
+    if doc != None:
+        slots = len(doc['watchlist'])
+        slot = 10-slots
+        anime = doc['watchlist']
+        name = ""
+        for ani in anime:
+            name += f"[{ani} - {findname(ani)}]({url + ani})\n"
+        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : {slot}/10\n\n{name}") 
+        await ctx.send(embed = em)
+    elif doc == None:
+        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : 10/10\n\nUse `S.awl [animeid]` to add`") 
+        await ctx.send(embed = em)    
+@client.command(name='remind',aliases=["Remind"])
+async def remind(ctx):
+    userid = ctx.author.id
+    doc = listed.find_one({"_id": userid})
+    if doc == None:
+        listed.insert_one({"_id": userid,"watchlist" : [],"toggle" : 1})
+        await ctx.reply("`Reminder Enabled`")
+    elif doc != None:
+        if doc["toggle"] == 1:
+            listed.update_one({"_id": userid},{"$set":{"toggle": 0}})
+            await ctx.reply("`Reminder Disabled`")
+        elif doc["toggle"] == 0:  
+            listed.update_one({"_id": userid},{"$set":{"toggle": 1}})
+            await ctx.reply("`Reminder Enabled`") 
            
             
         
