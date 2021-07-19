@@ -3060,7 +3060,7 @@ def findid(anime):
 @tasks.loop(minutes= 15)
 async def checkNewLoop():
 
-    channel = client.get_channel(772496570436419592)
+    channel = client.get_channel(765216983666524180)
     anime = check_new()
     if anime == []:
         print("nothing new")
