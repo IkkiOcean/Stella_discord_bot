@@ -55,7 +55,7 @@ mal_collect = db["mal"]
 animetriv_collect = db["anime-trivia"]
 upd = db["anime-updates"]
 listed = db["watchlist"]
-owner  = client.get_user(745006368175423489)
+
 reddit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
                     client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
                     #username = 'ItzStela',
@@ -85,9 +85,9 @@ async def on_command_error(ctx,error):
 @client.event
 async def on_ready():
     #status
-    
+    global owner
     await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Anime | S.help for commands"))
-
+    owner  = client.get_user(745006368175423489)
     #welcome 
     general_channel = client.get_channel(772496570436419592)
 
@@ -1123,7 +1123,7 @@ async def announce_everyone(ctx,mention,channel : discord.TextChannel, *,msg):
 async def dm(context, member : discord.Member, *,msg):
     
     await member.send(msg +f"\n\nsent by **{context.author}** from **{context.guild}** ")
-    await context.message.delete()
+
 #say
 @client.command(name='say',aliases = ["Say","Type","type"])
 @commands.cooldown(2, 120, BucketType.user)
@@ -2339,7 +2339,7 @@ async def userinfo(ctx, member: discord.Member = None):
 async def serverinfo(ctx):
   name = str(ctx.guild.name)
 
-  owner = str(ctx.guild.owner)
+  ownner = str(ctx.guild.owner)
   id = str(ctx.guild.id)
   region = str(ctx.guild.region)
   memberCount = str(ctx.guild.member_count)
@@ -2352,7 +2352,7 @@ async def serverinfo(ctx):
   embed.set_author(name=name,icon_url=icon)
   embed.set_footer(text=f"Requested by {ctx.author} | Server Created : {create}")
   embed.set_thumbnail(url=icon)
-  embed.add_field(name="Owner", value=owner, inline=True)
+  embed.add_field(name="Owner", value=ownner, inline=True)
   embed.add_field(name="Region", value=region, inline=True)
   embed.add_field(name="Server ID", value=id, inline=True)
   embed.add_field(name="Text Channels", value=txtchannel, inline=True)
@@ -2534,6 +2534,8 @@ async def guild(ctx):
         serverss = str(len(servers))
         await ctx.send(guilds)
         await ctx.send(f"total servers {serverss}")
+
+
 
 @client.command(name="poll",aliases = ["Poll"])
 async def poll(ctx,ques, *,msg: commands.clean_content):
@@ -3100,6 +3102,7 @@ async def checkNewLoop():
 
              
     print(f'checked') 
+    
 
 def check_new():
     link = "https://animixplay.to"
@@ -3290,9 +3293,9 @@ async def help(ctx):
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `punch` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `rndqoute` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
     em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing`",inline=False)
-    em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `watch` `eplist` `filler` `mal` `profile` `read` `recommend` `character`",inline=False)
+    em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `watch` `eplist` `filler` `mal` `profile` `read` `recommend` `character` `rndqoute`",inline=False)
     em.add_field(name="🔧 Utility",value="`server` `movie` `version` `dm` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
