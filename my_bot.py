@@ -3314,7 +3314,7 @@ async def submit(ctx):
     em = discord.Embed(description="Submits your contestant for the Tournament",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
-    em.add_field(name="**Usage**",value="`S.submit <name>`\nafter that Send the link of the image within 20 sec\nThis command will only work in Tournament")
+    em.add_field(name="**Usage**",value="`S.submit <name>`\nafter that Send the link of the image within 20 sec\nThis command will only work in Tournament\nOnly works in support server")
     await ctx.send(embed=em)
 
 @help.command()
