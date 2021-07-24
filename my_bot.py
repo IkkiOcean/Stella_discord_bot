@@ -55,6 +55,7 @@ mal_collect = db["mal"]
 animetriv_collect = db["anime-trivia"]
 upd = db["anime-updates"]
 listed = db["watchlist"]
+owner  = client.get_user(745006368175423489)
 reddit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
                     client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
                     #username = 'ItzStela',
@@ -85,7 +86,7 @@ async def on_command_error(ctx,error):
 async def on_ready():
     #status
     
-    await client.change_presence(activity=discord.Streaming(name=' in Anime Ocean | use S. or Stela ',url=('https://discord.gg/H7MDM37')))
+    await client.change_presence(activity=discord.Activity(type=discord.ActivityType.watching, name="Anime | S.help for commands"))
 
     #welcome 
     general_channel = client.get_channel(772496570436419592)
@@ -110,10 +111,8 @@ async def on_ready():
 async def version(context):
     myembed = discord.Embed(title='Current Version', description='The Bot is in version 1.4.3',color=0x00ebff)
     myid = '<@!745006368175423489>'
-    helper1 = '<@!741967836422996008>'
     
     myembed.add_field(name= "**Developer**", value= myid )
-    myembed.add_field(name= "**Helpers**",value= helper1)
     
     await context.message.channel.send(embed=myembed)
 
@@ -178,39 +177,39 @@ async def clear(context,amount=2):
 
 #mute
 #addrole
-@client.command(name="addrole",aliases=["Addrole"])    
-@commands.has_permissions(administrator = True)    
+@client.command(name="addrole",aliases=["Addrole"])       
 async def addrole(ctx,member :discord.Member,role: typing.Optional[discord.Role], *,rolename = None):
-    try:
-        
-        if role != None:
+    if ctx.author == owner:
+        try:
             
-            await member.add_roles(role)
-            await ctx.reply(f"`{role.name}` role has been given to {member.mention}")
-        else:   
-            roless = discord.utils.get(ctx.guild.roles, name = rolename)
-        
-            await member.add_roles(roless)
-            await ctx.reply(f"`{rolename}` role has been given to {member.mention}")
-    except:
-        await ctx.reply("Type `S.addrole <member> <ROLE NAME OR MENTION ROLE>`")
+            if role != None:
+                
+                await member.add_roles(role)
+                await ctx.reply(f"`{role.name}` role has been given to {member.mention}")
+            else:   
+                roless = discord.utils.get(ctx.guild.roles, name = rolename)
+            
+                await member.add_roles(roless)
+                await ctx.reply(f"`{rolename}` role has been given to {member.mention}")
+        except:
+            await ctx.reply("Type `S.addrole <member> <ROLE NAME OR MENTION ROLE>`")
  
-@client.command(name="removerole",aliases=["Removerole"])    
-@commands.has_permissions(administrator = True)    
+@client.command(name="removerole",aliases=["Removerole"])        
 async def removerole(ctx,member :discord.Member,role: typing.Optional[discord.Role], *,rolename = None):
-    try:
-        
-        if role != None:
+    if ctx.author == owner:
+        try:
             
-            await member.remove_roles(role)
-            await ctx.reply(f"`{role.name}` role has been removed from {member.mention}")
-        else:   
-            roless = discord.utils.get(ctx.guild.roles, name = rolename)
-        
-            await member.remove_roles(roless)
-            await ctx.reply(f"`{rolename}` role has been removed from {member.mention}")
-    except:
-            await ctx.reply("Type `S.removerole <member> <ROLE NAME OR MENTION ROLE>`") 
+            if role != None:
+                
+                await member.remove_roles(role)
+                await ctx.reply(f"`{role.name}` role has been removed from {member.mention}")
+            else:   
+                roless = discord.utils.get(ctx.guild.roles, name = rolename)
+            
+                await member.remove_roles(roless)
+                await ctx.reply(f"`{rolename}` role has been removed from {member.mention}")
+        except:
+                await ctx.reply("Type `S.removerole <member> <ROLE NAME OR MENTION ROLE>`") 
 
 @client.command(name='Steal',aliases=["steal"])
 @commands.has_permissions(manage_emojis = True) 
@@ -2208,7 +2207,7 @@ async def watch(ctx, *,anime):
     except:
         await ctx.reply("Not found")
 
-@client.command(name="wallpaper",aliases = ["Wallpaper","wl","Wl"])
+@client.command(name="wallpaper",aliases = ["Wallpaper","wall","Wall"])
 async def wallpaper(ctx, *,word = None ):
     
     try:    
@@ -2237,7 +2236,7 @@ async def wallpaper(ctx, *,word = None ):
         await ctx.reply("Not found")
 
 
-@client.command(name="mwallpaper",aliases = ["Mwallpaper","mwl","Mwl"])
+@client.command(name="mwallpaper",aliases = ["Mwallpaper","mwall","Mwall"])
 async def wallpaper_mobile(ctx, *,word = None ):
     try:
         
@@ -2372,7 +2371,8 @@ async def yt(ctx, *, search):
     search_results = re.findall(r'/watch\?v=(.{11})',htm_content.read().decode())
     await ctx.send('http://www.youtube.com/watch?v=' + search_results[0])
 
-@client.command(name="embed",aliases=["Embed"])    
+@client.command(name="embed",aliases=["Embed"])   
+@commands.has_permissions(manage_messages=True) 
 async def embed(ctx,color, *,text = None):
     #msg, color = text.split("|")
     if text == None:
@@ -2517,26 +2517,32 @@ async def on_member_join(member):
         await village.send(f"{member.mention}",embed = em)   
 
 @client.command(name="server")
-@commands.has_permissions(manage_messages = True)
-async def server(ctx):  
-    servers = (client.guilds)
-    guilds = ""
-    for guild in servers:
-        guilds += f"{guild.name}\n"
+async def server(ctx):
+    try:
+        await ctx.author.send("Heres our support server!\nhttps://discord.gg/ZbemgbQuXa")
+    except:
+        await ctx.send("Maybe your dm is close....")    
+@client.command(name="guild")
+async def guild(ctx):
+    if ctx.author == owner:  
+        servers = (client.guilds)
+        guilds = ""
+        for guild in servers:
+            guilds += f"{guild.name}\n"
 
-    
-    serverss = str(len(servers))
-    await ctx.send(guilds)
-    await ctx.send(serverss)
+        
+        serverss = str(len(servers))
+        await ctx.send(guilds)
+        await ctx.send(f"total servers {serverss}")
 
 @client.command(name="poll",aliases = ["Poll"])
-@commands.has_permissions(manage_messages = True)
 async def poll(ctx,ques, *,msg: commands.clean_content):
-    data = re.split(pattern = "\|+" , string = msg)
-    await ctx.send("❔"+ ques)
-    for options in data:
-        message = await ctx.send(options)
-        await message.add_reaction("⏫")
+    if ctx.author == owner:
+        data = re.split(pattern = "\|+" , string = msg)
+        await ctx.send("❔"+ ques)
+        for options in data:
+            message = await ctx.send(options)
+            await message.add_reaction("⏫")
 
 @client.command(name="f",aliases = ["F"])
 async def f(ctx,*,msg: commands.clean_content):
@@ -3059,35 +3065,38 @@ def findid(anime):
 
 @tasks.loop(minutes= 15)
 async def checkNewLoop():
-
+    
     channel = client.get_channel(765216983666524180)
     anime = check_new()
     if anime == []:
         print("nothing new")
-    else:    
-        for ani in anime:
-            title = ani['titles']
-            episode = ani['episodes']
-            watch = ani['watch']
-            image = ani['image']
-            id = ani['id']
-            em = discord.Embed(title = title,description = f"{episode} just dropped\n\n[Click Here to watch]({watch})")
-            em.set_image(url = image)
-            await channel.send(embed = em)
-            #animeid = ani['id']
-            if id != "None":
-                docs = listed.find({"watchlist": id, "toggle" : 1}) 
-                if docs != None:
-                    users = []
-                    for doc in docs: 
-                        users.append(doc['_id'])
-                        
-                    for user in users:
-                        member = client.get_user(user)
-                        try:
-                            await member.send(embed = em)
-                        except:    
-                            print("can't dm")
+    else:
+        try:    
+            for ani in anime:
+                title = ani['titles']
+                episode = ani['episodes']
+                watch = ani['watch']
+                image = ani['image']
+                id = ani['id']
+                em = discord.Embed(title = title,description = f"{episode} just dropped\n\n[Click Here to watch]({watch})")
+                em.set_image(url = image)
+                await channel.send(embed = em)
+                #animeid = ani['id']
+                if id != "None":
+                    docs = listed.find({"watchlist": id, "toggle" : 1}) 
+                    if docs != None:
+                        users = []
+                        for doc in docs: 
+                            users.append(doc['_id'])
+                            
+                        for user in users:
+                            member = client.get_user(user)
+                            try:
+                                await member.send(embed = em)
+                            except:    
+                                print("can't dm")
+        except: 
+            await owner.send("Error in checknewLoop!")                   
 
              
     print(f'checked') 
@@ -3118,9 +3127,6 @@ def check_new():
            
             
         
-@client.event
-async def on_ready():
-    checkNewLoop.start()
 
 @client.command(name='airing',aliases=["Airing","air"])
 async def airing(ctx):
@@ -3213,7 +3219,7 @@ async def addwatchlist(ctx, code):
         else:
             await ctx.reply("`your watchlist is full, remove any anime to enter new one`")  
     else:
-        await ctx.reply("`Cant find the anime, Maybe its not airing right now`")        
+        await ctx.reply("`Cant find the anime, Maybe its not airing right now`\nCheck using `S.airing`")        
 
 @client.command(name='rwl',aliases=["removewatchlist"])
 async def removewatchlist(ctx, code):  
@@ -3230,7 +3236,7 @@ async def removewatchlist(ctx, code):
     else:
         await ctx.reply("`Its not in your watchlist`")
 
-@client.command(name='watchlist',aliases=["Watchlist"])
+@client.command(name='watchlist',aliases=["Watchlist","wl","Wl"])
 async def watchlist(ctx,member: discord.Member = None):
     url = "https://myanimelist.net/anime/"
     if member == None:
@@ -3241,13 +3247,18 @@ async def watchlist(ctx,member: discord.Member = None):
         slots = len(doc['watchlist'])
         slot = 10-slots
         anime = doc['watchlist']
+        rem = doc['toggle']
+        if rem == 1:
+            rem = 'On'
+        elif rem == 0:
+            rem = 'Off'    
         name = ""
         for ani in anime:
-            name += f"[{ani} - {findname(ani)}]({url + ani})\n"
-        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : {slot}/10\n\n{name}") 
+            name += f"[{findname(ani)}]({url + ani}) - `{ani}`  \n"
+        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : {slot}/10\nReminder - {rem}\n\n{name}") 
         await ctx.send(embed = em)
     elif doc == None:
-        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : 10/10\n\nUse `S.awl [animeid]` to add`") 
+        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : 10/10\nReminder - Off\n\nUse `S.awl [animeid]` to add`") 
         await ctx.send(embed = em)    
 @client.command(name='remind',aliases=["Remind"])
 async def remind(ctx):
@@ -3273,15 +3284,16 @@ async def remind(ctx):
 client.remove_command("help")
 @client.group(invoke_without_command=True)#<> required [] optional
 async def help(ctx):
-    em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/H7MDM37)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\n||Do not actually include the <> and [] symbols in the command||",timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
+    em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/ZbemgbQuXa)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\n||Do not actually include the <> and [] symbols in the command||",timestamp=datetime.datetime.utcnow(),color = discord.Color(0x00ff7d))
     em.set_author(name = "Help/Command List",icon_url=f"{client.user.avatar_url}")
-    em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear` `addrole` `removeroll`",inline=False)
+    em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear` `addemoji`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `punch` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `imposter` `rndqoute` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `rndqoute` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
     em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing`",inline=False)
-    em.add_field(name="🔧 Utility",value="`anime` `manga` `movie` `version` `dm` `avatar` `Bot` `watch` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `eplist` `filler` `mal` `profile` `read` `recommend` `char` `wallpaper` `rand`",inline=False)
+    em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `watch` `eplist` `filler` `mal` `profile` `read` `recommend` `character`",inline=False)
+    em.add_field(name="🔧 Utility",value="`server` `movie` `version` `dm` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
@@ -3547,6 +3559,7 @@ async def embed(ctx):
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.embed [hexcode of color] <Text message>`")
+    em.add_field(name="**Permission required**",value="`Manage Messages`")
     await ctx.send(embed=em)
 
 @help.command()
@@ -3557,7 +3570,14 @@ async def rndqoute(ctx):
     em.add_field(name="**Usage**",value="`S.rndqoute`")
     em.add_field(name="**Aliases**",value="`rq`")
     await ctx.send(embed=em)
-
+@help.command()
+async def rand(ctx):
+    em = discord.Embed(description="Choose random number between the limits",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.rand <number>`")
+    em.add_field(name="**Aliases**",value="`random`")
+    await ctx.send(embed=em)
 @help.command()
 async def filler(ctx):
     em = discord.Embed(description="Sends filler episodes of anime, if any",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
@@ -3615,9 +3635,33 @@ async def wallpaper(ctx):
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.wallpaper [topic]` \n`S.mwallpaper [topic]` for mobile")
-    em.add_field(name="**Aliases**",value="`wl`\n`mwl` for mobile")
+    em.add_field(name="**Aliases**",value="`wall`\n`mwall` for mobile")
     await ctx.send(embed=em)    
 
+@help.command()
+async def character(ctx):
+    em = discord.Embed(description="Searchs Anime Characters",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.character <name>`")
+    em.add_field(name="**Aliases**",value="`char`")
+    await ctx.send(embed=em)
+@help.command()
+async def reddit(ctx):
+    em = discord.Embed(description="Sends Sub-reddit posts",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.reddit <sub-reddit>`")
+    em.add_field(name="**Aliases**",value="`red`")
+    await ctx.send(embed=em)
+@help.command()
+async def addemoji(ctx):
+    em = discord.Embed(description="Adds emoji in the server",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.addemoji <emoji link> [emoji name]`")
+    em.add_field(name="**Permission required**",value="`Manage Emojis`")
+    await ctx.send(embed=em)
 @help.command()
 async def challenge(ctx):
     em = discord.Embed(description="A trivia based chase game",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
@@ -3635,5 +3679,46 @@ async def movie(ctx):
     
     await ctx.send(embed=em)        
 
+@help.command()
+async def remind(ctx):
+    em = discord.Embed(description="Toggles anime reminder",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.remind`")
+    
+    await ctx.send(embed=em)
+@help.command()
+async def addwatchlist(ctx):
+    em = discord.Embed(description="Adds anime in your watchlist for reminder",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.addwatchlist <anime id>`")
+    em.add_field(name="**Aliases**",value="`awl`")
+    await ctx.send(embed=em) 
+@help.command()
+async def removewatchlist(ctx):
+    em = discord.Embed(description="Removes anime from your watchlist for reminder",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.removewatchlist <anime id>`")
+    em.add_field(name="**Aliases**",value="`rwl`")
+    await ctx.send(embed=em) 
+
+@help.command()
+async def watchlist(ctx):
+    em = discord.Embed(description="Shows anime in your watchlist for reminder",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.watchlist`")
+    em.add_field(name="**Aliases**",value="`wl`")
+    await ctx.send(embed=em)
+@help.command()
+async def airing(ctx):
+    em = discord.Embed(description="Shows airing anime to add in your Watchlist",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.airing`")
+    em.add_field(name="**Aliases**",value="`air`")
+    await ctx.send(embed=em)              
 # run the client on the server
 client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.1sl5xrh9uoyW-uUZHo3kYpk-4pM')
