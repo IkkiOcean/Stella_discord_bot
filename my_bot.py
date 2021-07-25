@@ -1120,10 +1120,10 @@ async def announce_everyone(ctx,mention,channel : discord.TextChannel, *,msg):
 
 #dm
 @client.command(name='dm',pass_context = True)    
-@commands.has_permissions(manage_guild=True)
+#@commands.has_permissions(manage_guild=True)
 async def dm(context, member : discord.Member, *,msg):
-    
-    await member.send(msg +f"\n\nsent by **{context.author}** from **{context.guild}** ")
+    if context.author == owner:
+        await member.send(msg +f"\n\nsent by **{context.author}** from **{context.guild}** ")
 
 #say
 @client.command(name='say',aliases = ["Say","Type","type"])
@@ -2611,7 +2611,7 @@ def convert(time):
 
     return val * time_dict[unit]
 @client.command(name="gcreate")
-@commands.has_permissions(manage_messages = True)
+#@commands.has_permissions(manage_messages = True)
 async def giveaway(ctx):
     if ctx.author == owner:
         await ctx.send("Let's start with this giveaway! Answer these questions within 15 seconds!")
@@ -3302,7 +3302,7 @@ async def help(ctx):
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
     em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing`",inline=False)
     em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `watch` `eplist` `filler` `mal` `profile` `read` `recommend` `character` `rndqoute`",inline=False)
-    em.add_field(name="🔧 Utility",value="`server` `invite` `movie` `version` `dm` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
+    em.add_field(name="🔧 Utility",value="`server` `invite` `movie` `version` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
@@ -3528,14 +3528,14 @@ async def manga(ctx):
     em.add_field(name="**Usage**",value="`S.manga <Number of Msgs>`")
     await ctx.send(embed=em)
 
-@help.command()
-async def dm(ctx):
-    em = discord.Embed(description="Dms the message to the member",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
-    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
-    em.set_footer(text= f'Requested by {ctx.author}' )
-    em.add_field(name="**Usage**",value="`S.dm <member> <Text message`")
-    em.add_field(name="**Permission required**",value="`Manage Server`")
-    await ctx.send(embed=em)
+#@help.command()
+#async def dm(ctx):
+ #   em = discord.Embed(description="Dms the message to the member",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+ #   em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+ #   em.set_footer(text= f'Requested by {ctx.author}' )
+ #   em.add_field(name="**Usage**",value="`S.dm <member> <Text message`")
+ #   em.add_field(name="**Permission required**",value="`Manage Server`")
+ #   await ctx.send(embed=em)
 
 @help.command()
 async def watch(ctx):
