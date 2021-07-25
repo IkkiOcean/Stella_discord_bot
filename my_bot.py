@@ -3280,7 +3280,9 @@ async def remind(ctx):
             listed.update_one({"_id": userid},{"$set":{"toggle": 1}})
             await ctx.reply("`Reminder Enabled`") 
            
-            
+@client.command(name='invite',aliases=["Invite"])
+async def invite(ctx): 
+    await ctx.reply('https://discord.com/api/oauth2/authorize?client_id=782005398269984819&permissions=1346890870&scope=bot')           
         
     
 
@@ -3298,7 +3300,7 @@ async def help(ctx):
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
     em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing`",inline=False)
     em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `watch` `eplist` `filler` `mal` `profile` `read` `recommend` `character` `rndqoute`",inline=False)
-    em.add_field(name="🔧 Utility",value="`server` `movie` `version` `dm` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
+    em.add_field(name="🔧 Utility",value="`server` `invite` `movie` `version` `dm` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
