@@ -56,7 +56,7 @@ animetriv_collect = db["anime-trivia"]
 upd = db["anime-updates"]
 listed = db["watchlist"]
 
-reddit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
+redit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
                     client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
                     #username = 'ItzStela',
                     #password = 'password@10',
@@ -1000,7 +1000,8 @@ async def yugioh(ctx,*,msg ):
 
 @client.command(name='meme', aliases=['Meme','Memes','memes'])
 async def meme(ctx):
-    subred = reddit.subreddit("Animemes")
+
+    subred = redit.subreddit("Animemes")
     subs = subred.top("day",limit = 50)
     top = []
     for tops in subs:
@@ -1022,7 +1023,7 @@ async def meme(ctx):
 
 @client.command(name='reddit', aliases=['Reddit','red','Red'])
 async def redd(ctx,name):
-    subred = reddit.subreddit(name)
+    subred = redit.subreddit(name)
     subs = subred.top("day",limit = 60)
     top = []
     for tops in subs:
@@ -2612,76 +2613,77 @@ def convert(time):
 @client.command(name="gcreate")
 @commands.has_permissions(manage_messages = True)
 async def giveaway(ctx):
-    await ctx.send("Let's start with this giveaway! Answer these questions within 15 seconds!")
+    if ctx.author == owner:
+        await ctx.send("Let's start with this giveaway! Answer these questions within 15 seconds!")
 
-    questions = ["Which channel should it be hosted in?", 
-                "What should be the duration of the giveaway? (s|m|h|d)",
-                "What is the prize of the giveaway?","Enter the requirements If None then Type 'None'"]
+        questions = ["Which channel should it be hosted in?", 
+                    "What should be the duration of the giveaway? (s|m|h|d)",
+                    "What is the prize of the giveaway?","Enter the requirements If None then Type 'None'"]
 
-    answers = []
+        answers = []
 
-    def check(m):
-        return m.author == ctx.author and m.channel == ctx.channel 
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel 
 
-    for i in questions:
-        await ctx.send(i)
+        for i in questions:
+            await ctx.send(i)
 
+            try:
+                msg = await client.wait_for('message', timeout=30, check=check)
+            except asyncio.TimeoutError:
+                await ctx.send('You didn\'t answer in time, please be quicker next time!')
+                return
+            else:
+                answers.append(msg.content)
         try:
-            msg = await client.wait_for('message', timeout=30, check=check)
-        except asyncio.TimeoutError:
-            await ctx.send('You didn\'t answer in time, please be quicker next time!')
+            c_id = int(answers[0][2:-1])
+        except:
+            await ctx.send(f"You didn't mention a channel properly. Do it like this {ctx.channel.mention} next time.")
             return
-        else:
-            answers.append(msg.content)
-    try:
-        c_id = int(answers[0][2:-1])
-    except:
-        await ctx.send(f"You didn't mention a channel properly. Do it like this {ctx.channel.mention} next time.")
-        return
 
-    channel = client.get_channel(c_id)
+        channel = client.get_channel(c_id)
 
-    time = convert(answers[1])
-    if time == -1:
-        await ctx.send(f"You didn't answer the time with a proper unit. Use (s|m|h|d) next time!")
-        return
-    elif time == -2:
-        await ctx.send(f"The time must be an integer. Please enter an integer next time")
-        return            
+        time = convert(answers[1])
+        if time == -1:
+            await ctx.send(f"You didn't answer the time with a proper unit. Use (s|m|h|d) next time!")
+            return
+        elif time == -2:
+            await ctx.send(f"The time must be an integer. Please enter an integer next time")
+            return            
 
-    prize = answers[2]
-    rqmt = answers[3]
-    
-    await ctx.send(f"The Giveaway will be in {channel.mention} and will last {answers[1]}!")
+        prize = answers[2]
+        rqmt = answers[3]
+        
+        await ctx.send(f"The Giveaway will be in {channel.mention} and will last {answers[1]}!")
 
 
-    embed = discord.Embed(title = "Giveaway!", description = f"{prize}", color = ctx.author.color)
-    if rqmt != "None":
-        embed.add_field(name="Requirements:",value= rqmt)
-    embed.add_field(name = "Hosted by:", value = ctx.author.mention)
+        embed = discord.Embed(title = "Giveaway!", description = f"{prize}", color = ctx.author.color)
+        if rqmt != "None":
+            embed.add_field(name="Requirements:",value= rqmt)
+        embed.add_field(name = "Hosted by:", value = ctx.author.mention)
 
-    embed.set_footer(text = f"Ends {answers[1]} from now!")
+        embed.set_footer(text = f"Ends {answers[1]} from now!")
 
-    my_msg = await channel.send(embed = embed)
-    
+        my_msg = await channel.send(embed = embed)
+        
 
-    await my_msg.add_reaction("🎉")
-    
+        await my_msg.add_reaction("🎉")
+        
 
-    await asyncio.sleep(time)
-
-
-    new_msg = await channel.fetch_message(my_msg.id)
+        await asyncio.sleep(time)
 
 
-    users = await new_msg.reactions[0].users().flatten()
-    users.pop(users.index(client.user))
-    if users == []:
-        await my_msg.reply("No one Participated ;-;")
-    else:    
-        winner = random.choice(users)
+        new_msg = await channel.fetch_message(my_msg.id)
 
-        await my_msg.reply(f"Congratulations! {winner.mention} won {prize}!")
+
+        users = await new_msg.reactions[0].users().flatten()
+        users.pop(users.index(client.user))
+        if users == []:
+            await my_msg.reply("No one Participated ;-;")
+        else:    
+            winner = random.choice(users)
+
+            await my_msg.reply(f"Congratulations! {winner.mention} won {prize}!")
 @client.command()
 @commands.has_permissions(manage_messages = True)
 async def reroll(ctx,id_ : int):
