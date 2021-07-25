@@ -3282,7 +3282,9 @@ async def remind(ctx):
            
 @client.command(name='invite',aliases=["Invite"])
 async def invite(ctx): 
-    await ctx.reply('https://discord.com/api/oauth2/authorize?client_id=782005398269984819&permissions=1346890870&scope=bot')           
+    em = discord.Embed(description = '[Click here to invite me :)](https://discord.com/api/oauth2/authorize?client_id=782005398269984819&permissions=1346890870&scope=bot)',color = ctx.author.color)
+    em.set_thumbnail(url = client.user.avatar_url )
+    await ctx.reply(embed = em)           
         
     
 
