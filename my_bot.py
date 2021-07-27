@@ -34,6 +34,7 @@ import certifi
 from pymongo import MongoClient, database
 import aiohttp
 import praw
+from selenium import webdriver
 #urban = UrbanClient()
 os.chdir(r".vscode")#G:\bot\stella\.vscode
 
@@ -49,6 +50,22 @@ client = commands.Bot(command_prefix = ('stela ','S.','s.','Stela '), intents = 
     
 #{} means its required
 #() means its optional
+user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.83 Safari/537.36"
+
+options = webdriver.ChromeOptions()
+options.headless = True
+options.add_argument(f'user-agent={user_agent}')
+options.add_argument("--window-size=1920,1080")
+options.add_argument('--ignore-certificate-errors')
+options.add_argument('--allow-running-insecure-content')
+options.add_argument("--disable-extensions")
+options.add_argument("--proxy-server='direct://'")
+options.add_argument("--proxy-bypass-list=*")
+options.add_argument("--start-maximized")
+#options.add_argument('--disable-gpu')
+options.add_argument('--disable-dev-shm-usage')
+options.add_argument('--no-sandbox')
+driver = webdriver.Chrome(executable_path=r"chromedriver.exe",options = options )#G:\bot\stella\chromedriver.exe
 cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
 db = cluster["discord"]  
 mal_collect = db["mal"]             
@@ -1438,13 +1455,7 @@ async def waifu_(ctx):
         
 #gogoanime
 
-@client.command(name='ck')
-async def movie(ctx):       
-    ry = requests.get("https://www.imdb.com/title/tt0848228/")
-    print(ry.content)
-    soup = BeautifulSoup(ry.content,features="lxml")
-    gen = soup.find(text = "genres")
-    print(gen)
+
 @client.command(name='movie',aliases=["Movie","Series","series"])
 async def movie(ctx, *,name):
     #try:
@@ -1546,7 +1557,7 @@ async def define(ctx, *,word):
     except:
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
-@client.command(name='char',aliases=["Char"])
+@client.command(name='char',aliases=["Char","character","Character"])
 async def char(ctx, *,word): 
     
         #link = f"https://anilist.co/search/characters?search={word}"
@@ -2002,8 +2013,8 @@ async def recommend(ctx):
 @client.command(name='similar',aliases=["Similar"])
 async def similar(ctx, *,name):
     #try:
-        from mal import AnimeSearch
-        search = AnimeSearch(name) 
+        
+        search = findid(name) 
         id = (search.results[0].mal_id)
         link = f"https://myanimelist.net/anime/{id}/"
         
@@ -3046,6 +3057,8 @@ async def upload(ctx, num : int,*,question):
 
 
 
+
+        
 def findname(id):
     link = f"https://myanimelist.net/anime/{id}"
     r = requests.get(link)
@@ -3085,7 +3098,7 @@ async def checkNewLoop():
                 em = discord.Embed(title = title,description = f"{episode} just dropped\n\n[Click Here to watch]({watch})")
                 em.set_image(url = image)
                 await channel.send(embed = em)
-                #animeid = ani['id']
+                
                 if id != "None":
                     docs = listed.find({"watchlist": id, "toggle" : 1}) 
                     if docs != None:
@@ -3108,16 +3121,23 @@ async def checkNewLoop():
 
 def check_new():
     link = "https://animixplay.to"
-    r = requests.get(link)
-    tree = html.fromstring(r.content)
+    
+    
+    driver.get(link)
+    
+    r = driver.page_source
+    tree = html.fromstring(r)
     newanime = []
+    
     anime = tree.xpath('//*[@id="resultplace"]/ul/li')
+    
     for anim in anime:
-        title = (anim.xpath('.//a/div[@class = "details"]/p[@class = "name"]')[0].text)
+        title = (anim.xpath('.//a/@title'))[0]
         episode = (anim.xpath('.//a/div[@class = "details"]/p[@class = "infotext"]')[0].text)
         posst = {'titles' : title,'episodes' : episode}
         ccc = upd.find_one(posst)
         titlee = title.replace("(Dub)","")
+        
         if ccc == None:
             watch = anim.xpath('.//a/@href')
             image = anim.xpath('.//a/div[@class = "searchimg"]/img/@src')
@@ -3129,8 +3149,6 @@ def check_new():
             elif id == None:
                 newanime.append({'titles' : title,'episodes' : episode,'watch' : watchh,'image': image[0],'id' : 'None'})
     return newanime
-           
-            
         
 
 @client.command(name='airing',aliases=["Airing","air"])
