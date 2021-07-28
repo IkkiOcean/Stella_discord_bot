@@ -65,7 +65,7 @@ options.add_argument("--start-maximized")
 #options.add_argument('--disable-gpu')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--no-sandbox')
-driver = webdriver.Chrome(executable_path=r"chromedriver.exe",options = options )#G:\bot\stella\chromedriver.exe
+driver = webdriver.Chrome(executable_path=r"chromedriver",options = options )#G:\bot\stella\chromedriver.exe
 cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
 db = cluster["discord"]  
 mal_collect = db["mal"]             
