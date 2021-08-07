@@ -24,7 +24,7 @@ import asyncio
 
 from requests.api import delete
 from lxml import html
-from waifu import waifupics, waifuname, waifuseries
+#from waifu import waifupics, waifuname, waifuseries
 import numpy as np
 import urllib.parse, urllib.request, re
 from asyncio import gather
@@ -67,11 +67,15 @@ options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--no-sandbox')
 driver = webdriver.Chrome(executable_path=r"chromedriver",options = options )#G:\bot\stella\chromedriver.exe
 cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
+client2 = MongoClient("mongodb+srv://vivekprakash_india:passwordfordb@cluster0.tf1px.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where())
 db = cluster["discord"]  
 mal_collect = db["mal"]             
 animetriv_collect = db["anime-trivia"]
 upd = db["anime-updates"]
 listed = db["watchlist"]
+chan = db['channels']
+db2 = client2['Waifus']
+girl = db2['images']
 
 redit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
                     client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
@@ -1371,14 +1375,20 @@ async def manga(ctx, *, manga):
         
         
 @client.command(name='waifu',aliases=["Waifu"]) 
-@commands.cooldown(2, 120, BucketType.user)  
+@commands.cooldown(3, 120, BucketType.user)  
 async def waifu_(ctx):
-    
-    chosen_index = random.randint(0,len(waifupics)-1) 
-    embed=  discord.Embed(title = f"**{waifuname[chosen_index]}**",description= waifuseries[chosen_index],color =0x00ebff)
-    embed.set_image(url=waifupics[chosen_index])
-    message=await ctx.send(embed=embed)
-    
+    count = girl.find().count()
+    ct = count -1
+    im = random.randint(0,ct)
+    doc = girl.find_one({'_id' : im})     
+    name = doc['name']
+    anime = doc['anime']
+    image = doc['image']
+    byt  = BytesIO(image)
+    file = discord.File(fp = byt, filename = 'waifu.png')
+    emb = discord.Embed(description = f"**{name}**\n\n{anime}")
+    emb.set_image(url = 'attachment://waifu.png')
+    message= await ctx.send(file = file, embed=emb)
     await message.add_reaction("💗")
     
     def check(reaction, user):
@@ -1387,12 +1397,12 @@ async def waifu_(ctx):
     try:
         reaction, user = await client.wait_for('reaction_add',check=check,timeout=60)
 
-        await ctx.send(f"{user.name} wanna make {waifuname[chosen_index]}, waifu! 💝") 
+        await ctx.send(f"{user.name} wanna make {name}, waifu! 💝") 
         
         answer = random.randint(0,9)    
         if answer <= 4:
             await asyncio.sleep(5)
-            await ctx.send(f"{user.name}\nAwww... {waifuname[chosen_index]} said **Yes** for the marraige!! Congrats💝\nLet me make a wedding card for you >///<")
+            await ctx.send(f"{user.name}\nAwww... {name} said **Yes** for the marraige!! Congrats💝\nLet me make a wedding card for you >///<")
             resp=requests.get("https://i.imgur.com/gxsD8hr.png") #marraige
             #resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
             resp2=requests.get("https://i.imgur.com/Rs9YYjN.png")
@@ -1403,11 +1413,11 @@ async def waifu_(ctx):
             frm = Image.open(BytesIO(resp2.content)).convert('RGBA')
             frm = frm.resize((580,580))
             asset = user.avatar_url_as(size=128)
-            asset2 = requests.get(waifupics[chosen_index])
+            
             data = BytesIO(await asset.read())  
              
             pfp = Image.open(data).convert('RGB')
-            waifu0 = Image.open(BytesIO(asset2.content)).convert('RGB')
+            waifu0 = Image.open(byt).convert('RGB')
    
             pfp = pfp.resize((435,435))
             waifu1 =  waifu0.resize((435,435))
@@ -1441,13 +1451,13 @@ async def waifu_(ctx):
              
             bg.save("marraige.png",format="png")    
             
-            wed = discord.Embed(description=f"{user.name} and {waifuname[chosen_index]} are **married** now!!💝",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
+            wed = discord.Embed(description=f"{user.name} and {name} are **married** now!!💝",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
             file = discord.File("marraige.png")
             wed.set_image(url="attachment://marraige.png")
             await ctx.send(file = file, embed=wed)
         if answer > 4:
             await asyncio.sleep(5)
-            await ctx.send(f"{user.name}\n{waifuname[chosen_index]} said **No** to you.... ;-;")
+            await ctx.send(f"{user.name}\n{name} said **No** to you.... ;-;")
             
     except asyncio.TimeoutError:
         return    
@@ -3101,7 +3111,6 @@ def findid(anime):
 @tasks.loop(minutes= 15)
 async def checkNewLoop():
     
-    channel = client.get_channel(765216983666524180)
     anime = check_new()
     if anime == []:
         print("nothing new")
@@ -3115,7 +3124,7 @@ async def checkNewLoop():
                 id = ani['id']
                 em = discord.Embed(title = title,description = f"{episode} just dropped\n\n[Click Here to watch]({watch})")
                 em.set_image(url = image)
-                await channel.send(embed = em)
+                #await channel.send(embed = em)
                 
                 if id != "None":
                     docs = listed.find({"watchlist": id, "toggle" : 1}) 
@@ -3130,11 +3139,23 @@ async def checkNewLoop():
                                 await member.send(embed = em)
                             except:    
                                 print("can't dm")
+                posts = chan.find()
+                channels = []
+                for post in posts:
+                    channels.append(post['chnl'])
+                for channel in channels:
+                    chnnl = client.get_channel(channel)
+                    try:
+                        if chnnl == None:
+                            chan.delete_one({'chnl' : channel})
+                            print(f'deleted {channel}')
+                        elif chnnl != None:    
+                            await chnnl.send(embed =em) 
+                    except:
+                        print("can't post")                   
         except: 
             await owner.send("Error in checknewLoop!")                   
-
-             
-    print(f'checked') 
+    print(f'checked')
     
 
 def check_new():
@@ -3315,6 +3336,23 @@ async def remind(ctx):
         elif doc["toggle"] == 0:  
             listed.update_one({"_id": userid},{"$set":{"toggle": 1}})
             await ctx.reply("`Reminder Enabled`") 
+@client.command(name='setchannel')
+@commands.has_permissions(manage_guild = True)
+async def setchannel(ctx, channel : discord.TextChannel): 
+    try:   
+        guildid = ctx.guild.id
+        doc = chan.find_one({"_id": guildid})
+        if doc != None:
+            chan.update_one({"_id": guildid},{"$set":{"chnl": channel.id}})
+            await ctx.reply(f'{channel.mention} has been set for anime episode reminders!\n`Make sure Stela has permissions to send message there`')
+        elif doc == None:
+            post = {'_id' : guildid, 'chnl' : channel.id}
+            chan.insert_one(post)
+            await ctx.reply(f'{channel.mention} has been set for anime episode reminders!\n`Make sure Stela has permissions to send message there`')
+        else:
+            await ctx.reply('Something went wrong... join support server for help')
+    except:
+        return                    
            
 @client.command(name='invite',aliases=["Invite"])
 async def invite(ctx): 
@@ -3338,7 +3376,7 @@ async def help(ctx):
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
-    em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing`",inline=False)
+    em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing` `setchannel`",inline=False)
     em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `watch` `eplist` `filler` `mal` `setmal` `removemal` `profile` `read` `recommend` `character` `rndqoute`",inline=False)
     em.add_field(name="🔧 Utility",value="`server` `invite` `vote` `movie` `version` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
@@ -3780,6 +3818,14 @@ async def removemal(ctx):
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.removemal`")
+    await ctx.send(embed=em)    
+@help.command()
+async def setchannel(ctx):
+    em = discord.Embed(description="Set a channel for anime updates in your server",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.setchannel <mention channel>`")
+    em.add_field(name="**Permission required**",value="`Manage Server`")
     await ctx.send(embed=em)                 
 # run the client on the server
 client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.1sl5xrh9uoyW-uUZHo3kYpk-4pM')
