@@ -1386,7 +1386,7 @@ async def waifu_(ctx):
     image = doc['image']
     byt  = BytesIO(image)
     file = discord.File(fp = byt, filename = 'waifu.png')
-    emb = discord.Embed(description = f"**{name}**\n\n{anime}")
+    emb = discord.Embed(title = name,description = f"{anime}",color = ctx.author.color)
     emb.set_image(url = 'attachment://waifu.png')
     message= await ctx.send(file = file, embed=emb)
     await message.add_reaction("💗")
