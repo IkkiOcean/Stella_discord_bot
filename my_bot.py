@@ -2099,153 +2099,8 @@ async def similar(ctx, *,name):
        # return
 
         
-@client.command(name='read',aliases=["Read"])
-async def read(ctx,*,word): 
-    try:
-        word = word.replace(" ","_")
-        link = "https://manganato.com/search/story/{}".format(word)
-        r = requests.get(link)
-        soup = BeautifulSoup(r.content,features="lxml")
-        spans = soup.find_all('div',attrs={"class":"search-story-item"})
-        #chap = soup.find_all('a',attrs={"class":"item-chapter a-h text-nowrap"})
-        names = ""
-        namess =[]
-        linksss = []
-        count = 1
-        name = []
-         #[{chaps['title']}]({chaps['href']})
-         #{span.a.div.a['title']}
-        for span in spans:
-            chaps = (span.div.find('a',attrs={"class":"item-chapter a-h text-nowrap"}))
-            
-            names += (f"{count}: **{span.a['title']}**\n<a:aooc:854035196634464307> __LATEST CHAP__ : [{chaps['title']}]({chaps['href']})\n")
-            if "readmanganato" in span.a['href']:
-                linksss.append(span.a['href'][25:])
-            else:    
-                linksss.append(span.a['href'][21:])
-            name.append(f"{span.a['title']}")    
-            namess.append(f"**{span.a['title']}**\n<a:aooc:854035196634464307> __LATEST CHAP__ : [{chaps['title']}]({chaps['href']})")
-            count += 1
-            if count > 3:
-                break   
-
-           
-        em = discord.Embed(description= "<a:Stelaread:860390274773680149> **Select the manga you wanna read...**",color = ctx.author.color)    
-        em.add_field(name="Mangas:",value= names)
-        message = await ctx.reply(embed=em)
-        emoji_numbers = ["1️⃣", "2️⃣", "3️⃣"]
-        for i in range(count-1):
-            await message.add_reaction(emoji_numbers[i])
-         
-        def check(reaction, user):
-                return str(reaction.emoji) in emoji_numbers[0:count-1] and user != client.user and reaction.message.id == message.id and user == ctx.author
-            # This makes sure nobody except the command sender can interact with the "menu"
-        
-        try:  
-             
-            reaction, user = await client.wait_for('reaction_add', check=check, timeout=30)
-            
-            index = emoji_numbers.index(reaction.emoji)     
-            
-            chapter = (linksss[index])
-            emb = discord.Embed(description= "<a:Stelaread:860390274773680149> **Send the chapter number**",color = ctx.author.color)    
-            emb.add_field(name="Manga:",value= namess[index])
-            await message.remove_reaction(reaction, user)
-            for i in range(count-1):
-                await message.remove_reaction(emoji_numbers[i],client.user) 
-            await message.edit(embed = emb)
-            try:
-                def check2(msg2):
-                    return msg2.author == ctx.author and ctx.channel == msg2.channel and msg2.content.isdigit() 
-                msg2 = await client.wait_for("message", check=check2,timeout=30)    
-                number = int(msg2.content)
-                
-                link2 = f"https://readmanganato.com{chapter}/chapter-{number}"
-                
-                if "read-" in link2:
-                    
-                    nam = namess[index].replace(" ","_")
-                    
-                    link2 = (f"https://mangakakalot.com/chapter/{nam}/chapter_{number}")
-                
-                emb = discord.Embed(title=f"{name[index]}",description=f"[Click here for chapter {number}]({link2})",color = ctx.author.color)
-                await message.edit(embed=emb)
-            except asyncio.TimeoutError:
-                    
-                await ctx.reply("Timeout",delete_after=30)    
-        except asyncio.TimeoutError:
-                
-            await ctx.reply("Timeout",delete_after=30)  
-    except:
-        await ctx.reply("Not found",delete_after=30)
 
 
-@client.command(name='watch',aliases=["Watch"]) 
-async def watch(ctx, *,anime):     
-    try:
-        link = f"https://gogoanime.pe//search.html?keyword={anime}"
-        r = requests.get(link)
-        soup = BeautifulSoup(r.content,features="lxml")
-        spans = soup.find_all("div", {"class" : "img"})
-        count = 1
-        lis = ""
-        lin = []
-        titles = []
-        images = []
-        for span in spans:
-            lis += f"`{count}.` **{span.a['title']}**\n\n"
-            images.append(span.a.img['src'])
-            titles.append(span.a['title'])
-            lin.append(span.a['href'])
-            count += 1
-            if count > 14:
-                break
-        emb = discord.Embed(title = 'Search Results:',description = lis) 
-        message = await ctx.reply(embed = emb)   
-        try:
-            def check1(msg):
-                return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit() 
-            
-            numb = await client.wait_for("message", check=check1,timeout=30)
-           
-            numb = int(numb.content)
-            numb = numb - 1
-            link2 = f"https://gogoanime.pe{lin[numb]}"
-            r2 = requests.get(link2)
-            soup2 = BeautifulSoup(r2.content,features="lxml")
-            spans2 = soup2.find_all("p", {"class" : "type"})
-            spas3 = soup2.find("a",{"class" : "active"})
-            synop = spans2[1].text
-            last = spas3['ep_end']
-            em = discord.Embed(title = titles[numb],description = synop )
-            em.set_thumbnail(url = images[numb])
-            em.add_field(name = 'Total Episode:', value = f"{last} episodes avalaible")
-            em.set_footer(text = "Send the Episode number")
-        
-            await message.edit(embed = em)   
-            
-            try:
-                def check(msg):
-                    
-                    return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit()
-                episo = await client.wait_for("message", check=check,timeout=30)
-                episo = int(episo.content)
-                lin2 = lin[numb].replace("category/","")
-                link3 = f"https://gogoanime.pe{lin2}-episode-{episo}"
-                print(link3)
-                r3 = requests.get(link3)
-                soup3 = BeautifulSoup(r3.content,features="lxml")
-                spans3 = soup3.find("li", {"class" : "dowloads"})
-                print(spans3)
-                link4 = spans3.a['href']
-                embb = discord.Embed(title = titles[numb],description = f"Episode {episo}\n[Download/Watch link]({link4})")
-                await message.edit(embed = embb)
-            except asyncio.TimeoutError:
-                await ctx.reply("Timeout",delete_after=10)
-        except asyncio.TimeoutError:
-            await ctx.send("Timeout",delete_after=10) 
-    except:
-        await ctx.reply("Not found")
 
 @client.command(name="wallpaper",aliases = ["Wallpaper","wall","Wall"])
 async def wallpaper(ctx, *,word = None ):
@@ -3119,10 +2974,10 @@ async def checkNewLoop():
             for ani in anime:
                 title = ani['titles']
                 episode = ani['episodes']
-                watch = ani['watch']
+                #watch = ani['watch']
                 image = ani['image']
                 id = ani['id']
-                em = discord.Embed(title = title,description = f"{episode} just dropped\n\n[Click Here to watch]({watch})")
+                em = discord.Embed(title = title,description = f"{episode} just dropped")#\n\n[Click Here to watch]({watch})
                 em.set_image(url = image)
                 #await channel.send(embed = em)
                 
@@ -3178,15 +3033,15 @@ def check_new():
         titlee = title.replace("(Dub)","")
         
         if ccc == None:
-            watch = anim.xpath('.//a/@href')
+            #watch = anim.xpath('.//a/@href')
             image = anim.xpath('.//a/div[@class = "searchimg"]/img/@src')
-            watchh = link + watch[0]
+            #watchh = link + watch[0]
             id = findid(titlee)
             upd.insert_one(posst)
             if id  != None:
-                newanime.append({'titles' : title,'episodes' : episode,'watch' : watchh,'image': image[0],'id' : id})
+                newanime.append({'titles' : title,'episodes' : episode,'image': image[0],'id' : id})
             elif id == None:
-                newanime.append({'titles' : title,'episodes' : episode,'watch' : watchh,'image': image[0],'id' : 'None'})
+                newanime.append({'titles' : title,'episodes' : episode,'image': image[0],'id' : 'None'})
     return newanime
         
 
@@ -3377,7 +3232,7 @@ async def help(ctx):
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
     em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
     em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing` `setchannel`",inline=False)
-    em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `watch` `eplist` `filler` `mal` `setmal` `removemal` `profile` `read` `recommend` `character` `rndqoute`",inline=False)
+    em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `eplist` `filler` `mal` `setmal` `removemal` `profile` `recommend` `character` `rndqoute`",inline=False)
     em.add_field(name="🔧 Utility",value="`server` `invite` `vote` `movie` `version` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
@@ -3613,13 +3468,7 @@ async def manga(ctx):
  #   em.add_field(name="**Permission required**",value="`Manage Server`")
  #   await ctx.send(embed=em)
 
-@help.command()
-async def watch(ctx):
-    em = discord.Embed(description="Use it to find download/Watch Link of anime",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
-    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
-    em.set_footer(text= f'Requested by {ctx.author}' )
-    em.add_field(name="**Usage**",value="`S.watch <Name of the anime>`")
-    await ctx.send(embed=em)
+
 
 @help.command()
 async def announce(ctx):
