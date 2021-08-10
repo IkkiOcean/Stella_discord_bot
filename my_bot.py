@@ -76,7 +76,7 @@ listed = db["watchlist"]
 chan = db['channels']
 db2 = client2['Waifus']
 girl = db2['images']
-
+girl.create_index([('name','text'),('anime','text')])
 redit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
                     client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
                     #username = 'ItzStela',
@@ -1386,7 +1386,7 @@ async def waifu_(ctx):
     image = doc['image']
     byt  = BytesIO(image)
     file = discord.File(fp = byt, filename = 'waifu.png')
-    emb = discord.Embed(title = name,description = f"{anime}",color = ctx.author.color)
+    emb = discord.Embed(title = name,description = f"{anime}",color=0xdc143c)
     emb.set_image(url = 'attachment://waifu.png')
     message= await ctx.send(file = file, embed=emb)
     await message.add_reaction("💗")
@@ -1461,6 +1461,129 @@ async def waifu_(ctx):
             
     except asyncio.TimeoutError:
         return    
+@client.command(name='lookup',aliases = ['lu','Lookup'])
+async def lookup(ctx, name):
+    cursor = girl.find({"$text": {"$search": name}},{'score': {'$meta': 'textScore'}})
+    cursor.sort([('score', {'$meta':'textScore'})])
+    name = []
+    title = []
+    for nam in cursor:
+        name.append(nam['name'])
+        title.append(nam['anime'])
+    total = (len(name))  
+    pages = math.ceil(total/10)
+    if total == 0:
+        await ctx.reply('that character could not be found. It may not exist, or you may have misspelled their name.')
+    if pages > 1:      
+        x = -10
+        y = 0
+        cur_page = 1
+        x = 0
+        y = 10
+        show = ''
+        count = 0
+
+        for char,anime in zip(name[x:y],title[x:y]):
+            count += 1
+            show += f'{count}. {anime} . **{char}**\n'   
+             
+        embb = discord.Embed(title = "Waifu Results:",description = f"please type the number beside the character you are looking for.\n\n{show}",color=0xdc143c)
+        embb.set_footer(text = f"{cur_page}/{pages}")
+        message = await ctx.send(embed = embb) 
+        
+        await message.add_reaction("◀️")
+        await message.add_reaction("▶️")
+        def check(reaction, user):
+            return user == ctx.author and str(reaction.emoji) in ["◀️", "▶️"]
+        def check1(msg):
+            return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit()   
+        work  = 'True'     
+        while work == 'True':
+            
+            #try:
+                finished, unfinished = await asyncio.wait([client.wait_for('message', timeout=30,check=check1),client.wait_for('reaction_add', timeout=30,check=check)], return_when=asyncio.FIRST_COMPLETED)
+                for task in finished:
+                    result = task.result() 
+                try:  
+                    if str(result[0].emoji) == "▶️" and cur_page != pages:
+                        show = ""
+                        cur_page += 1
+                        x += 10
+                        y += 10
+                        num  = x
+                        for char,anime in zip(name[x:y],title[x:y]):
+                            num += 1
+                            show += f'{num}. {anime} . **{char}**\n'     
+                        
+                        if show != "":    
+                            em = discord.Embed(title = "Waifu Results:",description = f"please type the number beside the character you are looking for.\n\n{show}",color=0xdc143c)
+                            em.set_footer(text = f"{cur_page}/{pages}")
+                            await message.edit(embed = em)
+                    elif str(result[0].emoji) == "◀️" and cur_page > 1:
+                            show = ""
+                            cur_page -= 1    
+                            x -= 10
+                            y -= 10
+                            num = x
+                            for char,anime in zip(name[x:y],title[x:y]):
+                                num += 1
+                                show += f'{num}. {anime} . **{char}**\n' 
+                            emb = discord.Embed(title = "Waifu Results:",description = f"please type the number beside the character you are looking for.\n\n{show}",color=0xdc143c)
+                            emb.set_footer(text = f"{cur_page}/{pages}")
+                            await message.edit(embed = emb)
+                except:            
+                    if int(result.content) <= y and int(result.content) > x:
+                        try:
+                            msg3 = int(result.content)
+                            index = msg3 - 1
+                            name = name[index]
+                            anime = title[index]
+                            doc = girl.find_one({'name' : name,'anime' : anime})
+                            emmb = discord.Embed(title = 'Waifu Lookup',description = f"Name : **{doc['name']}**\n\nFrom : {doc['anime']}",color=0xdc143c)
+                            image = doc['image']
+                            byt  = BytesIO(image)
+                            file = discord.File(fp = byt, filename = 'waifu.png')
+                            emmb.set_image(url = 'attachment://waifu.png')
+                            await ctx.reply(file = file, embed=emmb)
+                            work = 'False'
+                            await message.delete()
+                        except:
+                            await ctx.reply('Something went wrong, Please report this bug in support server!')
+                       
+    elif pages  == 1:
+        count = 0
+        show = ""
+        for char,anime in zip(name,title):
+            count += 1
+            show += f'{count}. {anime} . **{char}**\n'   
+             
+        embb = discord.Embed(title = "Waifu Results:",description = f"please type the number beside the character you are looking for.\n\n{show}",color=0xdc143c)
+        msssg = await ctx.send(embed = embb)
+        def check(msg):
+            return msg.author == ctx.author and ctx.channel == msg.channel and msg.content.isdigit()
+        rest = 'true'    
+        while rest == 'true':    
+            try:
+                msg2 = await client.wait_for('message', check=check,timeout=30)
+                try:
+                    msg3 = int(msg2.content)
+                    if msg3 <= count and msg3 > 0:
+                        index = msg3 - 1
+                        name = name[index]
+                        anime = title[index]
+                        doc = girl.find_one({'name' : name,'anime' : anime})
+                        emmb = discord.Embed(title = 'Waifu Lookup',description = f"Name : **{doc['name']}**\n\nFrom : {doc['anime']}",color=0xdc143c)
+                        image = doc['image']
+                        byt  = BytesIO(image)
+                        file = discord.File(fp = byt, filename = 'waifu.png')
+                        emmb.set_image(url = 'attachment://waifu.png')
+                        await ctx.reply(file = file, embed=emmb)
+                        rest = 'false'
+                        await msssg.delete()
+                except:
+                    await ctx.reply('Something went wrong, Please report this bug in support server!')     
+            except asyncio.TimeoutError:
+                return  
         
         
 #gogoanime
@@ -2643,20 +2766,21 @@ async def dm_helper(player: discord.User,question , answer , option , options):
         res = await client.wait_for('message',check=check,timeout=30)
         
         if res.content.lower() == "cancel":
-            await msg.edit('`game has been cancelled`')
+            emmb = discord.Embed(title = "Chase the Runner",description = f"`Cancelling the game!`",color=0xFF0000) 
+            await msg.edit(embed = emmb,delete_after = 20)
             return ["cancel"]
             
         if res.content.lower() == answer.lower():
-            embed4 = discord.Embed(title = "Chase the Runner",description = f"**Answer the Question!**\n{question}\n`{res.content}` - **Correct Answer: +1**") 
+            embed4 = discord.Embed(title = "Chase the Runner",description = f"**Answer the Question!**\n{question}\n`{res.content}` - **Correct Answer: +1**",color=0x00FF00) 
             await msg.edit(embed = embed4,delete_after = 20)
             return [1]   
         else:    
-            embed2 = discord.Embed(title = "Chase the Runner",description = f"**Answer the Question!**\n{question}\n**Wrong Answer: +0**") 
+            embed2 = discord.Embed(title = "Chase the Runner",description = f"**Answer the Question!**\n{question}\n**Wrong Answer: +0**",color=0xFF0000) 
             await msg.edit(embed = embed2,delete_after = 20)
             return [0]
             
     except asyncio.TimeoutError:
-        embed3 = discord.Embed(title = "Chase the Runner",description = f"timeout....") 
+        embed3 = discord.Embed(title = "Chase the Runner",description = f"timeout....",color=0xFF0000) 
         await msg.edit(embed = embed3,delete_after = 10)
         return [0,1]
 
@@ -2730,7 +2854,7 @@ async def challenge(ctx, member : discord.Member):
                     
                     def check(response):
                         return response.content.lower() in options and response.author == mem2 and response.channel == ctx.channel
-                    embe = discord.Embed(title = "Chase the Runner",description = f"{qu}\n\n{option}")    
+                    embe = discord.Embed(title = "Chase the Runner",description = f"{qu}\n\n{option}",color=0x00FF00)    
                     await msg.edit(embed = embe)
                     try:
                         
@@ -2751,7 +2875,7 @@ async def challenge(ctx, member : discord.Member):
                         
                         name = "False"
                     
-                embed = discord.Embed(title = "Chase the Runner",description = f"**Robbery ended**\nYou robbed {money*100}+ Respect") 
+                embed = discord.Embed(title = "Chase the Runner",description = f"**Robbery ended**\nYou robbed {money*100}+ Respect",color=0x00FF00) 
                 await msg.edit(embed =embed)        
                 await ctx.send(f"{mem1.mention}|{mem2.mention}`Come in Dm \nChase will start in 30 sec`")
                 
@@ -2876,14 +3000,15 @@ async def challenge(ctx, member : discord.Member):
                             await mem1.send(scene,delete_after = 10)
                             await mem2.send(scene,delete_after = 10)   
                     else:
+                        print(1)
                         await mem1.send("Game has been cancelled")
                         await mem2.send("Game has been cancelled")   
                         work = "False"       
             if str(reaction.emoji) == "❌":
-                emb = discord.Embed(title = "Chase the Runner",description = f"{mem2.mention} declined the Challenge!")
+                emb = discord.Embed(title = "Chase the Runner",description = f"{mem2.mention} declined the Challenge!",color=0xFF0000)
                 await msg.edit(embed = emb)  
         except asyncio.TimeoutError:
-            embbb = discord.Embed(title = "Chase the Runner",description = f"You have been challenged by {mem1.mention}\nYou have to answer as many questions as you can, time for each question is 45 sec\n`Timeout`")
+            embbb = discord.Embed(title = "Chase the Runner",description = f"You have been challenged by {mem1.mention}\nYou have to answer as many questions as you can, time for each question is 45 sec\n`Timeout`",color=0xFF0000)
             await msg.edit(embed = embbb)
             
     else:
@@ -2977,7 +3102,7 @@ async def checkNewLoop():
                 #watch = ani['watch']
                 image = ani['image']
                 id = ani['id']
-                em = discord.Embed(title = title,description = f"{episode} just dropped")#\n\n[Click Here to watch]({watch})
+                em = discord.Embed(title = title,description = f"{episode} just dropped",color=0x00ebff)#\n\n[Click Here to watch]({watch})
                 em.set_image(url = image)
                 #await channel.send(embed = em)
                 
@@ -3075,7 +3200,7 @@ async def airing(ctx):
             pages = math.ceil(len(titles)/10)
             for name,idd in zip(titles[x:y],animeid[x:y]):
                 namee += f'{titles.index(name)+1}. {name} - `{idd}`\n\n'
-            embb = discord.Embed(title = "Airing Animes:",description = namee)
+            embb = discord.Embed(title = "Airing Animes:",description = namee,color=0x00ebff)
             embb.set_footer(text = f"{cur_page}/{pages}")
             message = await ctx.send(embed = embb) 
             await message.add_reaction("◀️")
@@ -3092,7 +3217,7 @@ async def airing(ctx):
                         for name,idd in zip(titles[x:y],animeid[x:y]):
                             namee += f'{titles.index(name)+1}. {name} - `{idd}`\n\n'
                         if namee != None:    
-                            em = discord.Embed(title = "Airing Animes:",description = namee)
+                            em = discord.Embed(title = "Airing Animes:",description = namee,color=0x00ebff)
                             em.set_footer(text = f"{cur_page}/{pages}")
                             await message.edit(embed = em)
                         
@@ -3104,7 +3229,7 @@ async def airing(ctx):
                         
                         for name,idd in zip(titles[x:y],animeid[x:y]):
                             namee += f'{titles.index(name)+1}. {name} - `{idd}`\n\n'
-                        emb = discord.Embed(title = "Airing Animes:",description = namee)
+                        emb = discord.Embed(title = "Airing Animes:",description = namee,color=0x00ebff)
                         emb.set_footer(text = f"{cur_page}/{pages}")
                         await message.edit(embed = emb)
                 except asyncio.TimeoutError:
@@ -3172,10 +3297,10 @@ async def watchlist(ctx,member: discord.Member = None):
         name = ""
         for ani in anime:
             name += f"[{findname(ani)}]({url + ani}) - `{ani}`  \n"
-        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : {slot}/10\nReminder - {rem}\n\n{name}") 
+        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : {slot}/10\nReminder - {rem}\n\n{name}",color=0x00ebff) 
         await ctx.send(embed = em)
     elif doc == None:
-        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : 10/10\nReminder - Off\n\nUse `S.awl [animeid]` to add") 
+        em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : 10/10\nReminder - Off\n\nUse `S.awl [animeid]` to add",color=0x00ebff) 
         await ctx.send(embed = em)    
 @client.command(name='remind',aliases=["Remind"])
 async def remind(ctx):
@@ -3211,7 +3336,7 @@ async def setchannel(ctx, channel : discord.TextChannel):
            
 @client.command(name='invite',aliases=["Invite"])
 async def invite(ctx): 
-    em = discord.Embed(description = '[Click here to invite me :)](https://discord.com/api/oauth2/authorize?client_id=782005398269984819&permissions=1346890870&scope=bot)',color = ctx.author.color)
+    em = discord.Embed(description = '[Click here to invite me :)](https://discord.com/api/oauth2/authorize?client_id=782005398269984819&permissions=1346890870&scope=bot)',color=0x00ebff)
     em.set_thumbnail(url = client.user.avatar_url )
     await ctx.reply(embed = em)           
         
