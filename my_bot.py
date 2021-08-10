@@ -3355,7 +3355,7 @@ async def help(ctx):
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `punch` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
     em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `say` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `lookup` `say` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
     em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing` `setchannel`",inline=False)
     em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `eplist` `filler` `mal` `setmal` `removemal` `profile` `recommend` `character` `rndqoute`",inline=False)
     em.add_field(name="🔧 Utility",value="`server` `invite` `vote` `movie` `version` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
@@ -3792,7 +3792,16 @@ async def removemal(ctx):
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.removemal`")
-    await ctx.send(embed=em)    
+    await ctx.send(embed=em)   
+
+@help.command()
+async def removemal(ctx):
+    em = discord.Embed(description="Search waifus for waifu command",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.Lookup <name>`")
+    em.add_field(name="**Aliases**",value="`lu`")
+    await ctx.send(embed=em)        
 @help.command()
 async def setchannel(ctx):
     em = discord.Embed(description="Set a channel for anime updates in your server",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
