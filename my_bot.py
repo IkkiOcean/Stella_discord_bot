@@ -3334,6 +3334,23 @@ async def setchannel(ctx, channel : discord.TextChannel):
     except:
         return                    
            
+@client.command(name='removechannel')
+@commands.has_permissions(manage_guild = True)
+async def removechannel(ctx): 
+    try:   
+        guildid = ctx.guild.id
+        doc = chan.find_one({"_id": guildid})
+        if doc != None:
+            chal = doc['chnl']
+            channel = client.get_channel(chal)
+            chan.delete_one({"_id": guildid})
+            await ctx.reply(f'{channel.mention} has been removed for anime episode reminders!')
+        elif doc == None:
+            await ctx.reply(f"This server does'nt have a anime reminder channel\n`Set it using `S.setchannel <mention channel>")
+        else:
+            await ctx.reply('Something went wrong... join support server for help')
+    except:
+        return            
 @client.command(name='invite',aliases=["Invite"])
 async def invite(ctx): 
     em = discord.Embed(description = '[Click here to invite me :)](https://discord.com/api/oauth2/authorize?client_id=782005398269984819&permissions=1346890870&scope=bot)',color=0x00ebff)
@@ -3795,7 +3812,7 @@ async def removemal(ctx):
     await ctx.send(embed=em)   
 
 @help.command()
-async def removemal(ctx):
+async def lookup(ctx):
     em = discord.Embed(description="Search waifus for waifu command",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
@@ -3809,6 +3826,14 @@ async def setchannel(ctx):
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.setchannel <mention channel>`")
     em.add_field(name="**Permission required**",value="`Manage Server`")
-    await ctx.send(embed=em)                 
+    await ctx.send(embed=em)
+@help.command()
+async def removechannel(ctx):
+    em = discord.Embed(description="Removes the channel from anime updates in your server",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.removechannel`")
+    em.add_field(name="**Permission required**",value="`Manage Server`")
+    await ctx.send(embed=em)                     
 # run the client on the server
 client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.1sl5xrh9uoyW-uUZHo3kYpk-4pM')
