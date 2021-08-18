@@ -1283,7 +1283,7 @@ async def imposter(context, member: Greedy[discord.Member]):#member1 : discord.M
 @client.command(name= "anime",aliases = ["Anime"])
 async def anime(ctx, *, anime):
     try:
-        id = findid(anime)    
+        id = findid(anime)   
         if id != None:
             link = f'https://myanimelist.net/anime/{id}' 
             r = requests.get(link)
@@ -1302,13 +1302,21 @@ async def anime(ctx, *, anime):
             
             
             rate = soup.find("div", {"class" : "fl-l score"})
-            rating = (rate.div.text)
-            
+            if rate != None:
+                rating = (rate.div.text)
+            else:
+                rating = "Not Available"
             rank = soup.find("span", {"class" : "numbers ranked"})
-            ranks = (rank.text)
+            if rank != None:
+                ranks = (rank.text)
+            else:
+                ranks = "Not Available"    
             
             imgstat = soup.find("td", {"class" : "borderClass"})
-            image = (imgstat.div.div.a.img['data-src'])
+            try:
+                image = (imgstat.div.div.a.img['data-src'])
+            except:
+                image = "https://www.indiaspora.org/wp-content/uploads/2018/10/image-not-available.jpg"    
             stats = soup.find_all("span", {"class" : "dark_text"})
             episode = ""
             status = ""
@@ -1317,13 +1325,24 @@ async def anime(ctx, *, anime):
             tyype = ""
             for stat in stats:
                 if 'Episodes:' in stat.text:
-                    episode += (stat.nextSibling )
+                    try:
+                        episode += (stat.nextSibling )
+                    except:
+                        episode += "Not Available"    
                 elif 'Type:' in stat.text:
-                    tyype += stat.parent.a.text
+                    if stat.parent.a != None:
+                        tyype += stat.parent.a.text
+                    elif stat.parent.a == None:
+                        tyype +=  stat.nextSibling   
+                    else:
+                        tyype += "Not Available"    
                 elif 'Status:' in stat.text:
                     status += (stat.nextSibling )
-                elif 'Aired:' in stat.text:  
-                    air += (stat.nextSibling )      
+                elif 'Aired:' in stat.text: 
+                    try: 
+                        air += (stat.nextSibling ) 
+                    except:
+                        air += "Not Available"         
                 if episode != "" and status != "" and air != "" and tyype != "":
                     break    
             genres = soup.find_all("span", {"itemprop" : "genre"}) 
@@ -1349,9 +1368,9 @@ async def anime(ctx, *, anime):
 
             await ctx.send(embed = mal)
         else:
-            await ctx.reply('that anime could not be found. It may not exist, or you may have misspelled its name.') 
+            await ctx.reply('that anime could not be found. It may not exist, or you may have misspelled its name.')
     except:
-        await ctx.reply('Something went wrong! pls report this to support server!')           
+        await ctx.reply('Something went wrong! pls report this to support server!')                    
 #manga search
 @client.command(name= "manga",aliases = ["Manga"])
 async def manga(ctx, *, manga):
