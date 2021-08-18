@@ -1282,27 +1282,76 @@ async def imposter(context, member: Greedy[discord.Member]):#member1 : discord.M
 #animesearch
 @client.command(name= "anime",aliases = ["Anime"])
 async def anime(ctx, *, anime):
-    from mal import AnimeSearch
-    search = AnimeSearch(anime) 
-    AAnime= Anime(search.results[0].mal_id)
-    x = ","
-    gen = ""
-    for genre in AAnime.genres:
-        if genre == AAnime.genres[-1]:
-            x = "."
-        gen += (f"{genre}{x} ")
-    mal = discord.Embed(description=f'**[{search.results[0].title}]({search.results[0].url})** \n{AAnime.synopsis}',timestamp=datetime.datetime.utcnow(),color=0xff0092)
-    mal.add_field(name="**⌛ Status**",value= AAnime.status,inline=False)
-    mal.add_field(name="**📺 Total Episodes**",value= AAnime.episodes,inline=True)
-    mal.add_field(name="**📡 Aired**",value= AAnime.aired,inline=True)
-    mal.add_field(name="**💻 Type**",value= AAnime.type,inline=True)
-    mal.add_field(name="**🎬 Genre**",value= gen,inline=False)
-    mal.add_field(name="**⭐ Rating**",value= f'{AAnime.score}/10',inline=True )
-    mal.add_field(name="**🎖️ Rank**",value= f'**Top {AAnime.rank}**',inline=False)
-    mal.set_footer(text= f'Requested by {ctx.author}' )
-    mal.set_thumbnail(url=AAnime.image_url)
+    try:
+        id = findid(anime)    
+        if id != None:
+            link = f'https://myanimelist.net/anime/{id}' 
+            r = requests.get(link)
+            soup = BeautifulSoup(r.content,features="lxml")
+            japanese = soup.find("h1", {"class" : "title-name h1_bold_none"})
+            
+            english = soup.find("p", {"class" : "title-english title-inherit"})
+            jap = (japanese.text)
+            synop = soup.find("p", {"itemprop" : "description"})
+            synopsis = (synop.text)
+            if english != None:
+                
+                mal = discord.Embed(description=f'**[{jap}]({link})** \nalso known as {english.text}\n{synopsis}',timestamp=datetime.datetime.utcnow(),color=0xff0092)
+            else:
+                mal = discord.Embed(description=f'**[{jap}]({link})** \n{synopsis}',timestamp=datetime.datetime.utcnow(),color=0xff0092)   
+            
+            
+            rate = soup.find("div", {"class" : "fl-l score"})
+            rating = (rate.div.text)
+            
+            rank = soup.find("span", {"class" : "numbers ranked"})
+            ranks = (rank.text)
+            
+            imgstat = soup.find("td", {"class" : "borderClass"})
+            image = (imgstat.div.div.a.img['data-src'])
+            stats = soup.find_all("span", {"class" : "dark_text"})
+            episode = ""
+            status = ""
+            air = ""
 
-    await ctx.send(embed = mal)
+            tyype = ""
+            for stat in stats:
+                if 'Episodes:' in stat.text:
+                    episode += (stat.nextSibling )
+                elif 'Type:' in stat.text:
+                    tyype += stat.parent.a.text
+                elif 'Status:' in stat.text:
+                    status += (stat.nextSibling )
+                elif 'Aired:' in stat.text:  
+                    air += (stat.nextSibling )      
+                if episode != "" and status != "" and air != "" and tyype != "":
+                    break    
+            genres = soup.find_all("span", {"itemprop" : "genre"}) 
+            genre = ''
+            length = len(genres)
+            num = 0
+            for gen in genres:
+                num += 1
+                if num == length:
+                    genre += f"{gen.text}."
+                else:
+                    genre += f"{gen.text}, "     
+            
+            mal.add_field(name="**⌛ Status**",value= status,inline=False)
+            mal.add_field(name="**📺 Total Episodes**",value= episode,inline=True)
+            mal.add_field(name="**📡 Aired**",value= air,inline=True)
+            mal.add_field(name="**💻 Type**",value= tyype,inline=True)
+            mal.add_field(name="**🎬 Genre**",value= genre,inline=False)
+            mal.add_field(name="**⭐ Rating**",value= f'{rating}/10',inline=True )
+            mal.add_field(name="**🎖️ Rank**",value= f'**Top {ranks}**',inline=False)
+            mal.set_footer(text= f'Requested by {ctx.author} |New|' )
+            mal.set_thumbnail(url=image)
+
+            await ctx.send(embed = mal)
+        else:
+            await ctx.reply('that anime could not be found. It may not exist, or you may have misspelled its name.') 
+    except:
+        await ctx.reply('Something went wrong! pls report this to support server!')           
 #manga search
 @client.command(name= "manga",aliases = ["Manga"])
 async def manga(ctx, *, manga):
