@@ -1343,8 +1343,8 @@ async def anime(ctx, *, anime):
             mal.add_field(name="**💻 Type**",value= tyype,inline=True)
             mal.add_field(name="**🎬 Genre**",value= genre,inline=False)
             mal.add_field(name="**⭐ Rating**",value= f'{rating}/10',inline=True )
-            mal.add_field(name="**🎖️ Rank**",value= f'**Top {ranks}**',inline=False)
-            mal.set_footer(text= f'Requested by {ctx.author} |New|' )
+            mal.add_field(name="**🎖️ Rank**",value= f'**{ranks}**',inline=False)
+            mal.set_footer(text= f'Requested by {ctx.author}' )
             mal.set_thumbnail(url=image)
 
             await ctx.send(embed = mal)
