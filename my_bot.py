@@ -39,7 +39,8 @@ from selenium import webdriver
 os.chdir(r".vscode")#G:\bot\stella\.vscode
 
 #prefix...................]
-intents = discord.Intents.all()
+intents = discord.Intents.default()
+intents.members = True
 #client = commands.Bot(command_prefix='.', intents = intents)
 
 client = commands.Bot(command_prefix = ('stela ','S.','s.','Stela '), intents = intents)
