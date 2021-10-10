@@ -809,7 +809,66 @@ async def myboi(ctx,user:discord.Member):
     await ctx.send(file=discord.File("Myboi.png"))
 
      
-        
+@client.command(name='dumb', aliases=['Dumb'])
+async def tyg(ctx, *,caption):
+    resp=requests.get("https://i.imgur.com/pvkkups.jpg") #water
+    post = Image.open(BytesIO(resp.content))  
+    font = ImageFont.truetype("ARIAL.TTF", 30)
+    W = 347
+    H1 = 435
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(caption,14)   
+    for line in lines:
+        w1, h1 = font.getsize(line)
+        draw.text((W-w1/2,H1),line,(0,0,0),font=font)
+        H1 += h1
+    post.save("dumb.png")#185
+    await ctx.send(file=discord.File("dumb.png"))
+@client.command(name='wallpunch', aliases=['Wallpunch',"wallPunch"])
+async def dammit(ctx, *,caption):
+    resp=requests.get("https://i.imgur.com/qYBV6yl.png ") #water
+    post = Image.open(BytesIO(resp.content))  
+    font = ImageFont.truetype("ARIAL.TTF", 40)
+    W = 6
+    H1 = 4
+    
+    draw = ImageDraw.Draw(post)
+    lines = textwrap.wrap(caption,24)   
+    for line in lines:
+        w1, h1 = font.getsize(line)
+        draw.text((W,H1),line,(0,0,0),font=font)
+        H1 += h1
+    post.save("wallpunch.png")#185
+    await ctx.send(file=discord.File("wallpunch.png")) 
+@client.command(name='match')
+async def match(ctx,member1 : discord.Member, member2 : discord.Member = None ):  
+    
+    
+    if member2 ==None:
+        mem2 = member1
+        asset2 = mem2.avatar_url
+        mem1 = ctx.author
+        asset = mem1.avatar_url
+    else:
+        mem1 = member1
+        mem2 = member2
+        asset = member1.avatar_url 
+        asset2 = mem2.avatar_url   
+    data = BytesIO(await asset.read()) 
+    data2 = BytesIO(await asset2.read())  
+    pfp = Image.open(data)
+    pfp = pfp.resize((400,400))
+    pfp2 = Image.open(data2)
+    pfp2 = pfp2.resize((400,400))
+    image = Image.new('RGBA',(800,400))
+    image.paste(pfp,(0,0))
+    image.paste(pfp2,(400,0))
+    image.save("match.png")    
+    wed = discord.Embed(description=f"{mem1.name} and {mem2.name} are matching their pfp!",timestamp=datetime.datetime.utcnow() ,color=0x00ebff)
+    file = discord.File("match.png")
+    wed.set_image(url="attachment://match.png")
+    await ctx.send(file = file, embed=wed)        
 #worthless
 @client.command(name='worthless', aliases=['Worthless'])
 async def worthless(ctx, *,caption): 
@@ -2295,6 +2354,7 @@ async def similar(ctx, *,name):
 
 
 @client.command(name="wallpaper",aliases = ["Wallpaper","wall","Wall"])
+@commands.cooldown(9, 120, BucketType.user)
 async def wallpaper(ctx, *,word = None ):
     
     try:    
@@ -2324,7 +2384,9 @@ async def wallpaper(ctx, *,word = None ):
 
 
 @client.command(name="mwallpaper",aliases = ["Mwallpaper","mwall","Mwall"])
+@commands.cooldown(9, 120, BucketType.user)
 async def wallpaper_mobile(ctx, *,word = None ):
+
     try:
         
         if word == None:
@@ -3240,6 +3302,7 @@ def check_new():
         
 
 @client.command(name='airing',aliases=["Airing","air"])
+@commands.cooldown(2, 80, BucketType.user) 
 async def airing(ctx):
             r = requests.get('https://myanimelist.net/anime/season')
             mall = html.fromstring(r.content)
@@ -3348,7 +3411,8 @@ async def removewatchlist(ctx, code):
         await ctx.reply("`Its not in your watchlist`")
 
 @client.command(name='watchlist',aliases=["Watchlist","wl","Wl"])
-async def watchlist(ctx,member: discord.Member = None):
+@commands.cooldown(2, 80, BucketType.user) 
+async def watchlist(ctx,member: discord.Member = None):   
     url = "https://myanimelist.net/anime/"
     if member == None:
         member = ctx.author
@@ -3367,10 +3431,10 @@ async def watchlist(ctx,member: discord.Member = None):
         for ani in anime:
             name += f"[{findname(ani)}]({url + ani}) - `{ani}`  \n"
         em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : {slot}/10\nReminder - {rem}\n\n{name}",color=0x00ebff) 
-        await ctx.send(embed = em)
+        await ctx.reply(embed = em)
     elif doc == None:
         em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : 10/10\nReminder - Off\n\nUse `S.awl [animeid]` to add",color=0x00ebff) 
-        await ctx.send(embed = em)    
+        await ctx.reply(embed = em)    
 @client.command(name='remind',aliases=["Remind"])
 async def remind(ctx):
     userid = ctx.author.id
@@ -3439,10 +3503,10 @@ async def help(ctx):
     em.set_author(name = "Help/Command List",icon_url=f"{client.user.avatar_url}")
     em.add_field(name="🛡️ Moderation",value="`kick` `ban` `clear` `addemoji`",inline=False)
     em.add_field(name="🤗 Roleplay",value="`wave` `nom` `blush` `bonk` `cry` `dance` `hug` `kill` `laugh` `pat` `poke` `pout` `punch` `rage` `slap` `sleep` `smile` `smug` `stare` `think` ",inline=False)
-    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact`",inline=False)
+    em.add_field(name="😆 Meme Generation",value="`wanted` `insta` `jojo` `chika` `fbi` `worthless` `water` `rip` `disability` `thisisshit` `distract` `myboi` `santa` `news` `yugioh` `yugiohpfp` `bitch` `billy` `fact` `wallpunch` `dumb`",inline=False)
     #em.add_field(name="💰 Economy",value="`withdraw` `slot` `shop` `sell` `rob` `leaderboard` `kira` `inventory` `give` `deposit` `buy` `beg` `balance` ",inline=False)
-    em.add_field(name="🥳 Fun",value="`waifu` `lookup` `say` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
-    em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing` `setchannel`",inline=False)
+    em.add_field(name="🥳 Fun",value="`waifu` `lookup` `say` `match` `spoiler` `propose` `roast` `define` `insult` `meme` `F` `reddit` `challenge` ",inline=False)
+    em.add_field(name="🕰️ Anime Reminder",value="`remind` `addwatchlist` `removewatchlist` `watchlist` `airing` `setchannel` `removechannel`",inline=False)
     em.add_field(name="📺 Anime-Manga",value="`anime` `manga` `eplist` `filler` `mal` `setmal` `removemal` `profile` `recommend` `character` `rndqoute`",inline=False)
     em.add_field(name="🔧 Utility",value="`server` `invite` `vote` `movie` `version` `avatar` `userinfo` `announce` `serverinfo` `yt` `embed` `submit` `wallpaper` `rand`",inline=False)
     em.set_footer(text= f'Requested by {ctx.author}' )
@@ -3645,15 +3709,29 @@ async def propose(ctx):
     em.add_field(name="**Usage**",value="`S.propose <member>`")
     await ctx.send(embed=em)
 
+
 @help.command()
-async def imposter(ctx):
+async def match(ctx):
+    em = discord.Embed(description="Use it to match pfp with your friend",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.match <member>`")
+    await ctx.send(embed=em)
+
+@help.command()
+async def dumb(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
-    em.add_field(name="**Usage**",value="`S.imposter <ping more than 2 member>`")
-    em.add_field(name="**Aliases**",value="`Whoisimposter`")
-    await ctx.send(embed=em)
-
+    em.add_field(name="**Usage**",value="`S.dumb <text>`")
+    await ctx.send(embed=em)  
+@help.command()
+async def wallpunch(ctx):
+    em = discord.Embed(color=0x00ff7d,timestamp=datetime.datetime.utcnow())
+    em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.avatar_url}")
+    em.set_footer(text= f'Requested by {ctx.author}' )
+    em.add_field(name="**Usage**",value="`S.wallpunch <text>`")
+    await ctx.send(embed=em)      
 @help.command()
 async def anime(ctx):
     em = discord.Embed(description="Searches anime on Mal",color=0x00ff7d,timestamp=datetime.datetime.utcnow())
