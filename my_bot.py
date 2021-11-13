@@ -1080,6 +1080,7 @@ async def yugioh(ctx,*,msg ):
     await ctx.send(file=discord.File("yugioh.png")) 
 
 @client.command(name='meme', aliases=['Meme','Memes','memes'])
+@commands.cooldown(5, 60, BucketType.user)  
 async def meme(ctx):
 
     subred = redit.subreddit("Animemes")
@@ -1103,6 +1104,7 @@ async def meme(ctx):
 
 
 @client.command(name='reddit', aliases=['Reddit','red','Red'])
+@commands.cooldown(5, 60, BucketType.user)
 async def redd(ctx,name):
     subred = redit.subreddit(name)
     subs = subred.top("day",limit = 60)
@@ -2673,15 +2675,18 @@ async def server(ctx):
         await ctx.send("Maybe your dm is close....")    
 @client.command(name="guild")
 async def guild(ctx):
-    if ctx.author == owner:  
+    
+    if ctx.author == owner:
+          
         servers = (client.guilds)
-        guilds = ""
+        guilds = []
+        serverss = str(len(servers))
         for guild in servers:
-            guilds += f"{guild.name}\n"
+            guilds.append(guild.name)
 
         
-        serverss = str(len(servers))
-        await ctx.send(guilds)
+        
+        await ctx.send(guilds[-50:])
         await ctx.send(f"total servers {serverss}")
 
 
@@ -3196,8 +3201,82 @@ async def upload(ctx, num : int,*,question):
 
 
 
+@client.command(name='cleardb')
+async def cleardb(ctx): 
+    if ctx.author.id  == 745006368175423489:
+        docs = upd.find().count()
+        lmt = docs - 40
+        if lmt > 2:
+            await ctx.send(f'total entries {docs}')
+            doc = upd.find().limit(lmt)
+            count = 0
+            for d in doc:
+                count += 1
+                upd.delete_one({'_id' : d['_id']})
 
+            await ctx.send(f'deleted {count} enties') 
+        else:
+            await ctx.send(docs) 
+    else:
+        print('error')
+@client.command(name='tyyy')
+async def tyy(ctx, link): 
+    if ctx.author == owner:
+           #https://mywaifulist.moe/popular
+        driver.get(link)
+        await asyncio.sleep(5)
         
+        soup = BeautifulSoup(driver.page_source,features="lxml")
+        url = soup.find_all('div', {"class" : "relative overflow-hidden"})
+        
+        urll = []
+        for u in url:
+            urll.append(u.div.a['href'])
+        print(urll)
+        for ur in urll:
+            url = f"https://mywaifulist.moe{ur}" 
+            driver.get(url)
+            await asyncio.sleep(5)
+            soup = BeautifulSoup(driver.page_source,features="lxml")
+            spans = soup.find("div", {"class" : "col-span-4 sm:col-span-5"})
+            images = soup.find("div", {"class" : "md:w-1/3 lg:w-1/4 sm:mb-0 mb-4"})
+            print(images.div.img)
+            name = spans.h1.text
+            animes = soup.find("a", {"class" : "tooltip-target text-blue-500 font-semibold no-underline tracking-wide cursor-pointer text-xs"})
+            anime = animes.text
+            await ctx.send(f"name : {name}\nanime : {anime}") 
+            img = images.div.img['src']
+            await ctx.send(img)
+            dc = girl.find_one({'name' : name, 'anime' : anime})
+            if dc == None:
+                r =  requests.get(img)  
+                byt  = BytesIO(r.content)
+                #print(byt)
+                print(byt)
+                #im.show()
+                file = discord.File(fp = byt, filename = 'waifu.png')
+                msg = await ctx.send(file = discord.File(fp = byt, filename = 'waifu.png'))
+                await msg.add_reaction("❌")
+                await msg.add_reaction("✅")
+                def check1(reaction, user):
+                        return str(reaction.emoji) in ["✅","❌"] and user != client.user and reaction.message.id == msg.id and user.id == ctx.author.id
+                reaction, user = await client.wait_for('reaction_add',check = check1,timeout = 40) 
+                if str(reaction.emoji) == "✅": 
+                    count = girl.find().count()
+                    print(count)
+                    post = {"_id": count,"name": name, "anime" : anime,"image" : r.content }
+                    emb = discord.Embed(description = f"{name}\n\n{anime}")
+                    emb.set_image(url = 'attachment://waifu.png')
+                    await msg.edit(embed = emb)
+                    girl.insert_one(post)
+                    print(1)
+                    
+                if str(reaction.emoji) == "❌":    
+                    await ctx.send("cancelled")
+
+            else:
+                await ctx.send('already exist')        
+        print('done')        
 def findname(id):
     link = f"https://myanimelist.net/anime/{id}"
     r = requests.get(link)
