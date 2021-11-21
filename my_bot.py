@@ -56,17 +56,18 @@ user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 options = webdriver.ChromeOptions()
 options.headless = True
 options.add_argument(f'user-agent={user_agent}')
-options.add_argument("--window-size=1920,1080")
+options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+#options.add_argument("--window-size=1920,1080")
 options.add_argument('--ignore-certificate-errors')
 options.add_argument('--allow-running-insecure-content')
 options.add_argument("--disable-extensions")
 options.add_argument("--proxy-server='direct://'")
 options.add_argument("--proxy-bypass-list=*")
-options.add_argument("--start-maximized")
+
 #options.add_argument('--disable-gpu')
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--no-sandbox')
-driver = webdriver.Chrome(executable_path=r"chromedriver",options = options )#G:\bot\stella\chromedriver.exe
+driver = webdriver.Chrome(executable_path= os.environ.get("CHROMEDRIVER_PATH"),options = options )#G:\bot\stella\chromedriver.exe
 cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
 client2 = MongoClient("mongodb+srv://vivekprakash_india:passwordfordb@cluster0.tf1px.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where())
 db = cluster["discord"]  
