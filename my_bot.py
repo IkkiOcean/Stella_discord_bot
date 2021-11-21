@@ -3329,6 +3329,8 @@ async def checkNewLoop():
                                 await member.send(embed = em)
                             except:    
                                 print("can't dm")
+                else:                
+                    await owner.send(f"id issues in {title}")                
                 posts = chan.find()
                 channels = []
                 for post in posts:
