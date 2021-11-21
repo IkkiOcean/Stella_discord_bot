@@ -3324,7 +3324,7 @@ async def checkNewLoop():
                             users.append(doc['_id'])
                             
                         for user in users:
-                            member = client.get_user(user)
+                            member = await client.fetch_user(user)
                             try:
                                 await member.send(embed = em)
                             except:    
@@ -3365,13 +3365,13 @@ def check_new():
         episode = (anim.xpath('.//a/div[@class = "details"]/p[@class = "infotext"]')[0].text)
         posst = {'titles' : title,'episodes' : episode}
         ccc = upd.find_one(posst)
-        titlee = title.replace("(Dub)","")
+        #titlee = title.replace("(Dub)","")
         
         if ccc == None:
-            #watch = anim.xpath('.//a/@href')
+            watch = anim.xpath('.//a/@href')
             image = anim.xpath('.//a/div[@class = "searchimg"]/img/@src')
-            #watchh = link + watch[0]
-            id = findid(titlee)
+            url = link + watch[0]
+            id = findmixid(url)
             upd.insert_one(posst)
             if id  != None:
                 newanime.append({'titles' : title,'episodes' : episode,'image': image[0],'id' : id})
@@ -3379,7 +3379,18 @@ def check_new():
                 newanime.append({'titles' : title,'episodes' : episode,'image': image[0],'id' : 'None'})
     return newanime
         
-
+def findmixid(url):
+    driver.get(url)
+    
+    r = driver.page_source
+    tree = html.fromstring(r)
+    anime = tree.xpath('//*/a[@id = "animebtn2"]/@href')
+    if anime != []:
+        id = anime[0].split('/')
+        animeid = id[2]
+        return animeid
+    else:
+        return None
 @client.command(name='airing',aliases=["Airing","air"])
 @commands.cooldown(2, 80, BucketType.user) 
 async def airing(ctx):
