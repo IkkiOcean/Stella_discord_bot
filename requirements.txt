@@ -9,7 +9,7 @@ beautifulsoup4==4.9.3
 bs4==0.0.1
 certifi==2020.11.8
 chardet==3.0.4
-chromedriver==2.24.1
+
 colorama==0.4.4
 cssselect==1.1.0
 dblpy==0.4.0
