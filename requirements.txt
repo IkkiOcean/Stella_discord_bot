@@ -9,7 +9,7 @@ beautifulsoup4==4.9.3
 bs4==0.0.1
 certifi==2020.11.8
 chardet==3.0.4
-
+chromedriver==2.24.1
 colorama==0.4.4
 cssselect==1.1.0
 dblpy==0.4.0
@@ -18,10 +18,7 @@ discord.py==1.6.0
 dnspython==2.1.0
 docopt==0.6.2
 fake-useragent==0.1.11
-<<<<<<< Updated upstream
-=======
 
->>>>>>> Stashed changes
 greenlet==1.1.0
 idna==2.10
 IMDbPY==2021.4.18
