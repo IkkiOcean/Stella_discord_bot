@@ -75,7 +75,7 @@ animetriv_collect = db["anime-trivia"]
 upd = db["anime-updates"]
 listed = db["watchlist"]
 chan = db['channels']
-airing = db['airing']
+airingg = db['airing']
 db2 = client2['Waifus']
 girl = db2['images']
 girl.create_index([('name','text'),('anime','text')])
@@ -3411,16 +3411,16 @@ async def updateairing(ctx, season):
             animelink.append(link)
             animeid.append(id[4])
             titles.append(name) 
-        doc = airing.find()
+        doc = airingg.find()
         count = 0
         for d in doc:
             count += 1
-            airing.delete_one({'_id' : d['_id']})  
+            airingg.delete_one({'_id' : d['_id']})  
         await ctx.send(f"deleted {count}")  
         num = 0  
         for title,idd,url in zip(titles,animeid,animelink):
             post = {'_id' : idd, 'name' : title, 'url' : url}
-            airing.insert_one(post)
+            airingg.insert_one(post)
             num += 1
         await ctx.send(f"added {num}")
         r2 = requests.get(f'https://myanimelist.net/anime/season/{season}')
@@ -3441,14 +3441,14 @@ async def updateairing(ctx, season):
         for title2,idd2,url2 in zip(titles2,animeid2,animelink2):
             if idd2 not in animeid:
                 post2 = {'_id' : idd2, 'name' : title2, 'url' : url2}
-                airing.insert_one(post2)
+                airingg.insert_one(post2)
                 num2 += 1
                 
         await ctx.send(f"added {num2}\nTotal {num + num2}") 
 @client.command(name='airing',aliases=["Air","Airing","air"])
 @commands.cooldown(2, 80, BucketType.user) 
 async def air(ctx):
-            docs = airing.find()
+            docs = airingg.find()
             titles = []
             animeid = []
             for doc in docs:
@@ -3506,7 +3506,7 @@ async def air(ctx):
 async def addwatchlist(ctx, code):  
     userid = ctx.author.id
     
-    docs = airing.find_one({"_id": code})
+    docs = airingg.find_one({"_id": code})
     if docs != None:
         doc = listed.find_one({"_id": userid})  
         if doc == None:
@@ -3553,7 +3553,7 @@ async def watchlist(ctx,member: discord.Member = None):
         name = ""
         slot = 0
         for ani in anime:
-            docs = airing.find_one({"_id": ani})
+            docs = airingg.find_one({"_id": ani})
             if docs == None:
                 listed.update_one({"_id": userid},{"$pull":{"watchlist": ani}})
             else:    
