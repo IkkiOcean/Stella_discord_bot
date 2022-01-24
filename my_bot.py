@@ -2024,7 +2024,7 @@ async def profile(ctx, *, member: discord.Member =None):
                         
                         #<div class="di-tc va-t pl8 data">
                         #<a href="https://myanimelist.net/anime/20507/Noragami">Noragami</a><br>
-                        favs = soup.find_all('div',attrs={"class":"di-tc va-t pl8 data"})
+                        favs = soup.find_all('li',attrs={"class":"btn-fav"})
                         #(spanss[msg1].a['href'])
                     
                         favanime = ""
@@ -2033,13 +2033,13 @@ async def profile(ctx, *, member: discord.Member =None):
                         for fav in favs:
                             if '/anime/' in (fav.a['href']):
                             
-                                favanime += f"[{fav.a.string}]({fav.a['href']})\n"
+                                favanime += f"[{fav['title']}]({fav.a['href']})\n"
                             if '/manga/' in (fav.a['href']):
                             
-                                favmanga += f"[{fav.a.string}]({fav.a['href']})\n"
+                                favmanga += f"[{fav['title']}]({fav.a['href']})\n"
                             if '/character/' in (fav.a['href']):
                             
-                                favcharacter += f"[{fav.a.string}]({fav.a['href']})\n"    
+                                favcharacter += f"[{fav['title']}](https://myanimelist.net{fav.a['href']})\n"    
                         if favmanga == "":
                             favmanga = "None"
                         if favanime == "":
@@ -2161,22 +2161,23 @@ async def mal(ctx, *,word):
                     
                     #<div class="di-tc va-t pl8 data">
                     #<a href="https://myanimelist.net/anime/20507/Noragami">Noragami</a><br>
-                    favs = soup.find_all('div',attrs={"class":"di-tc va-t pl8 data"})
+                    favs = soup.find_all('li',attrs={"class":"btn-fav"})
                     #(spanss[msg1].a['href'])
-                
+                    print(favs)
                     favanime = ""
                     favmanga = ""
                     favcharacter = ""
                     for fav in favs:
+                        print (fav)
                         if '/anime/' in (fav.a['href']):
                         
-                            favanime += f"[{fav.a.string}]({fav.a['href']})\n"
+                            favanime += f"[{fav['title']}]({fav.a['href']})\n"
                         if '/manga/' in (fav.a['href']):
                         
-                            favmanga += f"[{fav.a.string}]({fav.a['href']})\n"
+                            favmanga += f"[{fav['title']}]({fav.a['href']})\n"
                         if '/character/' in (fav.a['href']):
                         
-                            favcharacter += f"[{fav.a.string}]({fav.a['href']})\n"    
+                            favcharacter += f"[{fav['title']}](https://myanimelist.net{fav.a['href']})\n"    
                     if favmanga == "":
                         favmanga = "None"
                     if favanime == "":
@@ -3228,7 +3229,7 @@ async def tyy(ctx, link):
         await asyncio.sleep(5)
         
         soup = BeautifulSoup(driver.page_source,features="lxml")
-        url = soup.find_all('div', {"class" : "relative overflow-hidden"})
+        url = soup.find_all('div', {"class" : "md:my-0 my-6"})
         
         urll = []
         for u in url:
