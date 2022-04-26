@@ -1355,8 +1355,12 @@ async def anime(ctx, *, anime):
             
             english = soup.find("p", {"class" : "title-english title-inherit"})
             jap = (japanese.text)
+            
             synop = soup.find("p", {"itemprop" : "description"})
-            synopsis = (synop.text)
+            if synop != None:
+                synopsis = (synop.text)
+            else:
+                synopsis = "Synopsis Not Available"    
             if english != None:
                 
                 mal = discord.Embed(description=f'**[{jap}]({link})** \nalso known as {english.text}\n{synopsis}',timestamp=datetime.datetime.utcnow(),color=0xff0092)
@@ -1365,6 +1369,7 @@ async def anime(ctx, *, anime):
             
             
             rate = soup.find("div", {"class" : "fl-l score"})
+            print(rate)
             if rate != None:
                 rating = (rate.div.text)
             else:
@@ -3343,7 +3348,7 @@ async def checkNewLoop():
                         if chnnl == None:
                             chan.delete_one({'chnl' : channel})
                             print(f'deleted {channel}')
-                        elif chnnl != None:    
+                        elif chnnl != None:  
                             await chnnl.send(embed =em) 
                     except:
                         print("can't post")                   
@@ -3398,20 +3403,23 @@ def findmixid(url):
 @client.command(name='updateairing')
 async def updateairing(ctx, season): 
     if ctx.author == owner:
-        r = requests.get('https://myanimelist.net/anime/season')
+        link = 'http://myanimelist.net/anime/season/2022/spring'
+        r = requests.get(link)
         mall = html.fromstring(r.content)
-        anime = mall.xpath('//*/div[@class = "seasonal-anime js-seasonal-anime"]')
-        
+        anime = mall.xpath('//*/h2[@class = "h2_anime_title"]')
+        #anime2 = mall.xpath('//*/div[@class = "js-anime-category-producer seasonal-anime js-seasonal-anime js-anime-type-all js-anime-type-3"]')
+        #anime = anime1 + anime2
         titles = []
         animelink = []
         animeid = []
         for ani in anime:
-            name = ani.xpath('.//h2[@class = "h2_anime_title"]/a')[0].text
-            link =  ani.xpath('.//h2[@class = "h2_anime_title"]/a/@href')[0]
+            name = ani.xpath('.//a')[0].text
+            link =  ani.xpath('.//a/@href')[0]
             id = link.split('/')
             animelink.append(link)
             animeid.append(id[4])
             titles.append(name) 
+        print(titles)    
         doc = airingg.find()
         count = 0
         for d in doc:
@@ -3424,16 +3432,16 @@ async def updateairing(ctx, season):
             airingg.insert_one(post)
             num += 1
         await ctx.send(f"added {num}")
-        r2 = requests.get(f'https://myanimelist.net/anime/season/{season}')
+        r2 = requests.get(f'http://myanimelist.net/anime/season/{season}')
         mall2 = html.fromstring(r2.content)
-        anime2 = mall2.xpath('//*/div[@class = "seasonal-anime js-seasonal-anime"]')
+        anime2 = mall2.xpath('//*/h2[@class = "h2_anime_title"]')
         
         titles2 = []
         animelink2 = []
         animeid2 = []
         for ani2 in anime2:
-            name2 = ani2.xpath('.//h2[@class = "h2_anime_title"]/a')[0].text
-            link2 =  ani2.xpath('.//h2[@class = "h2_anime_title"]/a/@href')[0]
+            name2 = ani2.xpath('.//a')[0].text
+            link2 =  ani2.xpath('.//a/@href')[0]
             id2 = link2.split('/')
             animelink2.append(link2)
             animeid2.append(id2[4])
