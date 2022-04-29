@@ -3400,7 +3400,7 @@ def findmixid(url):
         return animeid
     else:
         return None
-@client.command(name='updateairing')
+@client.command(name= 'updateairing')
 async def updateairing(ctx, season): 
     if ctx.author == owner:
         link = 'http://myanimelist.net/anime/season/2022/spring'
