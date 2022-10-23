@@ -29,7 +29,7 @@ lxml==4.6.3
 mal-api==0.3.7
 mccabe==0.6.1
 multidict==4.7.6
-numpy==1.19.5
+numpy==1.21.5
 parse==1.19.0
 Pillow==8.0.1
 pipreqs==0.4.10
