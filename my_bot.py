@@ -3403,7 +3403,7 @@ def findmixid(url):
 @client.command(name= 'updateairing')
 async def updateairing(ctx, season): 
     if ctx.author == owner:
-        link = 'http://myanimelist.net/anime/season}'
+        link = 'http://myanimelist.net/anime/season'
         r = requests.get(link)
         mall = html.fromstring(r.content)
         anime = mall.xpath('//*/h2[@class = "h2_anime_title"]')
