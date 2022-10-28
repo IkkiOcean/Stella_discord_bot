@@ -4121,4 +4121,4 @@ async def removechannel(ctx):
     em.add_field(name="**Permission required**",value="`Manage Server`")
     await ctx.send(embed=em)                     
 # run the client on the server
-client.run('NzgyMDA1Mzk4MjY5OTg0ODE5.X8F5Rw.1sl5xrh9uoyW-uUZHo3kYpk-4pM')
+client.run('ODY2MTI5MDEyNTc2MjIzMjcy.GkHkku.myZ0qwfCIUjBd-lFt2xBKd2H08RfM--n1rHMeo')
