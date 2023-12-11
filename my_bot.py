@@ -67,8 +67,8 @@ options.add_argument("--start-maximized")
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--no-sandbox')
 driver = webdriver.Chrome(executable_path=r"chromedriver",options = options )#G:\bot\stella\chromedriver.exe
-cluster = MongoClient("mongodb+srv://vivekprakash_db:passwordfordb@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
-client2 = MongoClient("mongodb+srv://vivekprakash_india:passwordfordb@cluster0.tf1px.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where())
+cluster = MongoClient("mongodb+srv://vivekprakash_db:PASSWORD_HERE@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
+client2 = MongoClient("mongodb+srv://vivekprakash_india:PASSWORD_HERE@cluster0.tf1px.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where())
 db = cluster["discord"]  
 mal_collect = db["mal"]             
 animetriv_collect = db["anime-trivia"]
@@ -4121,4 +4121,4 @@ async def removechannel(ctx):
     em.add_field(name="**Permission required**",value="`Manage Server`")
     await ctx.send(embed=em)                     
 # run the client on the server
-client.run('ODY2MTI5MDEyNTc2MjIzMjcy.GkHkku.myZ0qwfCIUjBd-lFt2xBKd2H08RfM--n1rHMeo')
+client.run('YOUR TOKEN')
