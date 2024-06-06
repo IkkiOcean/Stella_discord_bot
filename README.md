@@ -91,7 +91,7 @@ Ensure all API keys and tokens are correctly placed in the `.env` file. This fil
     python my_bot.py
     ```
 
-2. **Invite Stella to your Discord server** and start using the commands with the prefix defined in the configuration (default is `!`).
+2. **Invite Stella to your Discord server** and start using the commands with the prefix defined in the configuration (default is `S.`).
 
 
 Thank you for using Stella! We hope this bot makes your Discord server more enjoyable and interactive. If you have any questions or need assistance, feel free to open an issue or reach out to me.
