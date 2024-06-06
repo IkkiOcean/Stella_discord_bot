@@ -52,7 +52,7 @@ Welcome to Stella's GitHub repository! Stella is a versatile Discord bot designe
 
 ## Command List
 
-![command list]([http://url/to/img.png](https://github.com/IkkiOcean/Stella_discord_bot/blob/main/command_list.jpg))
+![command list](https://github.com/IkkiOcean/Stella_discord_bot/blob/main/command_list.jpg)
 
 ## Installation
 
@@ -92,26 +92,6 @@ Ensure all API keys and tokens are correctly placed in the `.env` file. This fil
     ```
 
 2. **Invite Stella to your Discord server** and start using the commands with the prefix defined in the configuration (default is `!`).
-
-## Contributing
-
-We welcome contributions! To contribute:
-
-1. **Fork the repository**
-2. **Create a new branch**
-    ```bash
-    git checkout -b feature/your-feature-name
-    ```
-3. **Commit your changes**
-    ```bash
-    git commit -m "Add your feature"
-    ```
-4. **Push to the branch**
-    ```bash
-    git push origin feature/your-feature-name
-    ```
-5. **Open a pull request**
-
 
 
 Thank you for using Stella! We hope this bot makes your Discord server more enjoyable and interactive. If you have any questions or need assistance, feel free to open an issue or reach out to me.
