@@ -67,8 +67,8 @@ options.add_argument("--start-maximized")
 options.add_argument('--disable-dev-shm-usage')
 options.add_argument('--no-sandbox')
 driver = webdriver.Chrome(executable_path=r"chromedriver",options = options )#G:\bot\stella\chromedriver.exe
-cluster = MongoClient("mongodb+srv://vivekprakash_db:PASSWORD_HERE@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
-client2 = MongoClient("mongodb+srv://vivekprakash_india:PASSWORD_HERE@cluster0.tf1px.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where())
+cluster = MongoClient("mongodb+srv://ID_HERE:PASSWORD_HERE@cluster0.4i3yj.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where()) 
+client2 = MongoClient("mongodb+srv://ID_HERE:PASSWORD_HERE@cluster0.tf1px.mongodb.net/myFirstDatabase?retryWrites=true&w=majority", tlsCAFile=certifi.where())
 db = cluster["discord"]  
 mal_collect = db["mal"]             
 animetriv_collect = db["anime-trivia"]
@@ -79,10 +79,8 @@ airingg = db['airing']
 db2 = client2['Waifus']
 girl = db2['images']
 girl.create_index([('name','text'),('anime','text')])
-redit = praw.Reddit(client_id = 'zSgZiWoFnzqqlA',
-                    client_secret = 'eGzaxrgCrPj4DkuxKm21iFVxOHjq3g',
-                    #username = 'ItzStela',
-                    #password = 'password@10',
+redit = praw.Reddit(client_id = 'YOUR CLIENT ID',
+                    client_secret = 'YOUR CLIENT SECRET,
                     user_agent = "memes")
 #error.................
 @client.event
