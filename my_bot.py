@@ -333,10 +333,19 @@ async def on_ready():
         print("Anime update checker disabled (set ENABLE_ANIME_UPDATES=true to enable)")
 
     try:
-        synced = await client.tree.sync()
-        print(f"Synced {len(synced)} slash command(s)")
+        # Guild-only sync (prevents hitting the global 100 slash-command limit)
+        # Put your test guild id in TEST_GUILD_ID (or leave blank to skip syncing).
+        test_guild_id = os.getenv("TEST_GUILD_ID", "").strip()
+        if test_guild_id:
+            guild = discord.Object(id=int(test_guild_id))
+            synced = await client.tree.sync(guild=guild)
+            print(f"Synced {len(synced)} slash command(s) to guild {test_guild_id}")
+        else:
+            print("TEST_GUILD_ID not set; skipping slash command sync.")
     except Exception as exc:
         print(f"Warning: could not sync slash commands: {exc}")
+    
+
      
 #@client.event
 #async def on_message(message):
@@ -352,7 +361,7 @@ async def on_ready():
 
 @client.hybrid_command(name='version')
 async def version(context):
-    myembed = discord.Embed(title='Current Version', description='The Bot is in version 2.0.0',color=0x00ebff)
+    myembed = discord.Embed(title='Current Version', description='The Bot is in version 3.0.0',color=0x00ebff)
     myid = '<@!745006368175423489>'
     
     myembed.add_field(name= "**Developer**", value= myid )
@@ -762,7 +771,7 @@ async def pat(context,member: discord.Member, *,gifmsg=None):
     await context.send(embed=pats) 
     await context.message.delete()
 #hi,hello...........................
-@client.hybrid_command(name='hi', aliases=['Hello','hello','hi','Hey','hey','wave','Wave', 'Hi'])
+@client.hybrid_command(name='hi', aliases=['Hello','hello','Hey','hey','wave','Wave', 'Hi'])
 async def Hi(context,member: typing.Optional[discord.Member] = None , *,gifmsg=None):
     His = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
     if member == None:
@@ -776,7 +785,7 @@ async def Hi(context,member: typing.Optional[discord.Member] = None , *,gifmsg=N
     await context.message.delete() 
 
 #nom-nom............................ 
-@client.hybrid_command(name='nom', aliases=['nom','eat','bite','Bite','Eat', 'Nom'])
+@client.hybrid_command(name='nom', aliases=['eat','bite','Bite','Eat', 'Nom'])
 async def Nom(context,member: discord.Member, *,gifmsg=None):
     Noms = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
     nom1 = (f"{context.message.author.display_name} noms {member.display_name}! ")
@@ -1365,7 +1374,7 @@ async def redd(ctx,name):
         await ctx.reply("`something went wrong ;-;`")    
 
 #yu-gi-oh pfp
-@client.command(name='yugiohpfp', aliases=['Yugiohpfp'])
+@client.hybrid_command(name='yugiohpfp', aliases=['Yugiohpfp'])
 async def yugiohpfp(ctx,member: Greedy[discord.Member] ): 
     post = open_template("yugioh.png", "https://i.imgur.com/bPMhqIY.jpg") 
     asset1 = member[0].display_avatar.replace(size=128)
@@ -1383,7 +1392,7 @@ async def yugiohpfp(ctx,member: Greedy[discord.Member] ):
     post.save(output_path("yugiohpfp.jpg"))
     await ctx.send(file=discord.File(output_path("yugiohpfp.jpg")))  
 
-@client.hybrid_command(name='imagify', aliases=["img","Img","imagify", "Imagify"])
+@client.hybrid_command(name='imagify', aliases=["img","Img", "Imagify"])
 async def imagify(ctx, *,text):
     if ctx.interaction is not None:
         await ctx.defer()
@@ -1442,7 +1451,7 @@ async def announce_everyone(ctx,mention,channel : discord.TextChannel, *,msg):
     
 
 #dm
-@client.hybrid_command(name='dm')    
+@client.command(name='dm')    
 #@commands.has_permissions(manage_guild=True)
 async def dm(context, member : discord.Member, *,msg):
     if context.author == owner:
@@ -1455,7 +1464,7 @@ async def say(context, *,msg: commands.clean_content):
     await context.send(msg+f"\n\n           -{context.author}")
     await context.message.delete()
 #spoiler
-@client.hybrid_command(name='spoiler', aliases=["spoiler","Spoil","spoil", "Spoiler"])
+@client.hybrid_command(name='spoiler', aliases=["Spoil","spoil", "Spoiler"])
 @commands.cooldown(2, 120, BucketType.user)
 async def Spoiler(context, *,msg: commands.clean_content):
     await context.send("||"+msg+ f"||\n\n           -{context.author}")
@@ -1558,7 +1567,7 @@ async def propose(context, member: discord.Member , *,msg= None):
 
 
 
-@client.command(name='imposter',aliases= ['whoisimposter','Imposter'])
+@client.hybrid_command(name='imposter',aliases= ['whoisimposter','Imposter'])
 async def imposter(context, member: Greedy[discord.Member]):#member1 : discord.Member, member2 : discord.Member, member3 : discord.Member):
 
     #player=(member1.display_name,member2.display_name,member3.display_name)
@@ -2083,7 +2092,7 @@ async def char(ctx, *,word):
 
  
     
-@client.hybrid_command(name='eplist',aliases=["Eplist"])
+@client.command(name='eplist',aliases=["Eplist"])
 async def eplist(ctx, *,word):  
     try:   
         filler_string = word.replace(" ","-")
@@ -2137,7 +2146,7 @@ async def eplist(ctx, *,word):
     except:
         em = discord.Embed(title="Not found")
         msg = await ctx.send(embed=em,delete_after=30)
-@client.hybrid_command(name='filler',aliases=["Filler","Fill","fill"])
+@client.command(name='filler',aliases=["Filler","Fill","fill"])
 async def filler(ctx, *,word):  
     try:  
         filler_string = word.replace(" ","-")
@@ -2157,7 +2166,7 @@ async def filler(ctx, *,word):
         em = discord.Embed(title="Not found")
         msg = await ctx.send(embed=em,delete_after=30)
 
-@client.hybrid_command(name='setmal',aliases=["Setmal","setprofile","Setprofile"])
+@client.command(name='setmal',aliases=["Setmal","setprofile","Setprofile"])
 async def setmal(ctx, *,word): 
     userid = ctx.author.id
     
@@ -2169,7 +2178,7 @@ async def setmal(ctx, *,word):
         post = {"_id": userid,"mal_id":word}
         mal_collect.insert_one(post)
         await ctx.reply("done! Check your profile `S.profile`")
-@client.hybrid_command(name='resetmal',aliases=["Resetmal"])
+@client.command(name='resetmal',aliases=["Resetmal"])
 async def resetmal(ctx, *,word): 
     userid = ctx.author.id
     doc = mal_collect.find_one({"_id": userid})
@@ -2179,7 +2188,7 @@ async def resetmal(ctx, *,word):
     else:
         await ctx.reply("Set your id using `S.set <your myanimelist id>`")
 
-@client.hybrid_command(name='removemal',aliases=["Removemal"])
+@client.command(name='removemal',aliases=["Removemal"])
 async def removemal(ctx):
     userid = ctx.author.id
     doc = mal_collect.find_one({"_id": userid})
@@ -2331,7 +2340,7 @@ async def profile(ctx, *, member: discord.Member =None):
     except:
         em = discord.Embed(title="Not found")
         await ctx.send("Not found! Check your mal id")
-@client.hybrid_command(name='mal', aliases=["mal", "Mal"])
+@client.hybrid_command(name='mal', aliases=["Mal"])
 async def mal(ctx, *,word): 
     try:
         link = "https://myanimelist.net/profile/{}".format(word)
@@ -2802,31 +2811,20 @@ async def embed(ctx,color, *,text = None):
     except asyncio.TimeoutError:
         await ctx.send(embed=em)            
        
-@client.hybrid_command(name="hall", aliases=["hall", "Hall"])
-@commands.has_permissions(manage_messages= True)    
-async def hall(ctx,* ,text):
+@client.hybrid_command(name="hall", aliases=["Hall"])
+async def hall(ctx, *, text):
     hall_point = client.get_channel(837605170330337310)
     if ctx.channel == hall_point:
         x, msg = text.split("|")
-
-    
-    
-        colorhex = 0xff0000 
-    
-        em = discord.Embed(description = msg,color=colorhex,timestamp=utc_now())
-    ##if color == None:
-        #colorhex = 0x00ebff
-    
-    #else:  
-        #print(1)  
-       ## hexcode = int(color.replace("#",""),16)
-        #colorhex = int(hex(hexcode),0)
-    #em = discord.Embed(description = text,color=colorhex,timestamp=utc_now())
-        em.set_author(name=f"Hall Of Fame {x}" ,icon_url=ctx.guild.icon_url)
+        colorhex = 0xff0000
+        em = discord.Embed(description=msg, color=colorhex, timestamp=utc_now())
+        em.set_author(name=f"Hall Of Fame {x}", icon_url=ctx.guild.icon_url)
         await ctx.send(embed=em)
-        await ctx.message.delete() 
+        await ctx.message.delete()
     else:
-        return       
+        return
+
+
              
        
 
@@ -3003,7 +3001,7 @@ def convert(time):
 
 
     return val * time_dict[unit]
-@client.command(name="gcreate")
+@client.hybrid_command(name="gcreate")
 #@commands.has_permissions(manage_messages = True)
 async def giveaway(ctx):
     if ctx.author == owner:
@@ -3392,7 +3390,7 @@ async def challenge(ctx, member : discord.Member):
 #client.remove_command("help")
          
            
-@client.command(name='upload')    
+@client.hybrid_command(name='upload')    
 async def upload(ctx, num : int,*,question):
     print(ctx.author.id)
     if ctx.author.id == 745006368175423489:
@@ -3441,7 +3439,7 @@ async def upload(ctx, num : int,*,question):
 
 
 
-@client.command(name='cleardb')
+@client.hybrid_command(name='cleardb')
 async def cleardb(ctx): 
     if ctx.author.id  == 745006368175423489:
         docs = upd.count_documents({})
@@ -3761,7 +3759,7 @@ async def air(ctx):
                 except asyncio.TimeoutError:
                     return               
 
-@client.hybrid_command(name='awl',aliases=["addwatchlist"])
+@client.command(name='awl',aliases=["addwatchlist"])
 async def addwatchlist(ctx, code):  
     userid = ctx.author.id
     
@@ -3780,7 +3778,7 @@ async def addwatchlist(ctx, code):
     else:
         await ctx.reply("`Cant find the anime, Maybe its not airing right now`\nCheck using `S.airing`")        
 
-@client.hybrid_command(name='rwl',aliases=["removewatchlist"])
+@client.command(name='rwl',aliases=["removewatchlist"])
 async def removewatchlist(ctx, code):  
     userid = ctx.author.id
     doc = listed.find_one({"_id": userid})  
@@ -3795,7 +3793,7 @@ async def removewatchlist(ctx, code):
     else:
         await ctx.reply("`Its not in your watchlist`")
 
-@client.hybrid_command(name='watchlist',aliases=["Watchlist","wl","Wl"])
+@client.command(name='watchlist',aliases=["Watchlist","wl","Wl"])
 @commands.cooldown(2, 80, BucketType.user) 
 async def watchlist(ctx,member: discord.Member = None):   
     if member == None:
@@ -3823,7 +3821,7 @@ async def watchlist(ctx,member: discord.Member = None):
     elif doc == None:
         em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : 10/10\nReminder - Off\n\nUse `S.awl [animeid]` to add",color=0x00ebff) 
         await ctx.reply(embed = em)     
-@client.hybrid_command(name='remind',aliases=["Remind"])
+@client.command(name='remind',aliases=["Remind"])
 async def remind(ctx):
     userid = ctx.author.id
     doc = listed.find_one({"_id": userid})
@@ -3837,7 +3835,7 @@ async def remind(ctx):
         elif doc["toggle"] == 0:  
             listed.update_one({"_id": userid},{"$set":{"toggle": 1}})
             await ctx.reply("`Reminder Enabled`") 
-@client.hybrid_command(name='setchannel')
+@client.command(name='setchannel')
 @commands.has_permissions(manage_guild = True)
 async def setchannel(ctx, channel : discord.TextChannel): 
     try:   
@@ -3855,7 +3853,7 @@ async def setchannel(ctx, channel : discord.TextChannel):
     except:
         return                    
            
-@client.hybrid_command(name='removechannel')
+@client.command(name='removechannel')
 @commands.has_permissions(manage_guild = True)
 async def removechannel(ctx): 
     try:   
@@ -3874,7 +3872,7 @@ async def removechannel(ctx):
         return            
 @client.hybrid_command(name='invite',aliases=["Invite"])
 async def invite(ctx): 
-    em = discord.Embed(description = '[Click here to invite me :)](https://discord.com/api/oauth2/authorize?client_id=782005398269984819&permissions=1346890870&scope=bot)',color=0x00ebff)
+    em = discord.Embed(description = '[Click here to invite me :)](https://discord.com/oauth2/authorize?client_id=866129012576223272)',color=0x00ebff)
     em.set_thumbnail(url = client.user.display_avatar.url )
     await ctx.reply(embed = em)           
         
@@ -3885,7 +3883,7 @@ async def vote(ctx):
 
 #help...............................
 client.remove_command("help")
-@client.hybrid_group(invoke_without_command=True)#<> required [] optional
+@client.group(invoke_without_command=True)#<> required [] optional
 async def help(ctx):
     em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/ZbemgbQuXa)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\n||Do not actually include the <> and [] symbols in the command||\n\n**__PRIVACY POLICY__**\n1) We Do not share any kind of information provided by our users\n2) We do not store any kind of data which is mandatory, users can opt-out from using such commands if they dont want to\n3)Prior to collecting any data we notify it by specific explanation texts displayed prior to the Data collection.\n4)If any user wants to delete his/hers data from the bot then he/she can do it simply by using some commands or by asking help from server given in `S.server` command",timestamp=utc_now(),color = discord.Color(0x00ff7d))
     em.set_author(name = "Help/Command List",icon_url=f"{client.user.display_avatar.url}")
@@ -3900,7 +3898,7 @@ async def help(ctx):
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def kick(ctx):
     em = discord.Embed(description="Kicks a member from the Server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3909,7 +3907,7 @@ async def kick(ctx):
     em.add_field(name="**Permission required**",value="`Kick Member`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def submit(ctx):
     em = discord.Embed(description="Submits your contestant for the Tournament",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3917,7 +3915,7 @@ async def submit(ctx):
     em.add_field(name="**Usage**",value="`S.submit <name>`\nafter that Send the link of the image within 20 sec\nThis command will only work in Tournament\nOnly works in support server")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def ban(ctx):
     em = discord.Embed(description="Bans a member from the Server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3926,7 +3924,7 @@ async def ban(ctx):
     em.add_field(name="**Permission required**",value="`Ban Member`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def clear(ctx):
     em = discord.Embed(description="Deletes messages",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3936,7 +3934,7 @@ async def clear(ctx):
     em.add_field(name="**Permission required**",value="`Manage Messages`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def wanted(ctx):
     em = discord.Embed(description="Creates a Wanted poster from One Piece",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3945,7 +3943,7 @@ async def wanted(ctx):
     em.add_field(name="**Aliases**",value="`bounty`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def jojo(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3953,7 +3951,7 @@ async def jojo(ctx):
     em.add_field(name="**Usage**",value="`S.jojo <member>`")
     await ctx.send(embed=em)   
 
-@help.hybrid_command()
+@help.command()
 async def chika(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3961,14 +3959,14 @@ async def chika(ctx):
     em.add_field(name="**Usage**",value="`S.chika <message1>|<message2>|<message3>|<message4>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def fbi(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.fbi <Text Message>`")
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def worthless(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3976,7 +3974,7 @@ async def worthless(ctx):
     em.add_field(name="**Usage**",value="`S.worthless <Text Message>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def water(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3984,7 +3982,7 @@ async def water(ctx):
     em.add_field(name="**Usage**",value="`S.water [member] <Text Message>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def rip(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3992,7 +3990,7 @@ async def rip(ctx):
     em.add_field(name="**Usage**",value="`S.rip <member>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def disability(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4000,7 +3998,7 @@ async def disability(ctx):
     em.add_field(name="**Usage**",value="`S.disability <member>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def thisisshit(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4008,7 +4006,7 @@ async def thisisshit(ctx):
     em.add_field(name="**Usage**",value="`S.thisisshit <member>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def myboi(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4016,7 +4014,7 @@ async def myboi(ctx):
     em.add_field(name="**Usage**",value="`S.myboi <member>`")
     await ctx.send(embed=em)
  
-@help.hybrid_command()
+@help.command()
 async def santa(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4024,7 +4022,7 @@ async def santa(ctx):
     em.add_field(name="**Usage**",value="`S.santa <Text Message>`")
     await ctx.send(embed=em) 
 
-@help.hybrid_command()
+@help.command()
 async def news(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4032,7 +4030,7 @@ async def news(ctx):
     em.add_field(name="**Usage**",value="`S.news <member> <message1>|<message2>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def yugioh(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4040,7 +4038,7 @@ async def yugioh(ctx):
     em.add_field(name="**Usage**",value="`S.yugioh <message1>|<message2>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def yugiohpfp(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4048,7 +4046,7 @@ async def yugiohpfp(ctx):
     em.add_field(name="**Usage**",value="`S.yugiohpfp <member1> <member2>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def bitch(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4056,7 +4054,7 @@ async def bitch(ctx):
     em.add_field(name="**Usage**",value="`S.bitch <Text message>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def billy(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4064,7 +4062,7 @@ async def billy(ctx):
     em.add_field(name="**Usage**",value="`S.bily <Text message>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def fact(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4072,7 +4070,7 @@ async def fact(ctx):
     em.add_field(name="**Usage**",value="`S.fact <Text message>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def say(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4080,7 +4078,7 @@ async def say(ctx):
     em.add_field(name="**Usage**",value="`S.say <Text message>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def spoiler(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4089,7 +4087,7 @@ async def spoiler(ctx):
     em.add_field(name="**Aliases**",value="`spoil`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def propose(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4098,7 +4096,7 @@ async def propose(ctx):
     await ctx.send(embed=em)
 
 
-@help.hybrid_command()
+@help.command()
 async def match(ctx):
     em = discord.Embed(description="Use it to match pfp with your friend",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4106,21 +4104,21 @@ async def match(ctx):
     em.add_field(name="**Usage**",value="`S.match <member>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def dumb(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.dumb <text>`")
     await ctx.send(embed=em)  
-@help.hybrid_command()
+@help.command()
 async def wallpunch(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.wallpunch <text>`")
     await ctx.send(embed=em)      
-@help.hybrid_command()
+@help.command()
 async def anime(ctx):
     em = discord.Embed(description="Searches anime on Mal",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4128,7 +4126,7 @@ async def anime(ctx):
     em.add_field(name="**Usage**",value="`S.anime <Name of anime>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def manga(ctx):
     em = discord.Embed(description="Searches manga on Mal",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4136,7 +4134,7 @@ async def manga(ctx):
     em.add_field(name="**Usage**",value="`S.manga <Number of Msgs>`")
     await ctx.send(embed=em)
 
-#@help.hybrid_command()
+#@help.command()
 #async def dm(ctx):
  #   em = discord.Embed(description="Dms the message to the member",color=0x00ff7d,timestamp=utc_now())
  #   em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4147,7 +4145,7 @@ async def manga(ctx):
 
 
 
-@help.hybrid_command()
+@help.command()
 async def announce(ctx):
     em = discord.Embed(description="Use it to do announcement",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4156,7 +4154,7 @@ async def announce(ctx):
     em.add_field(name="**Permission required**",value="`Manage Server`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def yt(ctx):
     em = discord.Embed(description="Searches video on Youtube",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4164,7 +4162,7 @@ async def yt(ctx):
     em.add_field(name="**Usage**",value="`S.yt <search>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def embed(ctx):
     em = discord.Embed(description="Use to create Embeds",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4173,7 +4171,7 @@ async def embed(ctx):
     em.add_field(name="**Permission required**",value="`Manage Messages`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def rndqoute(ctx):
     em = discord.Embed(description="Sends a random anime qoute",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4181,7 +4179,7 @@ async def rndqoute(ctx):
     em.add_field(name="**Usage**",value="`S.rndqoute`")
     em.add_field(name="**Aliases**",value="`rq`")
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def rand(ctx):
     em = discord.Embed(description="Choose random number between the limits",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4189,7 +4187,7 @@ async def rand(ctx):
     em.add_field(name="**Usage**",value="`S.rand <number>`")
     em.add_field(name="**Aliases**",value="`random`")
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def filler(ctx):
     em = discord.Embed(description="Sends filler episodes of anime, if any",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4198,7 +4196,7 @@ async def filler(ctx):
     em.add_field(name="**Aliases**",value="`fill`")
     await ctx.send(embed=em)    
 
-@help.hybrid_command()
+@help.command()
 async def mal(ctx):
     em = discord.Embed(description="Use to check mal profile",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4207,7 +4205,7 @@ async def mal(ctx):
     em.add_field(name="**Aliases**",value="`profile`")
     await ctx.send(embed=em)  
 
-@help.hybrid_command()
+@help.command()
 async def profile(ctx):
     em = discord.Embed(description="Use to see mal profile",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4215,7 +4213,7 @@ async def profile(ctx):
     em.add_field(name="**Usage**",value="`S.profile`\nUse `S.set <mal-id>` to register")
     await ctx.send(embed=em)  
 
-@help.hybrid_command()
+@help.command()
 async def read(ctx):
     em = discord.Embed(description="Get link to read manga",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4223,7 +4221,7 @@ async def read(ctx):
     em.add_field(name="**Usage**",value="`S.read <Manga>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def char(ctx):
     em = discord.Embed(description="Search Characters",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4231,7 +4229,7 @@ async def char(ctx):
     em.add_field(name="**Usage**",value="`S.char <Character Name>`")
     await ctx.send(embed=em)
 
-@help.hybrid_command()
+@help.command()
 async def eplist(ctx):
     em = discord.Embed(description="Sends the episode list of anime",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4240,7 +4238,7 @@ async def eplist(ctx):
     
     await ctx.send(embed=em)  
 
-@help.hybrid_command()
+@help.command()
 async def wallpaper(ctx):
     em = discord.Embed(description="Sends Wallpapers",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4249,7 +4247,7 @@ async def wallpaper(ctx):
     em.add_field(name="**Aliases**",value="`wall`\n`mwall` for mobile")
     await ctx.send(embed=em)    
 
-@help.hybrid_command()
+@help.command()
 async def character(ctx):
     em = discord.Embed(description="Searchs Anime Characters",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4257,7 +4255,7 @@ async def character(ctx):
     em.add_field(name="**Usage**",value="`S.character <name>`")
     em.add_field(name="**Aliases**",value="`char`")
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def reddit(ctx):
     em = discord.Embed(description="Sends Sub-reddit posts",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4265,7 +4263,7 @@ async def reddit(ctx):
     em.add_field(name="**Usage**",value="`S.reddit <sub-reddit>`")
     em.add_field(name="**Aliases**",value="`red`")
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def addemoji(ctx):
     em = discord.Embed(description="Adds emoji in the server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4273,7 +4271,7 @@ async def addemoji(ctx):
     em.add_field(name="**Usage**",value="`S.addemoji <emoji link> [emoji name]`")
     em.add_field(name="**Permission required**",value="`Manage Emojis`")
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def challenge(ctx):
     em = discord.Embed(description="A trivia based chase game",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4281,7 +4279,7 @@ async def challenge(ctx):
     em.add_field(name="**Usage**",value="`S.challenge <mention>`")
     
     await ctx.send(embed=em)  
-@help.hybrid_command()
+@help.command()
 async def movie(ctx):
     em = discord.Embed(description="Searches movies/web series",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4290,7 +4288,7 @@ async def movie(ctx):
     
     await ctx.send(embed=em)        
 
-@help.hybrid_command()
+@help.command()
 async def remind(ctx):
     em = discord.Embed(description="Toggles anime reminder",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4298,7 +4296,7 @@ async def remind(ctx):
     em.add_field(name="**Usage**",value="`S.remind`")
     
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def addwatchlist(ctx):
     em = discord.Embed(description="Adds anime in your watchlist for reminder",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4306,7 +4304,7 @@ async def addwatchlist(ctx):
     em.add_field(name="**Usage**",value="`S.addwatchlist <anime id>`")
     em.add_field(name="**Aliases**",value="`awl`")
     await ctx.send(embed=em) 
-@help.hybrid_command()
+@help.command()
 async def removewatchlist(ctx):
     em = discord.Embed(description="Removes anime from your watchlist for reminder",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4315,7 +4313,7 @@ async def removewatchlist(ctx):
     em.add_field(name="**Aliases**",value="`rwl`")
     await ctx.send(embed=em) 
 
-@help.hybrid_command()
+@help.command()
 async def watchlist(ctx):
     em = discord.Embed(description="Shows anime in your watchlist for reminder",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4323,7 +4321,7 @@ async def watchlist(ctx):
     em.add_field(name="**Usage**",value="`S.watchlist`")
     em.add_field(name="**Aliases**",value="`wl`")
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def airing(ctx):
     em = discord.Embed(description="Shows airing anime to add in your Watchlist",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4331,14 +4329,14 @@ async def airing(ctx):
     em.add_field(name="**Usage**",value="`S.airing`")
     em.add_field(name="**Aliases**",value="`air`")
     await ctx.send(embed=em)   
-@help.hybrid_command()
+@help.command()
 async def setmal(ctx):
     em = discord.Embed(description="Tags your myanimelist account with your discord id",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.setmal <myanimelist id>`")
     await ctx.send(embed=em) 
-@help.hybrid_command()
+@help.command()
 async def removemal(ctx):
     em = discord.Embed(description="Removes your mal id from stela",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4346,7 +4344,7 @@ async def removemal(ctx):
     em.add_field(name="**Usage**",value="`S.removemal`")
     await ctx.send(embed=em)   
 
-@help.hybrid_command()
+@help.command()
 async def lookup(ctx):
     em = discord.Embed(description="Search waifus for waifu command",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4354,7 +4352,7 @@ async def lookup(ctx):
     em.add_field(name="**Usage**",value="`S.Lookup <name>`")
     em.add_field(name="**Aliases**",value="`lu`")
     await ctx.send(embed=em)        
-@help.hybrid_command()
+@help.command()
 async def setchannel(ctx):
     em = discord.Embed(description="Set a channel for anime updates in your server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4362,7 +4360,7 @@ async def setchannel(ctx):
     em.add_field(name="**Usage**",value="`S.setchannel <mention channel>`")
     em.add_field(name="**Permission required**",value="`Manage Server`")
     await ctx.send(embed=em)
-@help.hybrid_command()
+@help.command()
 async def removechannel(ctx):
     em = discord.Embed(description="Removes the channel from anime updates in your server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
