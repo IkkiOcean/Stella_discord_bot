@@ -1,8 +1,8 @@
 from threading import Timer
 import discord
-from discord import Forbidden
+from discord import Forbidden, app_commands
 from discord.ext import commands, tasks
-from discord.ext.commands import BucketType, Greedy
+from discord.ext.commands import BucketType, Greedy, CommandInvokeError
 import requests
 import random
 import textwrap
@@ -11,7 +11,7 @@ import json
 import os
 import sys
 from pathlib import Path
-from PIL import Image, ImageFont, ImageDraw
+from PIL import Image, ImageFont, ImageDraw, UnidentifiedImageError
 from io import BytesIO
 import typing
 import asyncio
@@ -60,10 +60,52 @@ def text_size(draw, text, font):
     return bbox[2] - bbox[0], bbox[3] - bbox[1]
 
 
+def _is_image_bytes(data: bytes) -> bool:
+    if not data:
+        return False
+    signatures = (
+        b"\x89PNG\r\n\x1a\n",
+        b"\xff\xd8\xff",
+        b"GIF87a",
+        b"GIF89a",
+        b"RIFF",
+    )
+    return data.startswith(signatures)
+
+
+def open_template(filename: str, fallback_url: str | None = None) -> Image.Image:
+    """Load a meme template from bundled assets, with optional URL fallback."""
+    local_path = ASSETS_DIR / filename
+    if local_path.exists():
+        with Image.open(local_path) as img:
+            return img.copy()
+
+    if not fallback_url:
+        raise FileNotFoundError(
+            f"Template '{filename}' not found in {ASSETS_DIR} and no fallback URL was provided."
+        )
+
+    url = fallback_url.strip()
+    headers = {"User-Agent": user_agent, "Accept": "image/*,*/*"}
+    resp = requests.get(url, headers=headers, timeout=30)
+    resp.raise_for_status()
+    if not _is_image_bytes(resp.content):
+        raise ValueError(
+            f"Could not download image template '{filename}' from {url}. "
+            "The remote host returned a non-image response."
+        )
+    return Image.open(BytesIO(resp.content))
+
+
+def env_flag(name: str, default: bool = False) -> bool:
+    return os.getenv(name, str(default).lower()).strip().lower() in ("1", "true", "yes", "on")
+
+
 load_dotenv()
 
 BOT_OWNER_ID = int(os.getenv("BOT_OWNER_ID", "745006368175423489"))
 STARTUP_CHANNEL_ID = os.getenv("STARTUP_CHANNEL_ID", "772496570436419592")
+ENABLE_ANIME_UPDATES = env_flag("ENABLE_ANIME_UPDATES", False)
 
 intents = discord.Intents.default()
 intents.members = True
@@ -95,12 +137,18 @@ def find_chrome_binary():
             "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary",
         ]
     elif sys.platform.startswith("linux"):
+        # Raspberry Pi / ARM Debian/Raspberry Pi OS common paths
         candidates = [
+            # Google Chrome
             "/usr/bin/google-chrome",
             "/usr/bin/google-chrome-stable",
+            # Chromium variants
             "/usr/bin/chromium",
             "/usr/bin/chromium-browser",
             "/snap/bin/chromium",
+            # Raspberry Pi OS often installs chromium under these names
+            "/usr/bin/chromium-browser-wayland",
+            "/usr/bin/chromium-wayland",
         ]
     else:
         candidates = []
@@ -142,6 +190,9 @@ def get_driver():
     options.add_argument("--proxy-bypass-list=*")
     options.add_argument("--start-maximized")
     options.add_argument("--disable-dev-shm-usage")
+    # Common stability flags for ARM/Raspberry Pi
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--disable-features=VizDisplayCompositor")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-gpu")
 
@@ -194,19 +245,52 @@ redit = praw.Reddit(
 
 #error.................
 @client.event
-async def on_command_error(ctx,error):
-    if isinstance(error,commands.MissingPermissions):
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingPermissions):
         await ctx.send("You are too weak ;-; Work hard and get powers to do that :)")
-    if isinstance(error,commands.MemberNotFound):
-        await ctx.send("Member Not Found")    
-    if isinstance(error,commands.MissingRequiredArgument):
-        await ctx.send("Pls use command properly! `S.help <command>`")    
-    elif isinstance(error,Forbidden):
-        await ctx.send("Give me powers to do that! I will not disappoint you ;-;")   
-    elif isinstance(error,commands.CommandOnCooldown):
-        await ctx.send(f" You have to wait {error.retry_after:,.2F} secs")     
+    elif isinstance(error, commands.MemberNotFound):
+        await ctx.send("Member Not Found")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Pls use command properly! `S.help <command>`")
+    elif isinstance(error, Forbidden):
+        await ctx.send("Give me powers to do that! I will not disappoint you ;-;")
+    elif isinstance(error, commands.CommandOnCooldown):
+        await ctx.send(f" You have to wait {error.retry_after:,.2F} secs")
+    elif isinstance(error, CommandInvokeError):
+        cause = error.original
+        if isinstance(cause, (UnidentifiedImageError, ValueError, FileNotFoundError)):
+            await ctx.send(
+                "Could not load the image template for this command. "
+                "Please try again later or contact the bot owner."
+            )
+            print(f"Image command error in {getattr(ctx.command, 'name', '?')}: {cause}")
+        else:
+            raise error
     else:
-        raise error       
+        raise error
+
+
+@client.tree.error
+async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.CommandInvokeError):
+        cause = error.original
+        if isinstance(cause, (UnidentifiedImageError, ValueError, FileNotFoundError)):
+            msg = (
+                "Could not load the image template for this command. "
+                "Please try again later or contact the bot owner."
+            )
+            if interaction.response.is_done():
+                await interaction.followup.send(msg, ephemeral=True)
+            else:
+                await interaction.response.send_message(msg, ephemeral=True)
+            print(f"Slash image error: {cause}")
+            return
+    print(f"Unhandled slash command error: {error}")
+    msg = "Something went wrong running that command."
+    if interaction.response.is_done():
+        await interaction.followup.send(msg, ephemeral=True)
+    else:
+        await interaction.response.send_message(msg, ephemeral=True)
 
 
     
@@ -241,8 +325,18 @@ async def on_ready():
     except Exception as exc:
         print(f"Warning: could not create waifu search index: {exc}")
 
-    if not checkNewLoop.is_running():
-        checkNewLoop.start()
+    if ENABLE_ANIME_UPDATES:
+        if not checkNewLoop.is_running():
+            checkNewLoop.start()
+        print("Anime update checker enabled")
+    else:
+        print("Anime update checker disabled (set ENABLE_ANIME_UPDATES=true to enable)")
+
+    try:
+        synced = await client.tree.sync()
+        print(f"Synced {len(synced)} slash command(s)")
+    except Exception as exc:
+        print(f"Warning: could not sync slash commands: {exc}")
      
 #@client.event
 #async def on_message(message):
@@ -256,7 +350,7 @@ async def on_ready():
 #commands...................................................
 
 
-@client.command(name='version')
+@client.hybrid_command(name='version')
 async def version(context):
     myembed = discord.Embed(title='Current Version', description='The Bot is in version 2.0.0',color=0x00ebff)
     myid = '<@!745006368175423489>'
@@ -265,14 +359,14 @@ async def version(context):
     
     await context.message.channel.send(embed=myembed)
 
-@client.command(name='Bot')   
+@client.hybrid_command(name='bot', aliases=['Bot'])
 async def Bot(context):
     helpembed = discord.Embed (title='Hi', description='Its me, Stela',color=0x00ebff) 
     await context.author.send(embed=helpembed) 
 
 #moderation.................................................................................... 
 #kick...............
-@client.command(name='kick',aliases=["Kick"])    
+@client.hybrid_command(name='kick',aliases=["Kick"])    
 @commands.has_permissions(kick_members=True)
 async def kick(context, member : discord.Member, *,reason = None):
     if member != context.author:
@@ -296,7 +390,7 @@ async def kick(context, member : discord.Member, *,reason = None):
     
 
 #ban.....................    
-@client.command(name='ban',aliases=["Ban"])    
+@client.hybrid_command(name='ban',aliases=["Ban"])    
 @commands.has_permissions(ban_members=True)
 async def ban(context, member : discord.Member, *,reason=None):
     
@@ -318,7 +412,7 @@ async def ban(context, member : discord.Member, *,reason=None):
 
 
 #clear.....
-@client.command(name="clear",aliases=["Clear",'Clean','clean','delete','Delete','purge','Purge'])    
+@client.hybrid_command(name="clear",aliases=["Clear",'Clean','clean','delete','Delete','purge','Purge'])    
 @commands.has_permissions(manage_messages = True)
 async def clear(context,amount=2):
     await context.channel.purge(limit = (amount+1))
@@ -326,7 +420,7 @@ async def clear(context,amount=2):
 
 #mute
 #addrole
-@client.command(name="addrole",aliases=["Addrole"])       
+@client.hybrid_command(name="addrole",aliases=["Addrole"])       
 async def addrole(ctx,member :discord.Member,role: typing.Optional[discord.Role], *,rolename = None):
     if ctx.author == owner:
         try:
@@ -343,7 +437,7 @@ async def addrole(ctx,member :discord.Member,role: typing.Optional[discord.Role]
         except:
             await ctx.reply("Type `S.addrole <member> <ROLE NAME OR MENTION ROLE>`")
  
-@client.command(name="removerole",aliases=["Removerole"])        
+@client.hybrid_command(name="removerole",aliases=["Removerole"])        
 async def removerole(ctx,member :discord.Member,role: typing.Optional[discord.Role], *,rolename = None):
     if ctx.author == owner:
         try:
@@ -360,7 +454,7 @@ async def removerole(ctx,member :discord.Member,role: typing.Optional[discord.Ro
         except:
                 await ctx.reply("Type `S.removerole <member> <ROLE NAME OR MENTION ROLE>`") 
 
-@client.command(name='Steal',aliases=["steal"])
+@client.hybrid_command(name='steal', aliases=["steal", "Steal"])
 @commands.has_permissions(manage_emojis = True) 
 async def steal(ctx, emoji:discord.Emoji, *, name):
     guild = ctx.guild   
@@ -389,7 +483,7 @@ async def steal(ctx, emoji:discord.Emoji, *, name):
     #for emo in emojiss:
   
      #   print(emo)
-@client.command(name='addemoji',aliases=["Addemoji"])
+@client.hybrid_command(name='addemoji',aliases=["Addemoji"])
 @commands.has_permissions(manage_emojis = True) 
 async def addemoji(ctx, url: str, *, name):
     guild = ctx.guild   
@@ -420,7 +514,7 @@ async def addemoji(ctx, url: str, *, name):
                   
 #EMOTES................................................................
 #blush......
-@client.command(name='blush')    
+@client.hybrid_command(name='blush')    
 async def blush(context,member: typing.Optional[discord.Member], *,gifmsg=None):
     blushes = discord.Embed(description=gifmsg,timestamp=utc_now(),color=0x00ebff)
     if member == None:
@@ -437,7 +531,7 @@ async def blush(context,member: typing.Optional[discord.Member], *,gifmsg=None):
     await context.message.delete()
 
 #smile......
-@client.command(name='smile',aliases = ["Smile"])    
+@client.hybrid_command(name='smile',aliases = ["Smile"])    
 async def smile(context,member: typing.Optional[discord.Member], *,gifmsg=None):
     smiles = discord.Embed(description=gifmsg,timestamp=utc_now(),color=0x00ebff) 
     if member == None:
@@ -454,7 +548,7 @@ async def smile(context,member: typing.Optional[discord.Member], *,gifmsg=None):
 
 
 #stare
-@client.command(name='stare',aliases = ["Stare"])    
+@client.hybrid_command(name='stare',aliases = ["Stare"])    
 async def stare(context,member: typing.Optional[discord.Member], *,gifmsg=None):
     stares = discord.Embed(description=gifmsg,timestamp=utc_now(),color=0x00ebff) 
     if member == None:
@@ -470,7 +564,7 @@ async def stare(context,member: typing.Optional[discord.Member], *,gifmsg=None):
     await context.message.delete()
 
 #laugh
-@client.command(name='laugh',aliases = ["Laugh"])    
+@client.hybrid_command(name='laugh',aliases = ["Laugh"])    
 async def laugh(context,member: typing.Optional[discord.Member], *,gifmsg=None):
     laughs = discord.Embed(description=gifmsg,timestamp=utc_now(),color=0x00ebff) 
     if member == None:
@@ -487,7 +581,7 @@ async def laugh(context,member: typing.Optional[discord.Member], *,gifmsg=None):
 #dance
 
        # await context.message.delete() 
-@client.command(name='dance')    
+@client.hybrid_command(name='dance')    
 async def dance(context, *,gifmsg=None):
     dances = discord.Embed(description=gifmsg,timestamp=utc_now(),color=0x00ebff) 
     dances.set_author(name = f"{context.message.author.display_name}  is Dancing ƪ(‾.‾“)┐",icon_url=f"{context.message.author.display_avatar.url}") 
@@ -500,7 +594,7 @@ async def dance(context, *,gifmsg=None):
     await context.message.delete()
 
 #sleepy
-@client.command(name='sleep')
+@client.hybrid_command(name='sleep')
 async def sleep(context, *,gifmsg=None):
     sleeps = discord.Embed(description=gifmsg,timestamp=utc_now(),color=0x00ebff) 
     sleeps.set_author(name = f"{context.message.author.display_name}  is Sleeping ",icon_url=f"{context.message.author.display_avatar.url}") 
@@ -513,7 +607,7 @@ async def sleep(context, *,gifmsg=None):
     await context.message.delete()
 
 #thinking..
-@client.command(name='think')
+@client.hybrid_command(name='think')
 async def think(context, *,gifmsg=None):
     thinks = discord.Embed(description=gifmsg,timestamp=utc_now(),color=0x00ebff)   
     thinks.set_author(name = f"{context.message.author.display_name}  is Thinking ",icon_url=f"{context.message.author.display_avatar.url}") 
@@ -526,7 +620,7 @@ async def think(context, *,gifmsg=None):
     await context.message.delete() 
 
 #cry.......
-@client.command(name='cry')
+@client.hybrid_command(name='cry')
 async def cry(context, *,gifmsg=None):
     crys = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)  
     crys.set_author(name = f"{context.message.author.display_name}  is Crying   ༎ຶ‿༎ຶ ",icon_url=f"{context.message.author.display_avatar.url}") 
@@ -539,7 +633,7 @@ async def cry(context, *,gifmsg=None):
     await context.message.delete()    
 
 #triggered..
-@client.command(name='rage',aliases= ["angry","Rage","Angry","Anger","anger","Triggered","triggered"])
+@client.hybrid_command(name='rage',aliases= ["angry","Rage","Angry","Anger","anger","Triggered","triggered"])
 async def rage(context,member: typing.Optional[discord.Member] = None , *,gifmsg=None):
     triggereds = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
     if member == None:
@@ -555,7 +649,7 @@ async def rage(context,member: typing.Optional[discord.Member] = None , *,gifmsg
     await context.send(embed=triggereds) 
     await context.message.delete() 
 
-@client.command(name='pout',aliases= ["Pout"])
+@client.hybrid_command(name='pout',aliases= ["Pout"])
 async def pout(context,member: typing.Optional[discord.Member] = None , *,gifmsg=None):
     pouts = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
     if member == None:
@@ -572,7 +666,7 @@ async def pout(context,member: typing.Optional[discord.Member] = None , *,gifmsg
     await context.message.delete()    
 
 #smug.....
-@client.command(name='smug')
+@client.hybrid_command(name='smug')
 async def smug(context, *,gifmsg=None):
     smugs = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
      
@@ -588,7 +682,7 @@ async def smug(context, *,gifmsg=None):
 #action...............................................................
 #kill...
 
-@client.command(name='kill')
+@client.hybrid_command(name='kill')
 async def kill(context,member: discord.Member, *,gifmsg=None):
     if  member == context.author:
         kills = discord.Embed(timestamp=utc_now() ,color=0x00ebff) 
@@ -611,7 +705,7 @@ async def kill(context,member: discord.Member, *,gifmsg=None):
         await context.message.delete()      
 #bonk
 
-@client.command(name='bonk',aliases=["Bonk"])
+@client.hybrid_command(name='bonk',aliases=["Bonk"])
 async def bonk(context,member: discord.Member, *,gifmsg=None):
     bonks = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
 
@@ -622,7 +716,7 @@ async def bonk(context,member: discord.Member, *,gifmsg=None):
     await context.send(embed=bonks) 
     await context.message.delete() 
 
-@client.command(name='punch',aliases=["Punch"])
+@client.hybrid_command(name='punch',aliases=["Punch"])
 async def punch(context,member: discord.Member, *,gifmsg=None):
     punchs = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
 
@@ -634,7 +728,7 @@ async def punch(context,member: discord.Member, *,gifmsg=None):
     await context.send(embed=punchs) 
     await context.message.delete()       
 #slap
-@client.command(name='slap',aliases=["Slap"])
+@client.hybrid_command(name='slap',aliases=["Slap"])
 async def slap(context,member: discord.Member, *,gifmsg=None):
     slaps = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
 
@@ -646,7 +740,7 @@ async def slap(context,member: discord.Member, *,gifmsg=None):
     await context.message.delete() 
 
 #poke
-@client.command(name='poke',aliases=["Poke"])
+@client.hybrid_command(name='poke',aliases=["Poke"])
 async def poke(context,member: discord.Member, *,gifmsg=None):
     pokes = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
 
@@ -657,7 +751,7 @@ async def poke(context,member: discord.Member, *,gifmsg=None):
     await context.send(embed=pokes) 
     await context.message.delete()
 #pat............................
-@client.command(name='pat',aliases=["Pat"])
+@client.hybrid_command(name='pat',aliases=["Pat"])
 async def pat(context,member: discord.Member, *,gifmsg=None):
     pats = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
 
@@ -668,7 +762,7 @@ async def pat(context,member: discord.Member, *,gifmsg=None):
     await context.send(embed=pats) 
     await context.message.delete()
 #hi,hello...........................
-@client.command(name='Hi',aliases=['Hello','hello','hi','Hey','hey','wave','Wave'])
+@client.hybrid_command(name='hi', aliases=['Hello','hello','hi','Hey','hey','wave','Wave', 'Hi'])
 async def Hi(context,member: typing.Optional[discord.Member] = None , *,gifmsg=None):
     His = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
     if member == None:
@@ -682,7 +776,7 @@ async def Hi(context,member: typing.Optional[discord.Member] = None , *,gifmsg=N
     await context.message.delete() 
 
 #nom-nom............................ 
-@client.command(name='Nom',aliases=['nom','eat','bite','Bite','Eat'])
+@client.hybrid_command(name='nom', aliases=['nom','eat','bite','Bite','Eat', 'Nom'])
 async def Nom(context,member: discord.Member, *,gifmsg=None):
     Noms = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
     nom1 = (f"{context.message.author.display_name} noms {member.display_name}! ")
@@ -698,8 +792,10 @@ async def Nom(context,member: discord.Member, *,gifmsg=None):
     await context.message.delete()
 
 #hug.................................
-@client.command(name='hug',aliases=['Hug'])
+@client.hybrid_command(name='hug',aliases=['Hug'])
 async def hug(context,member: discord.Member, *,gifmsg=None):
+    if ctx.interaction is not None:
+        await ctx.defer()
     hugs = discord.Embed(description=gifmsg,timestamp=utc_now() ,color=0x00ebff)
     hug1 = (f"{context.message.author.display_name} hugs {member.display_name}! ＼(^o^)／")
     hug2 = (f"{context.message.author.display_name} hugs {member.display_name}! Don't squeeze too hard!! ")
@@ -713,13 +809,13 @@ async def hug(context,member: discord.Member, *,gifmsg=None):
     await context.send(embed=hugs)          
     await context.message.delete()
 #image Manipulation................................................................................................
-@client.command(name='wanted', aliases=['Bounty','Wanted','bounty'])
+@client.hybrid_command(name='wanted', aliases=['Bounty','Wanted','bounty'])
 async def wanted(ctx,user:discord.Member=None):
+    if ctx.interaction is not None:
+        await ctx.defer()
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/jNJBoeJ.png") 
-    
-    wanted = Image.open(BytesIO(resp.content))
+    wanted = open_template("wanted.png", "https://i.imgur.com/jNJBoeJ.png")
     asset = user.display_avatar.replace(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
@@ -746,13 +842,13 @@ async def wanted(ctx,user:discord.Member=None):
         await ctx.send("Hey! Your name is longer than 19 Characters \n**Tip**: Keep it shorter :) ")
     await ctx.send(file=discord.File(output_path("wanted.png")))
 
-@client.command(name='instagram', aliases=['insta','Insta','Instagram'])
+@client.hybrid_command(name='instagram', aliases=['insta','Insta','Instagram'])
 async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= None):
+    if ctx.interaction is not None:
+        await ctx.defer()
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/REDMT7r.png") 
-    
-    post = Image.open(BytesIO(resp.content))
+    post = open_template("instagram.png", "https://i.imgur.com/REDMT7r.png")
     asset = user.display_avatar.replace(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
@@ -794,10 +890,11 @@ async def instagram(ctx,user:typing.Optional[discord.Member]=None, *,caption= No
         await ctx.send("Hey! Your name is longer than 18 Characters \n**Tip**: Keep it shorter :) ")    
     await ctx.send(file=discord.File(output_path("instagram.png")))
 #distract  
-@client.command(name='distract', aliases=['Distract',"distracted","Distracted"])
+@client.hybrid_command(name='distract', aliases=['Distract',"distracted","Distracted"])
 async def distract(ctx, *,caption): 
-    resp=requests.get("https://i.imgur.com/WE18XMM.jpg") #distract 
-    post = Image.open(BytesIO(resp.content)) 
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("distracted.jpg", "https://i.imgur.com/WE18XMM.jpg") 
     font = asset_font("ARIAL.TTF", 40)
     line1, line2, line3 = caption.split(",")
     draw = ImageDraw.Draw(post)
@@ -825,12 +922,13 @@ async def distract(ctx, *,caption):
     post.save(output_path("distracted.jpg"))#185
     await ctx.send(file=discord.File(output_path("distracted.jpg")))
 #thisisshit
-@client.command(name='thisisshit', aliases=['Thisisshit'])
+@client.hybrid_command(name='thisisshit', aliases=['Thisisshit'])
 async def thisisshit(ctx,user:discord.Member=None): 
+    if ctx.interaction is not None:
+        await ctx.defer()
     if user == None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/jtZqJ2u.jpg") #shit 
-    post = Image.open(BytesIO(resp.content)) 
+    post = open_template("thisisshit.jpg", "https://i.imgur.com/jtZqJ2u.jpg") 
     asset = user.display_avatar.replace(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
@@ -839,12 +937,13 @@ async def thisisshit(ctx,user:discord.Member=None):
     post.save(output_path("thisisshit.jpg"))    
     await ctx.send(file=discord.File(output_path("thisisshit.jpg")))
 #water
-@client.command(name='water', aliases=['Water'])
+@client.hybrid_command(name='water', aliases=['Water'])
 async def water(ctx,user:typing.Optional[discord.Member]=None, *,caption): 
+    if ctx.interaction is not None:
+        await ctx.defer()
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/wpN45qC.jpg") #water
-    post = Image.open(BytesIO(resp.content))  
+    post = open_template("water.png", "https://i.imgur.com/wpN45qC.jpg")  
     font = asset_font("ARIAL.TTF", 30)
     W = 282
     H1 = 36
@@ -863,10 +962,11 @@ async def water(ctx,user:typing.Optional[discord.Member]=None, *,caption):
     post.save(output_path("water.png"))    
     await ctx.send(file=discord.File(output_path("water.png")))
 #chika    
-@client.command(name='chika', aliases=['Chika'])
+@client.hybrid_command(name='chika', aliases=['Chika'])
 async def chika(ctx, *,caption): 
-    resp=requests.get("https://i.imgur.com/ZlnspzF.png") #chika 
-    post = Image.open(BytesIO(resp.content)) 
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("chika.png", "https://i.imgur.com/ZlnspzF.png") 
     #post = Image.open("chika.png") 
     font = asset_font("ARIAL.TTF", 30)
     line1, line2, line3, line4 = caption.split("|") 
@@ -914,11 +1014,12 @@ async def chika(ctx, *,caption):
     post.save(output_path("chika.png"))#185
     await ctx.send(file=discord.File(output_path("chika.png")))
 #myboi 
-@client.command(name='myboi', aliases=['myboy',"Myboi","Myboy"])
+@client.hybrid_command(name='myboi', aliases=['myboy',"Myboi","Myboy"])
 async def myboi(ctx,user:discord.Member): 
+    if ctx.interaction is not None:
+        await ctx.defer()
     
-    resp=requests.get("https://i.imgur.com/QTIHrse.jpg") #boy 
-    post = Image.open(BytesIO(resp.content)) 
+    post = open_template("Myboi.png", "https://i.imgur.com/QTIHrse.jpg") 
     text1 = ctx.author.display_name
     text = textwrap.wrap(text1, 19)
     W, H = (585,420)
@@ -936,10 +1037,11 @@ async def myboi(ctx,user:discord.Member):
     await ctx.send(file=discord.File(output_path("Myboi.png")))
 
      
-@client.command(name='dumb', aliases=['Dumb'])
+@client.hybrid_command(name='dumb', aliases=['Dumb'])
 async def tyg(ctx, *,caption):
-    resp=requests.get("https://i.imgur.com/pvkkups.jpg") #water
-    post = Image.open(BytesIO(resp.content))  
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("dumb.png", "https://i.imgur.com/pvkkups.jpg")  
     font = asset_font("ARIAL.TTF", 30)
     W = 347
     H1 = 435
@@ -952,10 +1054,11 @@ async def tyg(ctx, *,caption):
         H1 += h1
     post.save(output_path("dumb.png"))#185
     await ctx.send(file=discord.File(output_path("dumb.png")))
-@client.command(name='wallpunch', aliases=['Wallpunch',"wallPunch"])
+@client.hybrid_command(name='wallpunch', aliases=['Wallpunch',"wallPunch"])
 async def dammit(ctx, *,caption):
-    resp=requests.get("https://i.imgur.com/qYBV6yl.png ") #water
-    post = Image.open(BytesIO(resp.content))  
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("wallpunch.png", "https://i.imgur.com/qYBV6yl.png")  
     font = asset_font("ARIAL.TTF", 40)
     W = 6
     H1 = 4
@@ -968,7 +1071,7 @@ async def dammit(ctx, *,caption):
         H1 += h1
     post.save(output_path("wallpunch.png"))#185
     await ctx.send(file=discord.File(output_path("wallpunch.png"))) 
-@client.command(name='match')
+@client.hybrid_command(name='match')
 async def match(ctx,member1 : discord.Member, member2 : discord.Member = None ):  
     
     
@@ -997,10 +1100,11 @@ async def match(ctx,member1 : discord.Member, member2 : discord.Member = None ):
     wed.set_image(url="attachment://match.png")
     await ctx.send(file = file, embed=wed)        
 #worthless
-@client.command(name='worthless', aliases=['Worthless'])
+@client.hybrid_command(name='worthless', aliases=['Worthless'])
 async def worthless(ctx, *,caption): 
-    resp=requests.get("https://i.imgur.com/7yQETI9.png") #worthless 
-    post = Image.open(BytesIO(resp.content)) 
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("worthless.png", "https://i.imgur.com/7yQETI9.png") 
      
     font = asset_font("ARIAL.TTF", 25)
     W = 202
@@ -1016,10 +1120,11 @@ async def worthless(ctx, *,caption):
     await ctx.send(file=discord.File(output_path("worthless.png")))
 #fbi    
    
-@client.command(name='fbi', aliases=['Fbi'])
+@client.hybrid_command(name='fbi', aliases=['Fbi'])
 async def fbi(ctx, *,msg):
-    resp=requests.get("https://i.imgur.com/OkhouW4.jpg")  
-    post = Image.open(BytesIO(resp.content))
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("fbi.jpg", "https://i.imgur.com/OkhouW4.jpg")
     font = asset_font("Product_Sans_Regular.ttf", 35)     
     #msg1 = str(msg)   
     msg2 = textwrap.wrap(msg,33)
@@ -1029,14 +1134,13 @@ async def fbi(ctx, *,msg):
     await ctx.send(file=discord.File(output_path("fbi.jpg")))
 
 #breaking news
-@client.command(name='news', aliases=['News'])
+@client.hybrid_command(name='news', aliases=['News'])
 async def news(ctx,user:typing.Optional[discord.Member]=None, *,msg):
+    if ctx.interaction is not None:
+        await ctx.defer()
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/dvP6ekG.png")  
-    #resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
-    #bg = Image.open(BytesIO(resp2.content)).convert('RGB')
-    post = Image.open(BytesIO(resp.content))
+    post = open_template("news.png", "https://i.imgur.com/dvP6ekG.png")
     font1 = asset_font("BebasNeue-Regular.ttf", 35)  
     font2 = asset_font("BebasNeue-Regular.ttf", 15)    
     msg1, msg2 = msg.split("|") 
@@ -1058,10 +1162,11 @@ async def news(ctx,user:typing.Optional[discord.Member]=None, *,msg):
     bg.save(output_path("news.png"))
     await ctx.send(file=discord.File(output_path("news.png")))
 #santa
-@client.command(name='santa', aliases=['Santa'])
+@client.hybrid_command(name='santa', aliases=['Santa'])
 async def santa(ctx, *,caption): 
-    resp=requests.get("https://i.imgur.com/jCZwcR3.jpg") #santa 
-    post = Image.open(BytesIO(resp.content)) 
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("santa.png", "https://i.imgur.com/jCZwcR3.jpg") 
      
     font = asset_font("ARIAL.TTF", 25)
     W = 123
@@ -1076,12 +1181,13 @@ async def santa(ctx, *,caption):
     post.save(output_path("santa.png"))    
     await ctx.send(file=discord.File(output_path("santa.png")))    
 #jojo
-@client.command(name='jojo', aliases=['Jojo'])
+@client.hybrid_command(name='jojo', aliases=['Jojo'])
 async def jojo(ctx,user:discord.Member=None ): 
+    if ctx.interaction is not None:
+        await ctx.defer()
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/fFzVj4u.png")  
-    post = Image.open(BytesIO(resp.content)) 
+    post = open_template("jojo.png", "https://i.imgur.com/fFzVj4u.png") 
     asset = user.display_avatar.replace(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
@@ -1092,12 +1198,13 @@ async def jojo(ctx,user:discord.Member=None ):
     await ctx.send(file=discord.File(output_path("jojo.png")))
 
 #disability
-@client.command(name='disability', aliases=['Disability'])
+@client.hybrid_command(name='disability', aliases=['Disability'])
 async def disability(ctx,user:discord.Member=None ): 
+    if ctx.interaction is not None:
+        await ctx.defer()
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/4RsH5M4.png")  
-    post = Image.open(BytesIO(resp.content)) 
+    post = open_template("disability.png", "https://i.imgur.com/4RsH5M4.png") 
     asset = user.display_avatar.replace(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
@@ -1107,12 +1214,13 @@ async def disability(ctx,user:discord.Member=None ):
     post.save(output_path("disability.png"))
     await ctx.send(file=discord.File(output_path("disability.png")))
 #rip
-@client.command(name='rip', aliases=['Rip'])
+@client.hybrid_command(name='rip', aliases=['Rip'])
 async def rip(ctx,user:discord.Member=None ): 
+    if ctx.interaction is not None:
+        await ctx.defer()
     if user==None:
         user = ctx.author
-    resp=requests.get("https://i.imgur.com/c8mksIz.png")  
-    post = Image.open(BytesIO(resp.content)) 
+    post = open_template("rip.png", "https://i.imgur.com/c8mksIz.png") 
     asset = user.display_avatar.replace(size=128)
     data = BytesIO(await asset.read())   
     pfp = Image.open(data)
@@ -1124,10 +1232,11 @@ async def rip(ctx,user:discord.Member=None ):
     await message.add_reaction("🇫")
 
 #billy
-@client.command(name='billy', aliases=['Billy'])
+@client.hybrid_command(name='billy', aliases=['Billy'])
 async def billy(ctx, *,msg):
-    resp=requests.get("https://i.imgur.com/qhlo7N1.jpg")  
-    post = Image.open(BytesIO(resp.content))
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("billy.jpg", "https://i.imgur.com/qhlo7N1.jpg")
     font = asset_font("Product_Sans_Regular.ttf", 15)     
     #msg1 = str(msg)   
     msg2 = textwrap.wrap(msg,39)
@@ -1137,10 +1246,11 @@ async def billy(ctx, *,msg):
     await ctx.send(file=discord.File(output_path("billy.jpg")))
 
 #facts
-@client.command(name='fact', aliases=['Fact'])
+@client.hybrid_command(name='fact', aliases=['Fact'])
 async def fact(ctx, *,caption): 
-    resp=requests.get("https://i.imgur.com/aKADQfg.jpg") #fact
-    post = Image.open(BytesIO(resp.content)) 
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("fact.png", "https://i.imgur.com/aKADQfg.jpg") 
      
     font = asset_font("ARIAL.TTF", 25)
     W = 107
@@ -1157,10 +1267,11 @@ async def fact(ctx, *,caption):
     await ctx.send(file=discord.File(output_path("fact.png")))  
 
 #meme
-@client.command(name='bitch', aliases=['Bitch'])
+@client.hybrid_command(name='bitch', aliases=['Bitch'])
 async def bitch(ctx, *,caption): 
-    resp=requests.get("https://i.imgur.com/2i9cJvo.png") #meme
-    post = Image.open(BytesIO(resp.content)) 
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("bitch.png", "https://i.imgur.com/2i9cJvo.png") 
      
     font = asset_font("ARIAL.TTF", 32)
     W = 187
@@ -1176,10 +1287,11 @@ async def bitch(ctx, *,caption):
     await ctx.send(file=discord.File(output_path("bitch.png")))   
 
 #yu-gi-oh
-@client.command(name='yugioh', aliases=['Yugioh'])
+@client.hybrid_command(name='yugioh', aliases=['Yugioh'])
 async def yugioh(ctx,*,msg ): 
-    resp=requests.get("https://i.imgur.com/bPMhqIY.jpg")  
-    post = Image.open(BytesIO(resp.content)) 
+    if ctx.interaction is not None:
+        await ctx.defer()
+    post = open_template("yugioh.png", "https://i.imgur.com/bPMhqIY.jpg") 
     font = asset_font("ARIAL.TTF", 25)
     line1, line2 = msg.split("|")
     W = 88
@@ -1206,7 +1318,7 @@ async def yugioh(ctx,*,msg ):
     post.save(output_path("yugioh.png"))
     await ctx.send(file=discord.File(output_path("yugioh.png"))) 
 
-@client.command(name='meme', aliases=['Meme','Memes','memes'])
+@client.hybrid_command(name='meme', aliases=['Meme','Memes','memes'])
 @commands.cooldown(5, 60, BucketType.user)  
 async def meme(ctx):
 
@@ -1230,7 +1342,7 @@ async def meme(ctx):
 
 
 
-@client.command(name='reddit', aliases=['Reddit','red','Red'])
+@client.hybrid_command(name='reddit', aliases=['Reddit','red','Red'])
 @commands.cooldown(5, 60, BucketType.user)
 async def redd(ctx,name):
     subred = redit.subreddit(name)
@@ -1255,8 +1367,7 @@ async def redd(ctx,name):
 #yu-gi-oh pfp
 @client.command(name='yugiohpfp', aliases=['Yugiohpfp'])
 async def yugiohpfp(ctx,member: Greedy[discord.Member] ): 
-    resp=requests.get("https://i.imgur.com/bPMhqIY.jpg")  
-    post = Image.open(BytesIO(resp.content)) 
+    post = open_template("yugioh.png", "https://i.imgur.com/bPMhqIY.jpg") 
     asset1 = member[0].display_avatar.replace(size=128)
     data1 = BytesIO(await asset1.read())   
     pfp1 = Image.open(data1)
@@ -1272,11 +1383,12 @@ async def yugiohpfp(ctx,member: Greedy[discord.Member] ):
     post.save(output_path("yugiohpfp.jpg"))
     await ctx.send(file=discord.File(output_path("yugiohpfp.jpg")))  
 
-@client.command(name='Imagify',aliases=["img","Img","imagify"])
+@client.hybrid_command(name='imagify', aliases=["img","Img","imagify", "Imagify"])
 async def imagify(ctx, *,text):
+    if ctx.interaction is not None:
+        await ctx.defer()
     
-    resp=requests.get("https://i.imgur.com/CFvwPZQ.jpg") 
-    post = Image.open(BytesIO(resp.content))
+    post = open_template("profile.png", "https://i.imgur.com/CFvwPZQ.jpg")
     font = asset_font("Product_Sans_Regular.ttf", 30) 
     W2 = 210
     H2 = 20
@@ -1291,13 +1403,14 @@ async def imagify(ctx, *,text):
     await ctx.send(file=discord.File(output_path("img.jpg")))     
 
 #message................
-@client.command(name='pro',aliases=["Pro"])
+@client.hybrid_command(name='pro',aliases=["Pro"])
 async def pro(ctx, member: discord.Member = None):
+    if ctx.interaction is not None:
+        await ctx.defer()
     if member == None:
         member = ctx.author
        
-    resp=requests.get("https://i.imgur.com/fAkM4cd.png")  
-    post = Image.open(BytesIO(resp.content)).convert('RGBA')     
+    post = open_template("pro.png", "https://i.imgur.com/fAkM4cd.png").convert('RGBA')     
     asset1 = member.display_avatar.replace(size=128)
     data1 = BytesIO(await asset1.read())   
     pfp1 = Image.open(data1)
@@ -1314,7 +1427,7 @@ async def pro(ctx, member: discord.Member = None):
     await ctx.send(file=discord.File(output_path("profile.png"))) 
 
 #announcement
-@client.command(name="announcement",aliases=["announce","Announce","Announcement"])
+@client.hybrid_command(name="announcement",aliases=["announce","Announce","Announcement"])
 @commands.has_permissions(manage_guild=True)
 async def announce_everyone(ctx,mention,channel : discord.TextChannel, *,msg):
     if mention == "everyone":
@@ -1329,20 +1442,20 @@ async def announce_everyone(ctx,mention,channel : discord.TextChannel, *,msg):
     
 
 #dm
-@client.command(name='dm')    
+@client.hybrid_command(name='dm')    
 #@commands.has_permissions(manage_guild=True)
 async def dm(context, member : discord.Member, *,msg):
     if context.author == owner:
         await member.send(msg +f"\n\nsent by **{context.author}** from **{context.guild}** ")
 
 #say
-@client.command(name='say',aliases = ["Say","Type","type"])
+@client.hybrid_command(name='say',aliases = ["Say","Type","type"])
 @commands.cooldown(2, 120, BucketType.user)
 async def say(context, *,msg: commands.clean_content):
     await context.send(msg+f"\n\n           -{context.author}")
     await context.message.delete()
 #spoiler
-@client.command(name='Spoiler',aliases = ["spoiler","Spoil","spoil"])
+@client.hybrid_command(name='spoiler', aliases=["spoiler","Spoil","spoil", "Spoiler"])
 @commands.cooldown(2, 120, BucketType.user)
 async def Spoiler(context, *,msg: commands.clean_content):
     await context.send("||"+msg+ f"||\n\n           -{context.author}")
@@ -1358,7 +1471,7 @@ async def Spoiler(context, *,msg: commands.clean_content):
         #await context.message.delete()        
 
 #avatar
-@client.command(name='avatar',aliases=["pfp","Pfp","Avatar"])
+@client.hybrid_command(name='avatar',aliases=["pfp","Pfp","Avatar"])
 async def avatar(context, *,member : discord.Member = None):
     if member == None:
         user = context.author
@@ -1373,8 +1486,10 @@ async def avatar(context, *,member : discord.Member = None):
     await context.send(embed=avatars)         
 
 #marraige
-@client.command(name="propose",aliases= ["Propose"])
+@client.hybrid_command(name="propose",aliases= ["Propose"])
 async def propose(context, member: discord.Member , *,msg= None):
+    if ctx.interaction is not None:
+        await ctx.defer()
     if context.author != member:
         await context.send(f"{member.mention}\n{context.author.mention} proposed you for the marraige!! Do you accept?? \nType accept or reject")
         def check(response):
@@ -1385,14 +1500,10 @@ async def propose(context, member: discord.Member , *,msg= None):
             response= await client.wait_for('message', check= check, timeout= 40)
         
             if "accept" in response.content.lower():
-                resp=requests.get("https://i.imgur.com/gxsD8hr.png") #marraige
-            #resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
-                resp2=requests.get("https://i.imgur.com/Rs9YYjN.png")
                 bg = Image.new("RGBA",(1479,600), (0,0,0,0))
-             
-                marraige = Image.open(BytesIO(resp.content)).convert('RGBA')
+                marraige = open_template("marraige.png", "https://i.imgur.com/gxsD8hr.png").convert('RGBA')
                 mrg =  marraige.resize((250,250))
-                frm = Image.open(BytesIO(resp2.content)).convert('RGBA')
+                frm = open_template("marraige_frame.png", "https://i.imgur.com/Rs9YYjN.png").convert('RGBA')
                 frm = frm.resize((580,580))
                 asset = context.author.display_avatar.replace(size=128)
                 asset2 = member.display_avatar.replace(size=128)
@@ -1469,7 +1580,7 @@ async def imposter(context, member: Greedy[discord.Member]):#member1 : discord.M
  
 #MyAnimeList
 #animesearch
-@client.command(name= "anime",aliases = ["Anime"])
+@client.hybrid_command(name= "anime",aliases = ["Anime"])
 async def anime(ctx, *, anime):
     try:
         id = findid(anime)   
@@ -1566,7 +1677,7 @@ async def anime(ctx, *, anime):
     except:
         await ctx.reply('Something went wrong! pls report this to support server!')                    
 #manga search
-@client.command(name= "manga",aliases = ["Manga"])
+@client.hybrid_command(name= "manga",aliases = ["Manga"])
 async def manga(ctx, *, manga):
     from mal import MangaSearch
     search = MangaSearch(manga) 
@@ -1636,7 +1747,7 @@ async def manga(ctx, *, manga):
           #  await msg.add_reaction("🔎")
         
         
-@client.command(name='waifu',aliases=["Waifu"]) 
+@client.hybrid_command(name='waifu',aliases=["Waifu"]) 
 @commands.cooldown(3, 120, BucketType.user)  
 async def waifu_(ctx):
     count = girl.count_documents({})
@@ -1665,14 +1776,10 @@ async def waifu_(ctx):
         if answer <= 4:
             await asyncio.sleep(5)
             await ctx.send(f"{user.name}\nAwww... {name} said **Yes** for the marraige!! Congrats💝\nLet me make a wedding card for you >///<")
-            resp=requests.get("https://i.imgur.com/gxsD8hr.png") #marraige
-            #resp2=requests.get("https://i.imgur.com/apeZldc.png") #bg
-            resp2=requests.get("https://i.imgur.com/Rs9YYjN.png")
             bg = Image.new("RGBA",(1479,600), (0,0,0,0))
-             
-            marraige = Image.open(BytesIO(resp.content)).convert('RGBA')
+            marraige = open_template("marraige.png", "https://i.imgur.com/gxsD8hr.png").convert('RGBA')
             mrg =  marraige.resize((250,250))
-            frm = Image.open(BytesIO(resp2.content)).convert('RGBA')
+            frm = open_template("marraige_frame.png", "https://i.imgur.com/Rs9YYjN.png").convert('RGBA')
             frm = frm.resize((580,580))
             asset = user.display_avatar.replace(size=128)
             
@@ -1723,7 +1830,7 @@ async def waifu_(ctx):
             
     except asyncio.TimeoutError:
         return    
-@client.command(name='lookup',aliases = ['lu','Lookup'])
+@client.hybrid_command(name='lookup',aliases = ['lu','Lookup'])
 async def lookup(ctx, name):
     cursor = girl.find({"$text": {"$search": name}},{'score': {'$meta': 'textScore'}})
     cursor.sort([('score', {'$meta':'textScore'})])
@@ -1851,7 +1958,7 @@ async def lookup(ctx, name):
 #gogoanime
 
 
-@client.command(name='movie',aliases=["Movie","Series","series"])
+@client.hybrid_command(name='movie',aliases=["Movie","Series","series"])
 async def movie(ctx, *,name):
     #try:
 
@@ -1919,7 +2026,7 @@ async def movie(ctx, *,name):
                 
 #['airing', 'akas', 'alternate versions', 'awards', 'connections', 'crazy credits', 'critic reviews', 'episodes', 'external reviews', 'external sites', 'faqs', 'full credits', 'goofs', 'keywords', 'list', 'locations', 'main', 'misc sites', 'news', 'official sites', 'parents guide', 'photo sites', 'plot', 'quotes', 'recommendations', 'release dates', 'release info', 'reviews', 'sound clips', 'soundtrack', 'synopsis', 'taglines', 'technical', 'trivia', 'tv schedule', 'video clips', 'vote details']
 insult_api_url = 'http://autoinsult.datahamster.com/index.php?style=3'
-@client.command(name='insult',aliases=["Insult"])
+@client.hybrid_command(name='insult',aliases=["Insult"])
 async def insult(ctx, member : discord.Member = None):
     if member == None:
         member = ctx.author
@@ -1928,13 +2035,13 @@ async def insult(ctx, member : discord.Member = None):
     site = BeautifulSoup(data, "lxml")
     await ctx.send(f"{member.mention} " + "{}!".format(site.select("div.insult")[0].text))
 roast_api_url = 'https://evilinsult.com/generate_insult.php?lang=en&amp;type=json'    
-@client.command(name='roast',aliases=["Roast"])
+@client.hybrid_command(name='roast',aliases=["Roast"])
 async def roast(ctx, member : discord.Member = None):    
     if member == None:
         member = ctx.author
     data = requests.get("https://evilinsult.com/generate_insult.php").text
     await ctx.send(f"{member.mention} {data}") 
-@client.command(name='df',aliases=["define","Define","Df"])
+@client.hybrid_command(name='df',aliases=["define","Define","Df"])
 async def define(ctx, *,word): 
     try: 
         r = requests.get("http://www.urbandictionary.com/define.php?term={}".format(word))
@@ -1952,7 +2059,7 @@ async def define(ctx, *,word):
     except:
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
-@client.command(name='char',aliases=["Char","character","Character"])
+@client.hybrid_command(name='char',aliases=["Char","character","Character"])
 async def char(ctx, *,word): 
     
         #link = f"https://anilist.co/search/characters?search={word}"
@@ -1976,7 +2083,7 @@ async def char(ctx, *,word):
 
  
     
-@client.command(name='eplist',aliases=["Eplist"])
+@client.hybrid_command(name='eplist',aliases=["Eplist"])
 async def eplist(ctx, *,word):  
     try:   
         filler_string = word.replace(" ","-")
@@ -2030,7 +2137,7 @@ async def eplist(ctx, *,word):
     except:
         em = discord.Embed(title="Not found")
         msg = await ctx.send(embed=em,delete_after=30)
-@client.command(name='filler',aliases=["Filler","Fill","fill"])
+@client.hybrid_command(name='filler',aliases=["Filler","Fill","fill"])
 async def filler(ctx, *,word):  
     try:  
         filler_string = word.replace(" ","-")
@@ -2050,7 +2157,7 @@ async def filler(ctx, *,word):
         em = discord.Embed(title="Not found")
         msg = await ctx.send(embed=em,delete_after=30)
 
-@client.command(name='setmal',aliases=["Setmal","setprofile","Setprofile"])
+@client.hybrid_command(name='setmal',aliases=["Setmal","setprofile","Setprofile"])
 async def setmal(ctx, *,word): 
     userid = ctx.author.id
     
@@ -2062,7 +2169,7 @@ async def setmal(ctx, *,word):
         post = {"_id": userid,"mal_id":word}
         mal_collect.insert_one(post)
         await ctx.reply("done! Check your profile `S.profile`")
-@client.command(name='resetmal',aliases=["Resetmal"])
+@client.hybrid_command(name='resetmal',aliases=["Resetmal"])
 async def resetmal(ctx, *,word): 
     userid = ctx.author.id
     doc = mal_collect.find_one({"_id": userid})
@@ -2072,7 +2179,7 @@ async def resetmal(ctx, *,word):
     else:
         await ctx.reply("Set your id using `S.set <your myanimelist id>`")
 
-@client.command(name='removemal',aliases=["Removemal"])
+@client.hybrid_command(name='removemal',aliases=["Removemal"])
 async def removemal(ctx):
     userid = ctx.author.id
     doc = mal_collect.find_one({"_id": userid})
@@ -2085,7 +2192,7 @@ async def removemal(ctx):
 
 
 
-@client.command(name='profile',aliases=["Profile"])
+@client.hybrid_command(name='profile',aliases=["Profile"])
 async def profile(ctx, *, member: discord.Member =None): 
     try:
         if member == None:
@@ -2224,7 +2331,7 @@ async def profile(ctx, *, member: discord.Member =None):
     except:
         em = discord.Embed(title="Not found")
         await ctx.send("Not found! Check your mal id")
-@client.command(name='Mal',aliases=["mal"])
+@client.hybrid_command(name='mal', aliases=["mal", "Mal"])
 async def mal(ctx, *,word): 
     try:
         link = "https://myanimelist.net/profile/{}".format(word)
@@ -2359,7 +2466,7 @@ async def mal(ctx, *,word):
         em = discord.Embed(title="Not found")
         await ctx.send(embed=em)
    
-@client.command(name='recommend',aliases=["Recommend","recom","Recom"])
+@client.hybrid_command(name='recommend',aliases=["Recommend","recom","Recom"])
 async def recommend(ctx): 
     
         link = "https://myanimelist.net/recommendations.php?s=recentrecs&t=anime"
@@ -2407,7 +2514,7 @@ async def recommend(ctx):
             except asyncio.TimeoutError:   
                 return
 
-@client.command(name='similar',aliases=["Similar"])
+@client.hybrid_command(name='similar',aliases=["Similar"])
 async def similar(ctx, *,name):
     #try:
         
@@ -2488,7 +2595,7 @@ async def similar(ctx, *,name):
 
 
 
-@client.command(name="wallpaper",aliases = ["Wallpaper","wall","Wall"])
+@client.hybrid_command(name="wallpaper",aliases = ["Wallpaper","wall","Wall"])
 @commands.cooldown(9, 120, BucketType.user)
 async def wallpaper(ctx, *,word = None ):
     
@@ -2518,7 +2625,7 @@ async def wallpaper(ctx, *,word = None ):
         await ctx.reply("Not found")
 
 
-@client.command(name="mwallpaper",aliases = ["Mwallpaper","mwall","Mwall"])
+@client.hybrid_command(name="mwallpaper",aliases = ["Mwallpaper","mwall","Mwall"])
 @commands.cooldown(9, 120, BucketType.user)
 async def wallpaper_mobile(ctx, *,word = None ):
 
@@ -2548,7 +2655,7 @@ async def wallpaper_mobile(ctx, *,word = None ):
     except:
         await ctx.reply("Not found")
 
-@client.command(name='rand',aliases=["Random","Rand","random"])
+@client.hybrid_command(name='rand',aliases=["Random","Rand","random"])
 async def rndm(ctx, number : int):
     try:
         result = random.randint(1,number)      
@@ -2556,7 +2663,7 @@ async def rndm(ctx, number : int):
     except:
         await ctx.reply("I need a number")
 
-@client.command(name='userinfo',aliases=["whois","Whois","Userinfo"])
+@client.hybrid_command(name='userinfo',aliases=["whois","Whois","Userinfo"])
 async def userinfo(ctx, member: discord.Member = None):
     if not member:  # if member is no mentioned
         member = ctx.message.author  # set member as the author
@@ -2619,7 +2726,7 @@ async def userinfo(ctx, member: discord.Member = None):
     #print(member.guild_permissions for perm in perm_list)
     await ctx.send(embed=embed)
 
-@client.command(name="serverinfo",aliases=["Serverinfo","Sinfo","sinfo"])
+@client.hybrid_command(name="serverinfo",aliases=["Serverinfo","Sinfo","sinfo"])
 async def serverinfo(ctx):
   name = str(ctx.guild.name)
 
@@ -2646,7 +2753,7 @@ async def serverinfo(ctx):
 
   await ctx.send(embed=embed)
 
-@client.command(name="yt",aliases=["Yt","Youtube","youtube"])
+@client.hybrid_command(name="yt",aliases=["Yt","Youtube","youtube"])
 async def yt(ctx, *, search):
 
     query_string = urllib.parse.urlencode({'search_query': search})
@@ -2655,7 +2762,7 @@ async def yt(ctx, *, search):
     search_results = re.findall(r'/watch\?v=(.{11})',htm_content.read().decode())
     await ctx.send('http://www.youtube.com/watch?v=' + search_results[0])
 
-@client.command(name="embed",aliases=["Embed"])   
+@client.hybrid_command(name="embed",aliases=["Embed"])   
 @commands.has_permissions(manage_messages=True) 
 async def embed(ctx,color, *,text = None):
     #msg, color = text.split("|")
@@ -2695,7 +2802,7 @@ async def embed(ctx,color, *,text = None):
     except asyncio.TimeoutError:
         await ctx.send(embed=em)            
        
-@client.command(name="Hall",aliases=["hall"])
+@client.hybrid_command(name="hall", aliases=["hall", "Hall"])
 @commands.has_permissions(manage_messages= True)    
 async def hall(ctx,* ,text):
     hall_point = client.get_channel(837605170330337310)
@@ -2723,7 +2830,7 @@ async def hall(ctx,* ,text):
              
        
 
-@client.command(name="submit",aliases=["Submit"])    
+@client.hybrid_command(name="submit",aliases=["Submit"])    
 async def submit(ctx,*,text):
     drop_point = client.get_channel(837610754298478643)
     if ctx.channel == drop_point:
@@ -2769,7 +2876,7 @@ async def submit(ctx,*,text):
     else:
         return                  
 
-@client.command(name="post",aliases=["Post"])  
+@client.hybrid_command(name="post",aliases=["Post"])  
 @commands.has_permissions(manage_messages=True)  
 async def post(ctx, *,id): 
     id1, id2 = id.split("|")  
@@ -2800,13 +2907,13 @@ async def on_member_join(member):
         em.set_image(url=rndgif)
         await village.send(f"{member.mention}",embed = em)   
 
-@client.command(name="server")
+@client.hybrid_command(name="server")
 async def server(ctx):
     try:
         await ctx.author.send("Heres our support server!\nhttps://discord.gg/ZbemgbQuXa")
     except:
         await ctx.send("Maybe your dm is close....")    
-@client.command(name="guild")
+@client.hybrid_command(name="guild")
 async def guild(ctx):
     
     if ctx.author == owner:
@@ -2824,7 +2931,7 @@ async def guild(ctx):
 
 
 
-@client.command(name="poll",aliases = ["Poll"])
+@client.hybrid_command(name="poll",aliases = ["Poll"])
 async def poll(ctx,ques, *,msg: commands.clean_content):
     if ctx.author == owner:
         data = re.split(pattern = r"\|+" , string = msg)
@@ -2833,7 +2940,7 @@ async def poll(ctx,ques, *,msg: commands.clean_content):
             message = await ctx.send(options)
             await message.add_reaction("⏫")
 
-@client.command(name="f",aliases = ["F"])
+@client.hybrid_command(name="f",aliases = ["F"])
 async def f(ctx,*,msg: commands.clean_content):
     message = await ctx.send(f"Press 🇫 to pay respects to **{msg}**")  
     await message.add_reaction("🇫")
@@ -2864,7 +2971,7 @@ async def f(ctx,*,msg: commands.clean_content):
 
         
 
-@client.command(name="rndqoute",aliases = ["Rndqoute","Rq","rq"])
+@client.hybrid_command(name="rndqoute",aliases = ["Rndqoute","Rq","rq"])
 async def rndquote(ctx):
     qoute = requests.get("https://animechan.vercel.app/api/random").json()
     
@@ -2970,7 +3077,7 @@ async def giveaway(ctx):
             winner = random.choice(users)
 
             await my_msg.reply(f"Congratulations! {winner.mention} won {prize}!")
-@client.command()
+@client.hybrid_command()
 @commands.has_permissions(manage_messages = True)
 async def reroll(ctx,id_ : int):
     try:
@@ -3055,7 +3162,7 @@ async def dm_helper(player: discord.User,question , answer , option , options):
 
     
     
-@client.command(name='challenge',aliases=["Challenge"])    
+@client.hybrid_command(name='challenge',aliases=["Challenge"])    
 async def challenge(ctx, member : discord.Member):
     if ctx.author != member:
         mem1 = ctx.author
@@ -3597,7 +3704,7 @@ async def updateairing(ctx, season):
                 num2 += 1
                 
         await ctx.send(f"added {num2}\nTotal {num + num2}") 
-@client.command(name='airing',aliases=["Air","Airing","air"])
+@client.hybrid_command(name='airing',aliases=["Air","Airing","air"])
 @commands.cooldown(2, 80, BucketType.user) 
 async def air(ctx):
             docs = airingg.find()
@@ -3654,7 +3761,7 @@ async def air(ctx):
                 except asyncio.TimeoutError:
                     return               
 
-@client.command(name='awl',aliases=["addwatchlist"])
+@client.hybrid_command(name='awl',aliases=["addwatchlist"])
 async def addwatchlist(ctx, code):  
     userid = ctx.author.id
     
@@ -3673,7 +3780,7 @@ async def addwatchlist(ctx, code):
     else:
         await ctx.reply("`Cant find the anime, Maybe its not airing right now`\nCheck using `S.airing`")        
 
-@client.command(name='rwl',aliases=["removewatchlist"])
+@client.hybrid_command(name='rwl',aliases=["removewatchlist"])
 async def removewatchlist(ctx, code):  
     userid = ctx.author.id
     doc = listed.find_one({"_id": userid})  
@@ -3688,7 +3795,7 @@ async def removewatchlist(ctx, code):
     else:
         await ctx.reply("`Its not in your watchlist`")
 
-@client.command(name='watchlist',aliases=["Watchlist","wl","Wl"])
+@client.hybrid_command(name='watchlist',aliases=["Watchlist","wl","Wl"])
 @commands.cooldown(2, 80, BucketType.user) 
 async def watchlist(ctx,member: discord.Member = None):   
     if member == None:
@@ -3716,7 +3823,7 @@ async def watchlist(ctx,member: discord.Member = None):
     elif doc == None:
         em = discord.Embed(title = "Watchlist",description = f"User : {member.mention}\nAvailable Slots : 10/10\nReminder - Off\n\nUse `S.awl [animeid]` to add",color=0x00ebff) 
         await ctx.reply(embed = em)     
-@client.command(name='remind',aliases=["Remind"])
+@client.hybrid_command(name='remind',aliases=["Remind"])
 async def remind(ctx):
     userid = ctx.author.id
     doc = listed.find_one({"_id": userid})
@@ -3730,7 +3837,7 @@ async def remind(ctx):
         elif doc["toggle"] == 0:  
             listed.update_one({"_id": userid},{"$set":{"toggle": 1}})
             await ctx.reply("`Reminder Enabled`") 
-@client.command(name='setchannel')
+@client.hybrid_command(name='setchannel')
 @commands.has_permissions(manage_guild = True)
 async def setchannel(ctx, channel : discord.TextChannel): 
     try:   
@@ -3748,7 +3855,7 @@ async def setchannel(ctx, channel : discord.TextChannel):
     except:
         return                    
            
-@client.command(name='removechannel')
+@client.hybrid_command(name='removechannel')
 @commands.has_permissions(manage_guild = True)
 async def removechannel(ctx): 
     try:   
@@ -3765,20 +3872,20 @@ async def removechannel(ctx):
             await ctx.reply('Something went wrong... join support server for help')
     except:
         return            
-@client.command(name='invite',aliases=["Invite"])
+@client.hybrid_command(name='invite',aliases=["Invite"])
 async def invite(ctx): 
     em = discord.Embed(description = '[Click here to invite me :)](https://discord.com/api/oauth2/authorize?client_id=782005398269984819&permissions=1346890870&scope=bot)',color=0x00ebff)
     em.set_thumbnail(url = client.user.display_avatar.url )
     await ctx.reply(embed = em)           
         
-@client.command(name='vote',aliases=["Vote"])
+@client.hybrid_command(name='vote',aliases=["Vote"])
 async def vote(ctx): 
     await ctx.reply('https://top.gg/bot/782005398269984819/vote')    
 
 
 #help...............................
 client.remove_command("help")
-@client.group(invoke_without_command=True)#<> required [] optional
+@client.hybrid_group(invoke_without_command=True)#<> required [] optional
 async def help(ctx):
     em = discord.Embed(description = "For more info on a specific command, use stela help <command>\nFor more help, join our [server](https://discord.gg/ZbemgbQuXa)\n \nFor arguments in commands:\n<> means it's required\n[] means it's optional\n||Do not actually include the <> and [] symbols in the command||\n\n**__PRIVACY POLICY__**\n1) We Do not share any kind of information provided by our users\n2) We do not store any kind of data which is mandatory, users can opt-out from using such commands if they dont want to\n3)Prior to collecting any data we notify it by specific explanation texts displayed prior to the Data collection.\n4)If any user wants to delete his/hers data from the bot then he/she can do it simply by using some commands or by asking help from server given in `S.server` command",timestamp=utc_now(),color = discord.Color(0x00ff7d))
     em.set_author(name = "Help/Command List",icon_url=f"{client.user.display_avatar.url}")
@@ -3793,7 +3900,7 @@ async def help(ctx):
     em.set_footer(text= f'Requested by {ctx.author}' )
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def kick(ctx):
     em = discord.Embed(description="Kicks a member from the Server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3802,7 +3909,7 @@ async def kick(ctx):
     em.add_field(name="**Permission required**",value="`Kick Member`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def submit(ctx):
     em = discord.Embed(description="Submits your contestant for the Tournament",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3810,7 +3917,7 @@ async def submit(ctx):
     em.add_field(name="**Usage**",value="`S.submit <name>`\nafter that Send the link of the image within 20 sec\nThis command will only work in Tournament\nOnly works in support server")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def ban(ctx):
     em = discord.Embed(description="Bans a member from the Server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3819,7 +3926,7 @@ async def ban(ctx):
     em.add_field(name="**Permission required**",value="`Ban Member`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def clear(ctx):
     em = discord.Embed(description="Deletes messages",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3829,7 +3936,7 @@ async def clear(ctx):
     em.add_field(name="**Permission required**",value="`Manage Messages`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def wanted(ctx):
     em = discord.Embed(description="Creates a Wanted poster from One Piece",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3838,7 +3945,7 @@ async def wanted(ctx):
     em.add_field(name="**Aliases**",value="`bounty`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def jojo(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3846,7 +3953,7 @@ async def jojo(ctx):
     em.add_field(name="**Usage**",value="`S.jojo <member>`")
     await ctx.send(embed=em)   
 
-@help.command()
+@help.hybrid_command()
 async def chika(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3854,14 +3961,14 @@ async def chika(ctx):
     em.add_field(name="**Usage**",value="`S.chika <message1>|<message2>|<message3>|<message4>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def fbi(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.fbi <Text Message>`")
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def worthless(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3869,7 +3976,7 @@ async def worthless(ctx):
     em.add_field(name="**Usage**",value="`S.worthless <Text Message>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def water(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3877,7 +3984,7 @@ async def water(ctx):
     em.add_field(name="**Usage**",value="`S.water [member] <Text Message>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def rip(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3885,7 +3992,7 @@ async def rip(ctx):
     em.add_field(name="**Usage**",value="`S.rip <member>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def disability(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3893,7 +4000,7 @@ async def disability(ctx):
     em.add_field(name="**Usage**",value="`S.disability <member>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def thisisshit(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3901,7 +4008,7 @@ async def thisisshit(ctx):
     em.add_field(name="**Usage**",value="`S.thisisshit <member>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def myboi(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3909,7 +4016,7 @@ async def myboi(ctx):
     em.add_field(name="**Usage**",value="`S.myboi <member>`")
     await ctx.send(embed=em)
  
-@help.command()
+@help.hybrid_command()
 async def santa(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3917,7 +4024,7 @@ async def santa(ctx):
     em.add_field(name="**Usage**",value="`S.santa <Text Message>`")
     await ctx.send(embed=em) 
 
-@help.command()
+@help.hybrid_command()
 async def news(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3925,7 +4032,7 @@ async def news(ctx):
     em.add_field(name="**Usage**",value="`S.news <member> <message1>|<message2>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def yugioh(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3933,7 +4040,7 @@ async def yugioh(ctx):
     em.add_field(name="**Usage**",value="`S.yugioh <message1>|<message2>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def yugiohpfp(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3941,7 +4048,7 @@ async def yugiohpfp(ctx):
     em.add_field(name="**Usage**",value="`S.yugiohpfp <member1> <member2>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def bitch(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3949,7 +4056,7 @@ async def bitch(ctx):
     em.add_field(name="**Usage**",value="`S.bitch <Text message>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def billy(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3957,7 +4064,7 @@ async def billy(ctx):
     em.add_field(name="**Usage**",value="`S.bily <Text message>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def fact(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3965,7 +4072,7 @@ async def fact(ctx):
     em.add_field(name="**Usage**",value="`S.fact <Text message>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def say(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3973,7 +4080,7 @@ async def say(ctx):
     em.add_field(name="**Usage**",value="`S.say <Text message>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def spoiler(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3982,7 +4089,7 @@ async def spoiler(ctx):
     em.add_field(name="**Aliases**",value="`spoil`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def propose(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3991,7 +4098,7 @@ async def propose(ctx):
     await ctx.send(embed=em)
 
 
-@help.command()
+@help.hybrid_command()
 async def match(ctx):
     em = discord.Embed(description="Use it to match pfp with your friend",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -3999,21 +4106,21 @@ async def match(ctx):
     em.add_field(name="**Usage**",value="`S.match <member>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def dumb(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.dumb <text>`")
     await ctx.send(embed=em)  
-@help.command()
+@help.hybrid_command()
 async def wallpunch(ctx):
     em = discord.Embed(color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.wallpunch <text>`")
     await ctx.send(embed=em)      
-@help.command()
+@help.hybrid_command()
 async def anime(ctx):
     em = discord.Embed(description="Searches anime on Mal",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4021,7 +4128,7 @@ async def anime(ctx):
     em.add_field(name="**Usage**",value="`S.anime <Name of anime>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def manga(ctx):
     em = discord.Embed(description="Searches manga on Mal",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4029,7 +4136,7 @@ async def manga(ctx):
     em.add_field(name="**Usage**",value="`S.manga <Number of Msgs>`")
     await ctx.send(embed=em)
 
-#@help.command()
+#@help.hybrid_command()
 #async def dm(ctx):
  #   em = discord.Embed(description="Dms the message to the member",color=0x00ff7d,timestamp=utc_now())
  #   em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4040,7 +4147,7 @@ async def manga(ctx):
 
 
 
-@help.command()
+@help.hybrid_command()
 async def announce(ctx):
     em = discord.Embed(description="Use it to do announcement",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4049,7 +4156,7 @@ async def announce(ctx):
     em.add_field(name="**Permission required**",value="`Manage Server`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def yt(ctx):
     em = discord.Embed(description="Searches video on Youtube",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4057,7 +4164,7 @@ async def yt(ctx):
     em.add_field(name="**Usage**",value="`S.yt <search>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def embed(ctx):
     em = discord.Embed(description="Use to create Embeds",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4066,7 +4173,7 @@ async def embed(ctx):
     em.add_field(name="**Permission required**",value="`Manage Messages`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def rndqoute(ctx):
     em = discord.Embed(description="Sends a random anime qoute",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4074,7 +4181,7 @@ async def rndqoute(ctx):
     em.add_field(name="**Usage**",value="`S.rndqoute`")
     em.add_field(name="**Aliases**",value="`rq`")
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def rand(ctx):
     em = discord.Embed(description="Choose random number between the limits",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4082,7 +4189,7 @@ async def rand(ctx):
     em.add_field(name="**Usage**",value="`S.rand <number>`")
     em.add_field(name="**Aliases**",value="`random`")
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def filler(ctx):
     em = discord.Embed(description="Sends filler episodes of anime, if any",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4091,7 +4198,7 @@ async def filler(ctx):
     em.add_field(name="**Aliases**",value="`fill`")
     await ctx.send(embed=em)    
 
-@help.command()
+@help.hybrid_command()
 async def mal(ctx):
     em = discord.Embed(description="Use to check mal profile",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4100,7 +4207,7 @@ async def mal(ctx):
     em.add_field(name="**Aliases**",value="`profile`")
     await ctx.send(embed=em)  
 
-@help.command()
+@help.hybrid_command()
 async def profile(ctx):
     em = discord.Embed(description="Use to see mal profile",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4108,7 +4215,7 @@ async def profile(ctx):
     em.add_field(name="**Usage**",value="`S.profile`\nUse `S.set <mal-id>` to register")
     await ctx.send(embed=em)  
 
-@help.command()
+@help.hybrid_command()
 async def read(ctx):
     em = discord.Embed(description="Get link to read manga",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4116,7 +4223,7 @@ async def read(ctx):
     em.add_field(name="**Usage**",value="`S.read <Manga>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def char(ctx):
     em = discord.Embed(description="Search Characters",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4124,7 +4231,7 @@ async def char(ctx):
     em.add_field(name="**Usage**",value="`S.char <Character Name>`")
     await ctx.send(embed=em)
 
-@help.command()
+@help.hybrid_command()
 async def eplist(ctx):
     em = discord.Embed(description="Sends the episode list of anime",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4133,7 +4240,7 @@ async def eplist(ctx):
     
     await ctx.send(embed=em)  
 
-@help.command()
+@help.hybrid_command()
 async def wallpaper(ctx):
     em = discord.Embed(description="Sends Wallpapers",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4142,7 +4249,7 @@ async def wallpaper(ctx):
     em.add_field(name="**Aliases**",value="`wall`\n`mwall` for mobile")
     await ctx.send(embed=em)    
 
-@help.command()
+@help.hybrid_command()
 async def character(ctx):
     em = discord.Embed(description="Searchs Anime Characters",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4150,7 +4257,7 @@ async def character(ctx):
     em.add_field(name="**Usage**",value="`S.character <name>`")
     em.add_field(name="**Aliases**",value="`char`")
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def reddit(ctx):
     em = discord.Embed(description="Sends Sub-reddit posts",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4158,7 +4265,7 @@ async def reddit(ctx):
     em.add_field(name="**Usage**",value="`S.reddit <sub-reddit>`")
     em.add_field(name="**Aliases**",value="`red`")
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def addemoji(ctx):
     em = discord.Embed(description="Adds emoji in the server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4166,7 +4273,7 @@ async def addemoji(ctx):
     em.add_field(name="**Usage**",value="`S.addemoji <emoji link> [emoji name]`")
     em.add_field(name="**Permission required**",value="`Manage Emojis`")
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def challenge(ctx):
     em = discord.Embed(description="A trivia based chase game",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4174,7 +4281,7 @@ async def challenge(ctx):
     em.add_field(name="**Usage**",value="`S.challenge <mention>`")
     
     await ctx.send(embed=em)  
-@help.command()
+@help.hybrid_command()
 async def movie(ctx):
     em = discord.Embed(description="Searches movies/web series",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4183,7 +4290,7 @@ async def movie(ctx):
     
     await ctx.send(embed=em)        
 
-@help.command()
+@help.hybrid_command()
 async def remind(ctx):
     em = discord.Embed(description="Toggles anime reminder",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4191,7 +4298,7 @@ async def remind(ctx):
     em.add_field(name="**Usage**",value="`S.remind`")
     
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def addwatchlist(ctx):
     em = discord.Embed(description="Adds anime in your watchlist for reminder",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4199,7 +4306,7 @@ async def addwatchlist(ctx):
     em.add_field(name="**Usage**",value="`S.addwatchlist <anime id>`")
     em.add_field(name="**Aliases**",value="`awl`")
     await ctx.send(embed=em) 
-@help.command()
+@help.hybrid_command()
 async def removewatchlist(ctx):
     em = discord.Embed(description="Removes anime from your watchlist for reminder",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4208,7 +4315,7 @@ async def removewatchlist(ctx):
     em.add_field(name="**Aliases**",value="`rwl`")
     await ctx.send(embed=em) 
 
-@help.command()
+@help.hybrid_command()
 async def watchlist(ctx):
     em = discord.Embed(description="Shows anime in your watchlist for reminder",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4216,7 +4323,7 @@ async def watchlist(ctx):
     em.add_field(name="**Usage**",value="`S.watchlist`")
     em.add_field(name="**Aliases**",value="`wl`")
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def airing(ctx):
     em = discord.Embed(description="Shows airing anime to add in your Watchlist",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4224,14 +4331,14 @@ async def airing(ctx):
     em.add_field(name="**Usage**",value="`S.airing`")
     em.add_field(name="**Aliases**",value="`air`")
     await ctx.send(embed=em)   
-@help.command()
+@help.hybrid_command()
 async def setmal(ctx):
     em = discord.Embed(description="Tags your myanimelist account with your discord id",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
     em.set_footer(text= f'Requested by {ctx.author}' )
     em.add_field(name="**Usage**",value="`S.setmal <myanimelist id>`")
     await ctx.send(embed=em) 
-@help.command()
+@help.hybrid_command()
 async def removemal(ctx):
     em = discord.Embed(description="Removes your mal id from stela",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4239,7 +4346,7 @@ async def removemal(ctx):
     em.add_field(name="**Usage**",value="`S.removemal`")
     await ctx.send(embed=em)   
 
-@help.command()
+@help.hybrid_command()
 async def lookup(ctx):
     em = discord.Embed(description="Search waifus for waifu command",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4247,7 +4354,7 @@ async def lookup(ctx):
     em.add_field(name="**Usage**",value="`S.Lookup <name>`")
     em.add_field(name="**Aliases**",value="`lu`")
     await ctx.send(embed=em)        
-@help.command()
+@help.hybrid_command()
 async def setchannel(ctx):
     em = discord.Embed(description="Set a channel for anime updates in your server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
@@ -4255,7 +4362,7 @@ async def setchannel(ctx):
     em.add_field(name="**Usage**",value="`S.setchannel <mention channel>`")
     em.add_field(name="**Permission required**",value="`Manage Server`")
     await ctx.send(embed=em)
-@help.command()
+@help.hybrid_command()
 async def removechannel(ctx):
     em = discord.Embed(description="Removes the channel from anime updates in your server",color=0x00ff7d,timestamp=utc_now())
     em.set_author(name=ctx.author.name,icon_url=f"{ctx.author.display_avatar.url}")
