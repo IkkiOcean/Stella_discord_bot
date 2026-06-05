@@ -334,16 +334,6 @@ async def on_ready():
     else:
         print("Anime update checker disabled (set ENABLE_ANIME_UPDATES=true to enable)")
 
-    try:
-        # Guild-only sync (prevents hitting the global 100 slash-command limit)
-        # Put your guild id in TEST_GUILD_ID to sync slash commands to ONLY that guild.
-        # If not set, we still avoid global sync to prevent hitting Discord's global 100-command limit.
-        # Sync globally to all guilds
-        print("Syncing slash commands globally... (This might take a minute)")
-        synced = await client.tree.sync()
-        print(f"Successfully synced {len(synced)} slash command(s) globally to all guilds.")
-    except Exception as exc:
-        print(f"Warning: could not sync slash commands: {exc}")
 
 
      
@@ -368,10 +358,23 @@ async def version(context):
     
     await context.message.channel.send(embed=myembed)
 
-@client.hybrid_command(name='bot', aliases=['Bot'])
+@client.command(name='bot', aliases=['Bot'])
 async def Bot(context):
     helpembed = discord.Embed (title='Hi', description='Its me, Stela',color=0x00ebff) 
     await context.author.send(embed=helpembed) 
+
+@client.command(name="sync")
+@commands.is_owner() # Ensures only you can run this command
+async def sync_commands(ctx, scope: str = "guild"):
+    if scope == "global":
+        await ctx.send("Syncing 97 commands globally... This can take up to 1 hour.")
+        await client.tree.sync()
+        await ctx.send("Global sync payload sent successfully!")
+        
+    elif scope == "guild":
+        await ctx.send("Syncing commands locally to this server instantly...")
+        await client.tree.sync(guild=ctx.guild)
+        await ctx.send("Guild sync complete!")
 
 #moderation.................................................................................... 
 #kick...............
