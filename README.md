@@ -95,13 +95,24 @@ Welcome to Stella's GitHub repository! Stella is a versatile Discord bot designe
 
 2. Clone the repo, create a venv, install Python packages, and configure `.env` as above.
 
-3. Run the bot:
+4. **Run with PM2 (recommended for always-on servers):**
     ```bash
+    cd ~/Documents/Stella_discord_bot
+    python3 -m venv venv
     source venv/bin/activate
-    python my_bot.py
+    pip install -r requirements.txt
+    cp .env.example .env   # then edit .env with your secrets
+
+    pm2 delete stella 2>/dev/null || true
+    pm2 start ecosystem.config.cjs
+    pm2 save
+    pm2 logs stella
     ```
 
-4. For process managers (systemd, Docker, Railway, etc.), the included `Procfile` runs:
+    PM2 must use the venv Python, not system `python3`. The included `ecosystem.config.cjs` sets:
+    `interpreter: "./venv/bin/python"`
+
+5. For other process managers, the included `Procfile` runs:
     ```
     worker: python my_bot.py
     ```
