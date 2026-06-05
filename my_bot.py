@@ -334,17 +334,15 @@ async def on_ready():
 
     try:
         # Guild-only sync (prevents hitting the global 100 slash-command limit)
-        # Put your test guild id in TEST_GUILD_ID (or leave blank to skip syncing).
-        test_guild_id = os.getenv("TEST_GUILD_ID", "").strip()
-        if test_guild_id:
-            guild = discord.Object(id=int(test_guild_id))
-            synced = await client.tree.sync(guild=guild)
-            print(f"Synced {len(synced)} slash command(s) to guild {test_guild_id}")
-        else:
-            print("TEST_GUILD_ID not set; skipping slash command sync.")
+        # Put your guild id in TEST_GUILD_ID to sync slash commands to ONLY that guild.
+        # If not set, we still avoid global sync to prevent hitting Discord's global 100-command limit.
+        # Sync globally to all guilds
+        print("Syncing slash commands globally... (This might take a minute)")
+        synced = await client.tree.sync()
+        print(f"Successfully synced {len(synced)} slash command(s) globally to all guilds.")
     except Exception as exc:
         print(f"Warning: could not sync slash commands: {exc}")
-    
+
 
      
 #@client.event
