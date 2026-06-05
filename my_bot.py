@@ -454,7 +454,7 @@ async def removerole(ctx,member :discord.Member,role: typing.Optional[discord.Ro
         except:
                 await ctx.reply("Type `S.removerole <member> <ROLE NAME OR MENTION ROLE>`") 
 
-@client.hybrid_command(name='steal', aliases=["steal", "Steal"])
+@client.hybrid_command(name='steal', aliases=["Steal"])
 @commands.has_permissions(manage_emojis = True) 
 async def steal(ctx, emoji:discord.Emoji, *, name):
     guild = ctx.guild   
