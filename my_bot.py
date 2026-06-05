@@ -76,25 +76,27 @@ def _is_image_bytes(data: bytes) -> bool:
 def open_template(filename: str, fallback_url: str | None = None) -> Image.Image:
     """Load a meme template from bundled assets, with optional URL fallback."""
     local_path = ASSETS_DIR / filename
-    if local_path.exists():
-        with Image.open(local_path) as img:
-            return img.copy()
+    if fallback_url:
+        url = fallback_url.strip()
+        headers = {"User-Agent": user_agent, "Accept": "image/*,*/*"}
+        resp = requests.get(url, headers=headers, timeout=30)
+        resp.raise_for_status()
+        if not _is_image_bytes(resp.content):
+            raise ValueError(
+                f"Could not download image template '{filename}' from {url}. "
+                "The remote host returned a non-image response."
+            )
+        return Image.open(BytesIO(resp.content))
 
-    if not fallback_url:
+    else:
+        if local_path.exists():
+            with Image.open(local_path) as img:
+                return img.copy()
         raise FileNotFoundError(
             f"Template '{filename}' not found in {ASSETS_DIR} and no fallback URL was provided."
         )
 
-    url = fallback_url.strip()
-    headers = {"User-Agent": user_agent, "Accept": "image/*,*/*"}
-    resp = requests.get(url, headers=headers, timeout=30)
-    resp.raise_for_status()
-    if not _is_image_bytes(resp.content):
-        raise ValueError(
-            f"Could not download image template '{filename}' from {url}. "
-            "The remote host returned a non-image response."
-        )
-    return Image.open(BytesIO(resp.content))
+    
 
 
 def env_flag(name: str, default: bool = False) -> bool:
