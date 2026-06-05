@@ -3393,7 +3393,8 @@ async def challenge(ctx, member : discord.Member):
 #client.remove_command("help")
          
            
-@client.hybrid_command(name='upload')    
+@client.command(name='upload')  
+@commands.is_owner()  
 async def upload(ctx, num : int,*,question):
     print(ctx.author.id)
     if ctx.author.id == 745006368175423489:
@@ -3442,7 +3443,8 @@ async def upload(ctx, num : int,*,question):
 
 
 
-@client.hybrid_command(name='cleardb')
+@client.command(name='cleardb')
+@commands.is_owner()
 async def cleardb(ctx): 
     if ctx.author.id  == 745006368175423489:
         docs = upd.count_documents({})
