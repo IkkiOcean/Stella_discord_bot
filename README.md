@@ -64,25 +64,52 @@ Welcome to Stella's GitHub repository! Stella is a versatile Discord bot designe
 
 2. **Install the dependencies:**
     ```bash
+    python3 -m venv venv
+    source venv/bin/activate   # Linux/macOS
     pip install -r requirements.txt
     ```
 
 3. **Set up the configuration:**
-    - Create a `.env` file in the root directory.
-    - Add your Discord bot token and API keys for MyAnimeList, IMDb, Reddit, and other services.
+    - Copy `.env.example` to `.env` in the root directory.
+    - Add your Discord bot token, MongoDB URIs, and optional API keys.
+    ```bash
+    cp .env.example .env
+    ```
     ```env
     DISCORD_TOKEN=your_discord_bot_token
-    MAL_CLIENT_ID=your_myanimelist_client_id
-    MAL_CLIENT_SECRET=your_myanimelist_client_secret
-    IMDB_API_KEY=your_imdb_api_key
+    MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/myFirstDatabase
+    MONGODB_URI_WAIFUS=mongodb+srv://user:password@cluster.mongodb.net/myFirstDatabase
     REDDIT_CLIENT_ID=your_reddit_client_id
     REDDIT_CLIENT_SECRET=your_reddit_client_secret
-    REDDIT_USER_AGENT=your_reddit_user_agent
+    REDDIT_USER_AGENT=stella-discord-bot
+    CHROMEDRIVER_PATH=/usr/bin/chromedriver
     ```
 
-## Configuration
+## Linux server deployment
 
-Ensure all API keys and tokens are correctly placed in the `.env` file. This file should be in the root directory of your project.
+1. Install system dependencies (Ubuntu/Debian example):
+    ```bash
+    sudo apt update
+    sudo apt install -y python3 python3-venv python3-pip chromium-browser chromium-chromedriver
+    ```
+
+2. Clone the repo, create a venv, install Python packages, and configure `.env` as above.
+
+3. Run the bot:
+    ```bash
+    source venv/bin/activate
+    python my_bot.py
+    ```
+
+4. For process managers (systemd, Docker, Railway, etc.), the included `Procfile` runs:
+    ```
+    worker: python my_bot.py
+    ```
+
+**Notes:**
+- The bot uses **discord.py 2.x** and requires the **Message Content Intent** enabled in the [Discord Developer Portal](https://discord.com/developers/applications).
+- Anime update checking uses headless Chrome via Selenium. On Linux, either install Chrome/Chromium + chromedriver or leave `CHROMEDRIVER_PATH` empty to auto-download via `webdriver-manager`.
+- Meme/image assets and fonts live in `.vscode/`; generated images are written to `generated/`.
 
 ## Usage
 
