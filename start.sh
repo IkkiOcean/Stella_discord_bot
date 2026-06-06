@@ -11,4 +11,4 @@ fi
 # shellcheck disable=SC1091
 source venv/bin/activate
 pip install -r requirements.txt
-exec python my_bot.py
+exec python main.py
