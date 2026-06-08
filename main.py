@@ -1073,6 +1073,7 @@ EXTENSIONS = [
     'cogs.fun',
     'cogs.memegen',
     # 'cogs.anime_reminder',
+    'cogs.tournament',
     'cogs.chess',
     'cogs.anime_manga',
     'cogs.utility',
